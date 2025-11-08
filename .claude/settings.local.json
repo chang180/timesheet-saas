@@ -1,0 +1,23 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git checkout:*)",
+      "Bash(npm install:*)",
+      "Bash(npm run format:*)",
+      "Bash(npm uninstall:*)",
+      "Bash(php artisan make:controller:*)",
+      "Bash(php artisan make:request:*)",
+      "Bash(vendor/bin/pint:*)",
+      "Bash(php vendor/bin/pint:*)",
+      "Bash(git add:*)",
+      "Bash(git commit -m \"$(cat <<''EOF''\nrefactor: Convert Phase 2 to Inertia SSR architecture\n\n- Remove React Query, Axios, react-hook-form dependencies\n- Add LandingController and TenantSettingsController with Inertia::render\n- Add Form Requests with comprehensive validation rules (welcome page, IP whitelist)\n- Create welcome page modules (hero, quick-start, announcements, support contacts)\n- Refactor tenant-welcome page to use Inertia props instead of React Query hooks\n- Remove unused API client, contexts, and custom hooks\n- Format all code with Pint and Prettier\n\nThis follows Laravel Boost Guidelines for Inertia + Wayfinder architecture.\n\n🤖 Generated with [Claude Code](https://claude.com/claude-code)\n\nCo-Authored-By: Claude <noreply@anthropic.com>\nEOF\n)\")",
+      "Bash(php artisan wayfinder:generate:*)",
+      "Bash(php artisan:*)",
+      "Bash(php -v:*)",
+      "Bash(npm run build:*)",
+      "Bash(git commit -m \"$(cat <<''EOF''\nfeat: Add Phase 2 infrastructure - Controllers, Policies, Factories and Tests\n\n- Update LandingController and TenantSettingsController to use correct data structure\n  - Use Company->branding[''color''] instead of brand_color\n  - Use CompanySetting relationship instead of Company->settings array\n  - Fix updateOrCreate logic for tenant settings\n- Add CompanyPolicy with update authorization for admin/owner roles\n- Create CompanyFactory with branding and default values\n- Create CompanySettingFactory with default welcome page config\n- Add routes for landing pages and tenant settings management\n- Add comprehensive LandingController tests (7 passing tests)\n  - Test global landing page access\n  - Test tenant welcome page with authentication\n  - Test company branding display\n  - Test custom and default welcome config\n  - Test error handling for missing company\n- Run Wayfinder to generate TypeScript route functions\n- Build frontend assets with npm run build\n\n🤖 Generated with [Claude Code](https://claude.com/claude-code)\n\nCo-Authored-By: Claude <noreply@anthropic.com>\nEOF\n)\")"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}
