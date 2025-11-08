@@ -10,10 +10,10 @@
         "herd": {
             "command": "php",
             "args": [
-                "/Applications/Herd.app/Contents/Resources/herd-mcp.phar"
+                "C:/Users/chang180/.config/herd/bin/herd-mcp.phar"
             ],
             "env": {
-                "SITE_PATH": "/Users/changchien-wen/Herd/timesheet-saas"
+                "SITE_PATH": "D:\\coding\\timesheet-saas"
             }
         }
     }
