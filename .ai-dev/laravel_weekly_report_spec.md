@@ -1,4 +1,4 @@
-# Laravel 12 × React 工作週報系統開發說明
+# 週報通 Timesheet SaaS：Laravel 12 × React 工作週報系統開發說明
 
 ## 1. 系統概述（新多租戶架構）
 - **系統目標**：提供多租戶的工作週報平台，每間公司於專屬子網域或 slug 路徑下獨立運作。新專案以 Laravel 12 API + React 前端實作，沿用 Laravel Breeze（React 版）處理登入、註冊、密碼重設與內建 2FA。
