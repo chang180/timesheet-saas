@@ -9,7 +9,24 @@ import AppLayout from '@/layouts/app-layout';
 import { weeklyReports } from '@/routes/tenant';
 import { type BreadcrumbItem, type SharedData } from '@/types';
 import { Head, Link, useForm, usePage } from '@inertiajs/react';
-import { ArrowLeft, PlusCircle, Trash2 } from 'lucide-react';
+import { ArrowLeft, GripVertical, PlusCircle, Trash2 } from 'lucide-react';
+import {
+    DndContext,
+    closestCenter,
+    KeyboardSensor,
+    PointerSensor,
+    useSensor,
+    useSensors,
+    type DragEndEvent,
+} from '@dnd-kit/core';
+import {
+    arrayMove,
+    SortableContext,
+    sortableKeyboardCoordinates,
+    useSortable,
+    verticalListSortingStrategy,
+} from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
 
 type WeeklyReportItemInput = {
     id?: number;
@@ -82,6 +99,212 @@ const toFormItem = (
     tagsText: (item.tags ?? []).join(', '),
 });
 
+type SortableCurrentWeekRowProps = {
+    item: WeeklyReportItemInput;
+    index: number;
+    updateItem: (
+        type: 'current_week' | 'next_week',
+        index: number,
+        key: keyof WeeklyReportItemInput,
+        value: unknown,
+    ) => void;
+    removeItem: (type: 'current_week' | 'next_week', index: number) => void;
+    getError: (path: string) => string | undefined;
+};
+
+function SortableCurrentWeekRow({ item, index, updateItem, removeItem, getError }: SortableCurrentWeekRowProps) {
+    const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
+        id: item.localKey,
+    });
+
+    const style = {
+        transform: CSS.Transform.toString(transform),
+        transition,
+        opacity: isDragging ? 0.5 : 1,
+    };
+
+    return (
+        <tr ref={setNodeRef} style={style} className="hover:bg-muted/20">
+            <td className="px-3 py-2 cursor-move" {...attributes} {...listeners}>
+                <div className="flex items-center justify-center text-muted-foreground">
+                    <GripVertical className="size-4" />
+                </div>
+            </td>
+            <td className="px-3 py-2">
+                <Input
+                    value={item.title}
+                    placeholder="任務名稱"
+                    className="min-w-[180px]"
+                    onChange={(event) => updateItem('current_week', index, 'title', event.target.value)}
+                />
+                <InputError message={getError(`current_week.${index}.title`)} className="mt-1" />
+            </td>
+            <td className="px-3 py-2">
+                <Textarea
+                    rows={2}
+                    value={item.content ?? ''}
+                    placeholder="詳細說明"
+                    className="min-w-[200px]"
+                    onChange={(event) => updateItem('current_week', index, 'content', event.target.value)}
+                />
+                <InputError message={getError(`current_week.${index}.content`)} className="mt-1" />
+            </td>
+            <td className="px-3 py-2">
+                <Input
+                    type="number"
+                    step="0.5"
+                    min="0"
+                    value={item.hours_spent}
+                    className="w-20"
+                    onChange={(event) => updateItem('current_week', index, 'hours_spent', event.target.value)}
+                />
+                <InputError message={getError(`current_week.${index}.hours_spent`)} className="mt-1" />
+            </td>
+            <td className="px-3 py-2">
+                <div className="flex items-center justify-center">
+                    <Checkbox
+                        id={`is-billable-${item.localKey}`}
+                        checked={Boolean(item.is_billable)}
+                        onCheckedChange={(checked) =>
+                            updateItem('current_week', index, 'is_billable', Boolean(checked))
+                        }
+                    />
+                </div>
+            </td>
+            <td className="px-3 py-2">
+                <Input
+                    value={item.issue_reference ?? ''}
+                    placeholder="JIRA-1234"
+                    className="min-w-[120px]"
+                    onChange={(event) => updateItem('current_week', index, 'issue_reference', event.target.value)}
+                />
+                <InputError message={getError(`current_week.${index}.issue_reference`)} className="mt-1" />
+            </td>
+            <td className="px-3 py-2">
+                <Input
+                    value={item.tagsText ?? ''}
+                    placeholder="標籤"
+                    className="min-w-[120px]"
+                    onChange={(event) => updateItem('current_week', index, 'tagsText', event.target.value)}
+                />
+                <InputError message={getError(`current_week.${index}.tags`)} className="mt-1" />
+            </td>
+            <td className="px-3 py-2 text-center">
+                <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => removeItem('current_week', index)}
+                    className="text-muted-foreground hover:text-destructive"
+                >
+                    <Trash2 className="size-4" />
+                </Button>
+            </td>
+        </tr>
+    );
+}
+
+type SortableNextWeekRowProps = {
+    item: WeeklyReportItemInput;
+    index: number;
+    updateItem: (
+        type: 'current_week' | 'next_week',
+        index: number,
+        key: keyof WeeklyReportItemInput,
+        value: unknown,
+    ) => void;
+    removeItem: (type: 'current_week' | 'next_week', index: number) => void;
+    getError: (path: string) => string | undefined;
+};
+
+function SortableNextWeekRow({ item, index, updateItem, removeItem, getError }: SortableNextWeekRowProps) {
+    const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
+        id: item.localKey,
+    });
+
+    const style = {
+        transform: CSS.Transform.toString(transform),
+        transition,
+        opacity: isDragging ? 0.5 : 1,
+    };
+
+    return (
+        <tr ref={setNodeRef} style={style} className="hover:bg-muted/20">
+            <td className="px-3 py-2 cursor-move" {...attributes} {...listeners}>
+                <div className="flex items-center justify-center text-muted-foreground">
+                    <GripVertical className="size-4" />
+                </div>
+            </td>
+            <td className="px-3 py-2">
+                <Input
+                    value={item.title}
+                    placeholder="預計事項"
+                    className="min-w-[180px]"
+                    onChange={(event) => updateItem('next_week', index, 'title', event.target.value)}
+                />
+                <InputError message={getError(`next_week.${index}.title`)} className="mt-1" />
+            </td>
+            <td className="px-3 py-2">
+                <Textarea
+                    rows={2}
+                    value={item.content ?? ''}
+                    placeholder="說明"
+                    className="min-w-[200px]"
+                    onChange={(event) => updateItem('next_week', index, 'content', event.target.value)}
+                />
+                <InputError message={getError(`next_week.${index}.content`)} className="mt-1" />
+            </td>
+            <td className="px-3 py-2">
+                <Input
+                    type="number"
+                    step="0.5"
+                    min="0"
+                    value={item.planned_hours ?? ''}
+                    className="w-20"
+                    onChange={(event) =>
+                        updateItem(
+                            'next_week',
+                            index,
+                            'planned_hours',
+                            event.target.value === '' ? null : Number(event.target.value),
+                        )
+                    }
+                />
+                <InputError message={getError(`next_week.${index}.planned_hours`)} className="mt-1" />
+            </td>
+            <td className="px-3 py-2">
+                <Input
+                    value={item.issue_reference ?? ''}
+                    placeholder="JIRA-2030"
+                    className="min-w-[120px]"
+                    onChange={(event) => updateItem('next_week', index, 'issue_reference', event.target.value)}
+                />
+                <InputError message={getError(`next_week.${index}.issue_reference`)} className="mt-1" />
+            </td>
+            <td className="px-3 py-2">
+                <Input
+                    value={item.tagsText ?? ''}
+                    placeholder="標籤"
+                    className="min-w-[120px]"
+                    onChange={(event) => updateItem('next_week', index, 'tagsText', event.target.value)}
+                />
+                <InputError message={getError(`next_week.${index}.tags`)} className="mt-1" />
+            </td>
+            <td className="px-3 py-2 text-center">
+                <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => removeItem('next_week', index)}
+                    className="text-muted-foreground hover:text-destructive"
+                >
+                    <Trash2 className="size-4" />
+                </Button>
+            </td>
+        </tr>
+    );
+}
+
 export default function WeeklyReportForm({ mode, report, defaults, prefill, company }: WeeklyReportFormProps) {
     const { tenant, flash } = usePage<
         SharedData & { flash: { success?: string; info?: string; warning?: string } }
@@ -103,6 +326,39 @@ export default function WeeklyReportForm({ mode, report, defaults, prefill, comp
             toFormItem(item, 'next', index, { planned_hours: item.planned_hours ?? null }),
         ),
     });
+
+    const sensors = useSensors(
+        useSensor(PointerSensor),
+        useSensor(KeyboardSensor, {
+            coordinateGetter: sortableKeyboardCoordinates,
+        }),
+    );
+
+    const handleCurrentWeekDragEnd = (event: DragEndEvent) => {
+        const { active, over } = event;
+
+        if (over && active.id !== over.id) {
+            const oldIndex = form.data.current_week.findIndex((item) => item.localKey === active.id);
+            const newIndex = form.data.current_week.findIndex((item) => item.localKey === over.id);
+
+            if (oldIndex !== -1 && newIndex !== -1) {
+                form.setData('current_week', arrayMove(form.data.current_week, oldIndex, newIndex));
+            }
+        }
+    };
+
+    const handleNextWeekDragEnd = (event: DragEndEvent) => {
+        const { active, over } = event;
+
+        if (over && active.id !== over.id) {
+            const oldIndex = form.data.next_week.findIndex((item) => item.localKey === active.id);
+            const newIndex = form.data.next_week.findIndex((item) => item.localKey === over.id);
+
+            if (oldIndex !== -1 && newIndex !== -1) {
+                form.setData('next_week', arrayMove(form.data.next_week, oldIndex, newIndex));
+            }
+        }
+    };
 
     const breadcrumbs: BreadcrumbItem[] = [
         {
@@ -334,148 +590,52 @@ export default function WeeklyReportForm({ mode, report, defaults, prefill, comp
                             新增項目
                         </Button>
                     </CardHeader>
-                    <CardContent className="space-y-4">
+                    <CardContent>
                         {form.data.current_week.length === 0 ? (
                             <p className="text-sm text-muted-foreground">
                                 目前沒有任何項目，點擊「新增項目」開始紀錄。
                             </p>
-                        ) : null}
-
-                        {form.data.current_week.map((item, index) => (
-                            <div key={item.localKey} className="rounded-lg border border-border/60 p-4 shadow-sm">
-                                <div className="flex items-start justify-between gap-3">
-                                    <div className="flex-1 space-y-4">
-                                        <div>
-                                            <Label>標題</Label>
-                                            <Input
-                                                value={item.title}
-                                                placeholder="請輸入任務或專案名稱"
-                                                onChange={(event) =>
-                                                    updateItem('current_week', index, 'title', event.target.value)
-                                                }
-                                            />
-                                            <InputError
-                                                message={getError(`current_week.${index}.title`)}
-                                                className="mt-2"
-                                            />
-                                        </div>
-
-                                        <div className="grid gap-4 sm:grid-cols-[minmax(0,1fr)_160px]">
-                                            <div>
-                                                <Label>內容</Label>
-                                                <Textarea
-                                                    rows={3}
-                                                    value={item.content ?? ''}
-                                                    onChange={(event) =>
-                                                        updateItem(
-                                                            'current_week',
-                                                            index,
-                                                            'content',
-                                                            event.target.value,
-                                                        )
-                                                    }
-                                                />
-                                                <InputError
-                                                    message={getError(`current_week.${index}.content`)}
-                                                    className="mt-2"
-                                                />
-                                            </div>
-                                            <div className="space-y-4">
-                                                <div>
-                                                    <Label>耗費工時</Label>
-                                                    <Input
-                                                        type="number"
-                                                        step="0.5"
-                                                        min="0"
-                                                        value={item.hours_spent}
-                                                        onChange={(event) =>
-                                                            updateItem(
-                                                                'current_week',
-                                                                index,
-                                                                'hours_spent',
-                                                                event.target.value,
-                                                            )
-                                                        }
+                        ) : (
+                            <div className="overflow-x-auto">
+                                <DndContext
+                                    sensors={sensors}
+                                    collisionDetection={closestCenter}
+                                    onDragEnd={handleCurrentWeekDragEnd}
+                                >
+                                    <table className="min-w-full divide-y divide-border/60 text-sm">
+                                        <thead className="bg-muted/40 text-muted-foreground">
+                                            <tr>
+                                                <th className="px-3 py-2 w-10"></th>
+                                                <th className="px-3 py-2 text-left font-medium">標題</th>
+                                                <th className="px-3 py-2 text-left font-medium">內容</th>
+                                                <th className="px-3 py-2 text-left font-medium whitespace-nowrap">工時</th>
+                                                <th className="px-3 py-2 text-left font-medium whitespace-nowrap">計費</th>
+                                                <th className="px-3 py-2 text-left font-medium">Issue</th>
+                                                <th className="px-3 py-2 text-left font-medium">標籤</th>
+                                                <th className="px-3 py-2 text-center font-medium">操作</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody className="divide-y divide-border/40 bg-card">
+                                            <SortableContext
+                                                items={form.data.current_week.map((item) => item.localKey)}
+                                                strategy={verticalListSortingStrategy}
+                                            >
+                                                {form.data.current_week.map((item, index) => (
+                                                    <SortableCurrentWeekRow
+                                                        key={item.localKey}
+                                                        item={item}
+                                                        index={index}
+                                                        updateItem={updateItem}
+                                                        removeItem={removeItem}
+                                                        getError={getError}
                                                     />
-                                                    <InputError
-                                                        message={getError(`current_week.${index}.hours_spent`)}
-                                                        className="mt-2"
-                                                    />
-                                                </div>
-                                                <div className="flex items-center gap-3">
-                                                    <Checkbox
-                                                        id={`is-billable-${item.localKey}`}
-                                                        checked={Boolean(item.is_billable)}
-                                                        onCheckedChange={(checked) =>
-                                                            updateItem(
-                                                                'current_week',
-                                                                index,
-                                                                'is_billable',
-                                                                Boolean(checked),
-                                                            )
-                                                        }
-                                                    />
-                                                    <Label htmlFor={`is-billable-${item.localKey}`}>
-                                                        計入可計費工時
-                                                    </Label>
-                                                </div>
-                                            </div>
-                                        </div>
-
-                                        <div className="grid gap-4 sm:grid-cols-2">
-                                            <div>
-                                                <Label>關聯 Issue / 任務</Label>
-                                                <Input
-                                                    value={item.issue_reference ?? ''}
-                                                    placeholder="例如：JIRA-1234"
-                                                    onChange={(event) =>
-                                                        updateItem(
-                                                            'current_week',
-                                                            index,
-                                                            'issue_reference',
-                                                            event.target.value,
-                                                        )
-                                                    }
-                                                />
-                                                <InputError
-                                                    message={getError(`current_week.${index}.issue_reference`)}
-                                                    className="mt-2"
-                                                />
-                                            </div>
-                                            <div>
-                                                <Label>標籤（以逗號分隔）</Label>
-                                                <Input
-                                                    value={item.tagsText ?? ''}
-                                                    placeholder="backend, code-review"
-                                                    onChange={(event) =>
-                                                        updateItem(
-                                                            'current_week',
-                                                            index,
-                                                            'tagsText',
-                                                            event.target.value,
-                                                        )
-                                                    }
-                                                />
-                                                <InputError
-                                                    message={getError(`current_week.${index}.tags`)}
-                                                    className="mt-2"
-                                                />
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    <Button
-                                        type="button"
-                                        variant="ghost"
-                                        size="icon"
-                                        onClick={() => removeItem('current_week', index)}
-                                        className="text-muted-foreground hover:text-destructive"
-                                    >
-                                        <Trash2 className="size-4" />
-                                    </Button>
-                                </div>
+                                                ))}
+                                            </SortableContext>
+                                        </tbody>
+                                    </table>
+                                </DndContext>
                             </div>
-                        ))}
+                        )}
                     </CardContent>
                 </Card>
 
@@ -487,126 +647,51 @@ export default function WeeklyReportForm({ mode, report, defaults, prefill, comp
                             新增項目
                         </Button>
                     </CardHeader>
-                    <CardContent className="space-y-4">
+                    <CardContent>
                         {form.data.next_week.length === 0 ? (
                             <p className="text-sm text-muted-foreground">
                                 目前沒有任何預計事項，點擊「新增項目」規劃下週工作。
                             </p>
-                        ) : null}
-
-                        {form.data.next_week.map((item, index) => (
-                            <div key={item.localKey} className="rounded-lg border border-border/60 p-4 shadow-sm">
-                                <div className="flex items-start justify-between gap-3">
-                                    <div className="flex-1 space-y-4">
-                                        <div>
-                                            <Label>標題</Label>
-                                            <Input
-                                                value={item.title}
-                                                placeholder="請輸入預計事項"
-                                                onChange={(event) =>
-                                                    updateItem('next_week', index, 'title', event.target.value)
-                                                }
-                                            />
-                                            <InputError
-                                                message={getError(`next_week.${index}.title`)}
-                                                className="mt-2"
-                                            />
-                                        </div>
-
-                                        <div className="grid gap-4 sm:grid-cols-[minmax(0,1fr)_160px]">
-                                            <div>
-                                                <Label>補充說明</Label>
-                                                <Textarea
-                                                    rows={3}
-                                                    value={item.content ?? ''}
-                                                    onChange={(event) =>
-                                                        updateItem('next_week', index, 'content', event.target.value)
-                                                    }
-                                                />
-                                                <InputError
-                                                    message={getError(`next_week.${index}.content`)}
-                                                    className="mt-2"
-                                                />
-                                            </div>
-                                            <div>
-                                                <Label>預估工時</Label>
-                                                <Input
-                                                    type="number"
-                                                    step="0.5"
-                                                    min="0"
-                                                    value={item.planned_hours ?? ''}
-                                                    onChange={(event) =>
-                                                        updateItem(
-                                                            'next_week',
-                                                            index,
-                                                            'planned_hours',
-                                                            event.target.value === ''
-                                                                ? null
-                                                                : Number(event.target.value),
-                                                        )
-                                                    }
-                                                />
-                                                <InputError
-                                                    message={getError(`next_week.${index}.planned_hours`)}
-                                                    className="mt-2"
-                                                />
-                                            </div>
-                                        </div>
-
-                                        <div className="grid gap-4 sm:grid-cols-2">
-                                            <div>
-                                                <Label>關聯 Issue / 任務</Label>
-                                                <Input
-                                                    value={item.issue_reference ?? ''}
-                                                    placeholder="例如：JIRA-2030"
-                                                    onChange={(event) =>
-                                                        updateItem(
-                                                            'next_week',
-                                                            index,
-                                                            'issue_reference',
-                                                            event.target.value,
-                                                        )
-                                                    }
-                                                />
-                                                <InputError
-                                                    message={getError(`next_week.${index}.issue_reference`)}
-                                                    className="mt-2"
-                                                />
-                                            </div>
-                                            <div>
-                                                <Label>標籤（以逗號分隔）</Label>
-                                                <Input
-                                                    value={item.tagsText ?? ''}
-                                                    placeholder="planning, research"
-                                                    onChange={(event) =>
-                                                        updateItem(
-                                                            'next_week',
-                                                            index,
-                                                            'tagsText',
-                                                            event.target.value,
-                                                        )
-                                                    }
-                                                />
-                                                <InputError
-                                                    message={getError(`next_week.${index}.tags`)}
-                                                    className="mt-2"
-                                                />
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    <Button
-                                        type="button"
-                                        variant="ghost"
-                                        size="icon"
-                                        onClick={() => removeItem('next_week', index)}
-                                        className="text-muted-foreground hover:text-destructive"
-                                    >
-                                        <Trash2 className="size-4" />
-                                    </Button>
-                                </div>
+                        ) : (
+                            <div className="overflow-x-auto">
+                                <DndContext
+                                    sensors={sensors}
+                                    collisionDetection={closestCenter}
+                                    onDragEnd={handleNextWeekDragEnd}
+                                >
+                                    <table className="min-w-full divide-y divide-border/60 text-sm">
+                                        <thead className="bg-muted/40 text-muted-foreground">
+                                            <tr>
+                                                <th className="px-3 py-2 w-10"></th>
+                                                <th className="px-3 py-2 text-left font-medium">標題</th>
+                                                <th className="px-3 py-2 text-left font-medium">補充說明</th>
+                                                <th className="px-3 py-2 text-left font-medium whitespace-nowrap">預估工時</th>
+                                                <th className="px-3 py-2 text-left font-medium">Issue</th>
+                                                <th className="px-3 py-2 text-left font-medium">標籤</th>
+                                                <th className="px-3 py-2 text-center font-medium">操作</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody className="divide-y divide-border/40 bg-card">
+                                            <SortableContext
+                                                items={form.data.next_week.map((item) => item.localKey)}
+                                                strategy={verticalListSortingStrategy}
+                                            >
+                                                {form.data.next_week.map((item, index) => (
+                                                    <SortableNextWeekRow
+                                                        key={item.localKey}
+                                                        item={item}
+                                                        index={index}
+                                                        updateItem={updateItem}
+                                                        removeItem={removeItem}
+                                                        getError={getError}
+                                                    />
+                                                ))}
+                                            </SortableContext>
+                                        </tbody>
+                                    </table>
+                                </DndContext>
                             </div>
-                        ))}
+                        )}
                     </CardContent>
                 </Card>
 
