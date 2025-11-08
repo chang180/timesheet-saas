@@ -100,6 +100,14 @@
 - 在本 `development/` 目錄補充完成情況與已知問題。
 - 建議建立 GitHub Issues / Project 欄位追蹤各功能進度。
 
+### 2025-11-08 更新
+
+- ✅ 完成多租戶資料表、Seeder 與 Sanctum 設定。
+- ✅ 實作租戶設定／歡迎頁／IP 白名單／成員邀請與角色調整 API。
+- ✅ 新增 `TenantContext`、`EnsureTenantScope`、核心模型與 Policies。
+- ✅ 補充 `README.md` 與 `docs/README.md`，新增 `tests/Feature/Tenant/SettingsTest.php` 覆蓋主要驗收案例。
+- ⚠️ 目前測試需 PHP ≥ 8.3，若環境為 8.2 會在 `php artisan test` 時遇到 typed constant 解析錯誤。
+
 ## 6. 風險與待確認事項
 
 - **租戶資料隔離**：若未來需切換成多資料庫策略，需在此階段保留封裝層（Repository / Service）。
