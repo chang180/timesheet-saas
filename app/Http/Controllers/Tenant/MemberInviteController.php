@@ -20,13 +20,6 @@ class MemberInviteController extends Controller
     {
         $email = $request->invitedEmail();
 
-        if (User::query()
-            ->where('company_id', $company->getKey())
-            ->where('email', $email)
-            ->exists()) {
-            abort(422, '此電子郵件地址已經被使用。');
-        }
-
         $data = $request->validated();
 
         $division = isset($data['division_id']) ? Division::find($data['division_id']) : null;
@@ -58,6 +51,13 @@ class MemberInviteController extends Controller
                 ->whereKey($company->getKey())
                 ->lockForUpdate()
                 ->firstOrFail();
+
+            if (User::query()
+                ->where('company_id', $tenant->getKey())
+                ->where('email', $email)
+                ->exists()) {
+                abort(422, '此電子郵件地址已經被使用。');
+            }
 
             if ($tenant->current_user_count >= $tenant->user_limit) {
                 abort(422, '此租戶的成員數已達上限。');
