@@ -20,13 +20,15 @@ class LandingController extends Controller
             abort(404, '找不到租戶資訊');
         }
 
+        $branding = $company->branding ?? [];
+
         $tenantSettings = [
             'companyName' => $company->name,
-            'brandColor' => $company->brand_color,
-            'logo' => $company->logo,
+            'brandColor' => $branding['color'] ?? null,
+            'logo' => $branding['logo'] ?? null,
         ];
 
-        $welcomeConfig = $company->settings['welcome_page'] ?? $this->getDefaultWelcomeConfig();
+        $welcomeConfig = $company->settings?->welcome_page ?? $this->getDefaultWelcomeConfig();
 
         return Inertia::render('landing/tenant-welcome', [
             'tenantSettings' => $tenantSettings,

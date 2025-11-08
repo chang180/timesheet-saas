@@ -13,15 +13,16 @@ class TenantSettingsController extends Controller
     public function index(): Response
     {
         $company = auth()->user()->company;
+        $branding = $company->branding ?? [];
+        $settings = $company->settings;
 
         return Inertia::render('tenant/settings/index', [
             'settings' => [
                 'companyName' => $company->name,
-                'brandColor' => $company->brand_color,
-                'logo' => $company->logo,
-                'welcomePage' => $company->settings['welcome_page'] ?? [],
-                'ipWhitelist' => $company->settings['ip_whitelist'] ?? [],
-                'workingHoursPerDay' => $company->settings['working_hours_per_day'] ?? 8,
+                'brandColor' => $branding['color'] ?? null,
+                'logo' => $branding['logo'] ?? null,
+                'welcomePage' => $settings?->welcome_page ?? [],
+                'ipWhitelist' => $settings?->login_ip_whitelist ?? [],
                 'maxUserLimit' => $company->user_limit,
                 'currentUserCount' => $company->users()->count(),
             ],
@@ -32,10 +33,10 @@ class TenantSettingsController extends Controller
     {
         $company = auth()->user()->company;
 
-        $settings = $company->settings ?? [];
-        $settings['welcome_page'] = $request->validated();
-
-        $company->update(['settings' => $settings]);
+        $company->settings()->updateOrCreate(
+            ['company_id' => $company->id],
+            ['welcome_page' => $request->validated()]
+        );
 
         return redirect()->back()->with('success', '歡迎頁設定已更新');
     }
@@ -44,10 +45,10 @@ class TenantSettingsController extends Controller
     {
         $company = auth()->user()->company;
 
-        $settings = $company->settings ?? [];
-        $settings['ip_whitelist'] = $request->validated()['ipAddresses'];
-
-        $company->update(['settings' => $settings]);
+        $company->settings()->updateOrCreate(
+            ['company_id' => $company->id],
+            ['login_ip_whitelist' => $request->validated()['ipAddresses']]
+        );
 
         return redirect()->back()->with('success', 'IP 白名單已更新');
     }
