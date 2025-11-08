@@ -12,11 +12,11 @@
 
 ## 技術棧
 
-- **後端**：Laravel 12、PHP 8.3、Laravel Breeze（React SPA）、Laravel Sanctum
-- **前端**：Vite、React 18、TypeScript、React Query、Tailwind CSS
-- **認證**：Laravel Sanctum（SPA）、內建 2FA
+- **後端**：Laravel 12、PHP 8.4、Laravel Fortify、Laravel Sanctum、Laravel Wayfinder
+- **前端**：Inertia v2、React 19、TypeScript、Vite、Tailwind CSS v4、@tanstack/react-query（選用）
+- **認證**：Laravel Fortify + Sanctum（支援 2FA）
 - **資料**：MySQL 8、Redis 7（快取／Queue）
-- **測試**：Pest、React Testing Library、Cypress／Playwright
+- **測試**：Pest、Pest Browser、React Testing Library、Playwright
 
 ## 安裝
 
@@ -37,7 +37,7 @@ php artisan serve
 php artisan queue:work
 ```
 
-前端（React SPA）：
+前端（Inertia + React）：
 ```bash
 npm run dev
 ```
