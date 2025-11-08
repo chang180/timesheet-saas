@@ -20,7 +20,10 @@ class MemberInviteController extends Controller
     {
         $email = $request->invitedEmail();
 
-        if (User::query()->where('email', $email)->exists()) {
+        if (User::query()
+            ->where('company_id', $company->getKey())
+            ->where('email', $email)
+            ->exists()) {
             abort(422, '此電子郵件地址已經被使用。');
         }
 
