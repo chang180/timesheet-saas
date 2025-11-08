@@ -28,7 +28,7 @@ beforeEach(function (): void {
     Sanctum::actingAs($this->admin, guard: 'web');
 });
 
-it('阻止同一租戶使用重複的電子郵件邀請', function (): void {
+it('阻止同一用戶使用重複的電子郵件邀請', function (): void {
     User::factory()->create([
         'company_id' => $this->company->id,
         'email' => 'member@alpha.test',
@@ -46,7 +46,7 @@ it('阻止同一租戶使用重複的電子郵件邀請', function (): void {
     $response->assertStatus(422);
 });
 
-it('允許不同租戶使用相同電子郵件邀請', function (): void {
+it('允許不同用戶使用相同電子郵件邀請', function (): void {
     $betaCompany = Company::create([
         'name' => 'Beta Corp',
         'slug' => 'beta-corp',

@@ -2,25 +2,34 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\Tenant\UpdateWelcomePageRequest;
 use App\Http\Requests\UpdateIPWhitelistRequest;
-use App\Http\Requests\UpdateWelcomePageRequest;
+use App\Models\Company;
 use Illuminate\Http\RedirectResponse;
 use Inertia\Inertia;
 use Inertia\Response;
 
 class TenantSettingsController extends Controller
 {
-    public function index(): Response
+    public function index(Company $company): Response
     {
-        $company = auth()->user()->company;
+        $this->authorize('update', $company);
+
         $branding = $company->branding ?? [];
+        $brandColor = $branding['color']
+            ?? $branding['primaryColor']
+            ?? null;
+        $brandLogo = $branding['logo']
+            ?? $branding['logoUrl']
+            ?? null;
         $settings = $company->settings;
 
         return Inertia::render('tenant/settings/index', [
             'settings' => [
                 'companyName' => $company->name,
-                'brandColor' => $branding['color'] ?? null,
-                'logo' => $branding['logo'] ?? null,
+                'companySlug' => $company->slug,
+                'brandColor' => $brandColor,
+                'logo' => $brandLogo,
                 'welcomePage' => $settings?->welcome_page ?? [],
                 'ipWhitelist' => $settings?->login_ip_whitelist ?? [],
                 'maxUserLimit' => $company->user_limit,
@@ -29,10 +38,8 @@ class TenantSettingsController extends Controller
         ]);
     }
 
-    public function updateWelcomePage(UpdateWelcomePageRequest $request): RedirectResponse
+    public function updateWelcomePage(UpdateWelcomePageRequest $request, Company $company): RedirectResponse
     {
-        $company = auth()->user()->company;
-
         $company->settings()->updateOrCreate(
             ['company_id' => $company->id],
             ['welcome_page' => $request->validated()]
@@ -41,13 +48,11 @@ class TenantSettingsController extends Controller
         return redirect()->back()->with('success', '歡迎頁設定已更新');
     }
 
-    public function updateIPWhitelist(UpdateIPWhitelistRequest $request): RedirectResponse
+    public function updateIPWhitelist(UpdateIPWhitelistRequest $request, Company $company): RedirectResponse
     {
-        $company = auth()->user()->company;
-
         $company->settings()->updateOrCreate(
             ['company_id' => $company->id],
-            ['login_ip_whitelist' => $request->validated()['ipAddresses']]
+            ['login_ip_whitelist' => $request->whitelist()]
         );
 
         return redirect()->back()->with('success', 'IP 白名單已更新');

@@ -1,3 +1,5 @@
+import { WelcomeShowcase } from '@/components/landing/welcome-showcase';
+import AppearanceToggleDropdown from '@/components/appearance-dropdown';
 import { Button } from '@/components/ui/button';
 import {
     Card,
@@ -5,39 +7,105 @@ import {
     CardHeader,
     CardTitle,
 } from '@/components/ui/card';
-import { Link } from '@inertiajs/react';
+import { Head, Link, usePage } from '@inertiajs/react';
 import {
     ArrowRight,
     Calendar,
     Clock,
     Shield,
+    Sparkles,
     TrendingUp,
     Users,
 } from 'lucide-react';
+import { login, register } from '@/routes';
+
+interface PageProps {
+    demoTenant: {
+        enabled: boolean;
+        name?: string | null;
+        url?: string | null;
+        description?: string | null;
+    };
+}
 
 export default function GlobalLandingPage() {
+    const { demoTenant } = usePage<PageProps>().props;
+    const showDemoTenant = Boolean(demoTenant?.enabled && demoTenant?.url);
+
     return (
-        <div className="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800">
+        <div className="min-h-screen bg-gradient-to-b from-gray-50 via-white to-gray-100 dark:from-gray-950 dark:via-gray-900 dark:to-gray-800">
+            <Head title="週報通 Timesheet SaaS" />
             {/* Hero Section */}
-            <section className="relative px-6 py-24 lg:px-8">
-                <div className="mx-auto max-w-4xl text-center">
-                    <h1 className="text-4xl font-bold tracking-tight text-gray-900 sm:text-6xl dark:text-white">
-                        週報通 Timesheet SaaS
-                    </h1>
-                    <p className="mt-6 text-lg leading-8 text-gray-600 dark:text-gray-300">
-                        簡化週報管理，提升團隊效率。支援多租戶、層級管理、Redmine/Jira
-                        整合，讓週報填寫不再是負擔。
-                    </p>
-                    <div className="mt-10 flex items-center justify-center gap-x-6">
-                        <Button asChild size="lg">
-                            <Link href="/login">
-                                立即登入
-                                <ArrowRight className="ml-2 size-4" />
-                            </Link>
-                        </Button>
-                        <Button asChild size="lg" variant="outline">
-                            <Link href="/register">申請試用</Link>
-                        </Button>
+            <section className="relative overflow-hidden pb-20 pt-24">
+                <div className="absolute inset-0 -z-10 bg-[radial-gradient(circle_at_top,_#c7d2fe_0%,_transparent_55%),radial-gradient(circle_at_bottom,_#fce7f3_0%,_transparent_60%)] opacity-80 dark:opacity-20" />
+                <div className="absolute right-4 top-4 flex items-center gap-3 lg:right-8 lg:top-6">
+                    <AppearanceToggleDropdown />
+                </div>
+                <div className="relative mx-auto flex max-w-6xl flex-col gap-16 px-6 lg:flex-row lg:items-center lg:px-8">
+                    <div className="relative max-w-xl space-y-8 text-center lg:max-w-lg lg:text-left">
+                        <span className="inline-flex items-center justify-center gap-2 rounded-full border border-indigo-200/70 bg-indigo-50/70 px-4 py-1 text-sm font-medium text-indigo-600 shadow-sm dark:border-indigo-500/30 dark:bg-indigo-500/10 dark:text-indigo-200">
+                            <Sparkles className="size-4" />
+                            多用戶週報最佳實務
+                        </span>
+                        <h1 className="text-4xl font-semibold leading-tight tracking-tight text-gray-900 sm:text-5xl dark:text-white">
+                            <span className="block text-balance">
+                                週報通 Timesheet SaaS
+                            </span>
+                            <span className="mt-2 block text-3xl font-light text-gray-600 sm:text-4xl dark:text-gray-300">
+                                一個平台，統一掌握工時、提醒與審核流程
+                            </span>
+                        </h1>
+                        <p className="text-lg leading-8 text-gray-600 dark:text-gray-300">
+                            針對多用戶與跨層級團隊設計。整合 Redmine / Jira 任務、假日行事曆與自動提醒，
+                            幫助主管即時掌握團隊狀態，成員也能 5 分鐘完成週報。
+                        </p>
+                        <div className="flex flex-wrap items-center justify-center gap-4 lg:justify-start">
+                            <Button asChild size="lg" className="px-6">
+                                <Link href={register.url()}>
+                                    立即建立週報帳號
+                                    <ArrowRight className="ml-2 size-4" />
+                                </Link>
+                            </Button>
+                            <Button
+                                asChild
+                                size="lg"
+                                variant="outline"
+                                className="border-indigo-200 bg-white/80 text-indigo-600 backdrop-blur hover:bg-indigo-50 dark:border-indigo-500/40 dark:bg-indigo-500/10 dark:text-indigo-200 dark:hover:bg-indigo-500/20"
+                            >
+                                <Link href={login.url()}>已有帳號？直接登入</Link>
+                            </Button>
+                        </div>
+                        <dl className="grid gap-6 pt-4 text-left sm:grid-cols-3">
+                            <div className="rounded-2xl border border-indigo-100/70 bg-white/80 p-4 shadow-sm dark:border-indigo-500/30 dark:bg-indigo-500/10">
+                                <dt className="text-xs uppercase tracking-wide text-indigo-500 dark:text-indigo-200">
+                                    週報提交成功率
+                                </dt>
+                                <dd className="mt-2 text-2xl font-semibold text-gray-900 dark:text-white">
+                                    98%
+                                </dd>
+                            </div>
+                            <div className="rounded-2xl border border-emerald-100/70 bg-white/80 p-4 shadow-sm dark:border-emerald-500/30 dark:bg-emerald-500/10">
+                                <dt className="text-xs uppercase tracking-wide text-emerald-500 dark:text-emerald-200">
+                                    工時校對時間
+                                </dt>
+                                <dd className="mt-2 text-2xl font-semibold text-gray-900 dark:text-white">
+                                    -65%
+                                </dd>
+                            </div>
+                            <div className="rounded-2xl border border-sky-100/70 bg-white/80 p-4 shadow-sm dark:border-sky-500/30 dark:bg-sky-500/10">
+                                <dt className="text-xs uppercase tracking-wide text-sky-500 dark:text-sky-200">
+                                    主管審核效率
+                                </dt>
+                                <dd className="mt-2 text-2xl font-semibold text-gray-900 dark:text-white">
+                                    3× faster
+                                </dd>
+                            </div>
+                        </dl>
+                    </div>
+
+                    <div className="relative flex-1">
+                        <div className="absolute -inset-6 -z-10 rounded-3xl bg-white/60 blur-3xl dark:bg-indigo-500/10" />
+                        <WelcomeShowcase />
                     </div>
                 </div>
             </section>
@@ -150,7 +218,7 @@ export default function GlobalLandingPage() {
                                 </div>
                                 <div>
                                     <h3 className="text-xl font-semibold text-gray-900 dark:text-white">
-                                        建立租戶帳號
+                                        建立用戶帳號
                                     </h3>
                                     <p className="mt-2 text-gray-600 dark:text-gray-300">
                                         註冊公司帳號，設定品牌色彩與
@@ -189,19 +257,45 @@ export default function GlobalLandingPage() {
                 </div>
             </section>
 
+            {showDemoTenant && (
+                <section className="px-6 py-16 lg:px-8">
+                    <div className="mx-auto max-w-4xl rounded-3xl border border-emerald-200/70 bg-white/90 p-10 text-center shadow-lg dark:border-emerald-500/40 dark:bg-gray-900/70">
+                        <h2 className="text-2xl font-semibold text-gray-900 dark:text-white">
+                            體驗 {demoTenant?.name ?? 'Demo 用戶'}
+                        </h2>
+                        <p className="mt-4 text-base text-gray-600 dark:text-gray-300">
+                            {demoTenant?.description ??
+                                '即刻進入示範用戶，了解週報通的完整體驗與設定流程。'}
+                        </p>
+                        <div className="mt-8 flex justify-center">
+                            <Button asChild size="lg" className="shadow-md">
+                                <a
+                                    href={demoTenant?.url ?? '#'}
+                                    target="_blank"
+                                    rel="noreferrer"
+                                >
+                                    進入 Demo 用戶
+                                    <ArrowRight className="ml-2 size-4" />
+                                </a>
+                            </Button>
+                        </div>
+                    </div>
+                </section>
+            )}
+
             {/* CTA Section */}
             <section className="px-6 py-24 lg:px-8">
                 <div className="mx-auto max-w-4xl text-center">
                     <h2 className="text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl dark:text-white">
-                        準備好開始了嗎？
+                        準備好用週報掌握本週重點了嗎？
                     </h2>
                     <p className="mt-6 text-lg leading-8 text-gray-600 dark:text-gray-300">
-                        立即註冊，享受 14 天免費試用，無需信用卡
+                        立即註冊，一本工作簿收好本週所有任務、支援與會議重點。
                     </p>
                     <div className="mt-10 flex items-center justify-center gap-x-6">
                         <Button asChild size="lg">
-                            <Link href="/register">
-                                開始免費試用
+                            <Link href={register.url()}>
+                                建立週報帳號
                                 <ArrowRight className="ml-2 size-4" />
                             </Link>
                         </Button>

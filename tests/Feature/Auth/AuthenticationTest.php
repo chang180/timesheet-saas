@@ -1,5 +1,6 @@
 <?php
 
+use App\Models\Company;
 use App\Models\User;
 use Illuminate\Support\Facades\RateLimiter;
 use Laravel\Fortify\Features;
@@ -11,15 +12,19 @@ test('login screen can be rendered', function () {
 });
 
 test('users can authenticate using the login screen', function () {
-    $user = User::factory()->withoutTwoFactor()->create();
+    $company = Company::factory()->create();
+    $user = User::factory()->withoutTwoFactor()->create([
+        'company_id' => $company->id,
+    ]);
 
     $response = $this->post(route('login.store'), [
         'email' => $user->email,
         'password' => 'password',
     ]);
 
+    $response->assertSessionHasNoErrors();
     $this->assertAuthenticated();
-    $response->assertRedirect(route('dashboard', absolute: false));
+    $response->assertRedirect('/app');
 });
 
 test('users with two factor enabled are redirected to two factor challenge', function () {

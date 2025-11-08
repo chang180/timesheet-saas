@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests;
 
+use App\Rules\IpAddressOrCidr;
 use Illuminate\Foundation\Http\FormRequest;
 
 class UpdateIPWhitelistRequest extends FormRequest
@@ -14,17 +15,24 @@ class UpdateIPWhitelistRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'ipAddresses' => ['required', 'array', 'max:5'],
-            'ipAddresses.*' => ['required', 'string', 'ip'],
+            'ipAddresses' => ['nullable', 'array', 'max:5'],
+            'ipAddresses.*' => ['string', new IpAddressOrCidr()],
         ];
     }
 
     public function messages(): array
     {
         return [
-            'ipAddresses.required' => 'IP 位址清單為必填',
             'ipAddresses.max' => 'IP 白名單最多 5 組',
-            'ipAddresses.*.ip' => '請輸入有效的 IP 位址',
+            'ipAddresses.*' => '請輸入有效的 IP 位址或 CIDR 範圍',
         ];
+    }
+
+    /**
+     * @return list<string>
+     */
+    public function whitelist(): array
+    {
+        return array_values($this->validated('ipAddresses', []));
     }
 }

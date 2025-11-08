@@ -54,15 +54,48 @@ class SampleCompanySeeder extends Seeder
 
             $settingsData = [
                 'welcome_page' => json_encode([
-                    'headline' => '歡迎加入 Acme Holdings 週報通',
-                    'cta' => [
-                        'primary' => ['label' => '登入', 'href' => '/login'],
-                        'secondary' => ['label' => '申請帳號', 'href' => '/register'],
+                    'hero' => [
+                        'enabled' => true,
+                        'title' => '歡迎加入 Acme Holdings 週報通',
+                        'subtitle' => '整合工時、流程與提醒，讓團隊週報更簡單。',
+                        'backgroundImage' => null,
+                        'videoUrl' => null,
                     ],
-                    'highlights' => [
-                        '工時快速彙整',
-                        '拖曳調整優先順序',
-                        '主管即時掌握填寫狀態',
+                    'quickStartSteps' => [
+                        'enabled' => true,
+                        'steps' => [
+                            ['title' => '登入系統', 'description' => '使用您的用戶帳號登入並設定密碼。'],
+                            ['title' => '設定品牌與成員', 'description' => '自訂歡迎頁、匯入成員及權限。'],
+                            ['title' => '開始填寫週報', 'description' => '快速記錄本週成果並規劃下週。'],
+                        ],
+                    ],
+                    'announcements' => [
+                        'enabled' => true,
+                        'items' => [
+                            [
+                                'title' => '系統更新提醒',
+                                'content' => '本週新增 IP 白名單設定與週報預覽功能。',
+                                'publishedAt' => $now->toIso8601String(),
+                            ],
+                        ],
+                    ],
+                    'weeklyReportDemo' => [
+                        'enabled' => true,
+                        'highlights' => [
+                            '拖曳排序同步更新主管檢視順序',
+                            'Redmine/Jira 自動帶入任務與工時',
+                            '假日工時超額即時提醒',
+                        ],
+                    ],
+                    'supportContacts' => [
+                        'enabled' => true,
+                        'contacts' => [
+                            ['name' => '客服中心', 'email' => 'support@acme.test', 'phone' => '+886-2-1234-5678'],
+                        ],
+                    ],
+                    'ctas' => [
+                        ['text' => '登入用戶後台', 'url' => '/login', 'variant' => 'primary'],
+                        ['text' => '觀看操作指南', 'url' => 'https://docs.acme.test/guide', 'variant' => 'secondary'],
                     ],
                 ], JSON_THROW_ON_ERROR),
                 'login_ip_whitelist' => json_encode(['0.0.0.0/0'], JSON_THROW_ON_ERROR),
@@ -328,8 +361,8 @@ class SampleCompanySeeder extends Seeder
                     'summary' => '完成 API Gateway 新版規格討論，與 QA 協調回歸測試時程。',
                     'items' => [
                         [
-                            'title' => '完成多租戶 API 設計串接',
-                            'content' => '與後端確認租戶 slug 規則，更新 Wayfinder route 定義。',
+                            'title' => '完成多用戶 API 設計串接',
+                            'content' => '與後端確認用戶 slug 規則，更新 Wayfinder route 定義。',
                             'hours' => 12.5,
                             'issue' => 'JIRA-1234',
                             'tags' => ['backend', 'architecture'],
@@ -356,8 +389,8 @@ class SampleCompanySeeder extends Seeder
                             'tags' => ['frontend', 'ui'],
                         ],
                         [
-                            'title' => '修復多租戶佈景切換',
-                            'content' => '調整 Tailwind v4 Token，支援租戶品牌色覆蓋。',
+                            'title' => '修復多用戶佈景切換',
+                            'content' => '調整 Tailwind v4 Token，支援用戶品牌色覆蓋。',
                             'hours' => 7.25,
                             'issue' => 'BUG-554',
                             'tags' => ['frontend', 'bugfix'],

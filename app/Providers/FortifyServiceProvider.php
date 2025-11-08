@@ -55,12 +55,11 @@ class FortifyServiceProvider extends ServiceProvider
             $tenant = app()->bound(TenantContext::class) ? app(TenantContext::class) : null;
 
             $user = User::query()
+                ->where('email', $email)
                 ->when(
                     $tenant,
-                    fn ($query) => $query->where('company_id', $tenant->companyId()),
-                    fn ($query) => $query->whereNull('company_id')
+                    fn ($query) => $query->where('company_id', $tenant->companyId())
                 )
-                ->where('email', $email)
                 ->first();
 
             if (! $user || ! Hash::check($password, $user->password)) {
