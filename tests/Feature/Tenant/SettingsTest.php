@@ -191,6 +191,8 @@ it('updates welcome page configuration', function () {
         'company_id' => $this->company->id,
         'welcome_page->hero->title' => '新的歡迎標題',
     ]);
+
+    expect($this->company->fresh()->onboarded_at)->not->toBeNull();
 });
 
 it('validates IP whitelist entries', function () {
@@ -210,6 +212,8 @@ $valid = $this->putJson(
 
     $valid->assertOk()
         ->assertJsonPath('login_ip_whitelist.1', '10.0.0.0/8');
+
+    expect($this->company->fresh()->onboarded_at)->not->toBeNull();
 });
 
 it('invites a new member and increments user count', function () {

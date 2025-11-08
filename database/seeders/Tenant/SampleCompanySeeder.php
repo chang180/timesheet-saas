@@ -359,7 +359,7 @@ class SampleCompanySeeder extends Seeder
                     'email' => 'manager@acme.test',
                     'status' => WeeklyReport::STATUS_SUBMITTED,
                     'summary' => '完成 API Gateway 新版規格討論，與 QA 協調回歸測試時程。',
-                    'items' => [
+                    'current' => [
                         [
                             'title' => '完成多用戶 API 設計串接',
                             'content' => '與後端確認用戶 slug 規則，更新 Wayfinder route 定義。',
@@ -375,12 +375,26 @@ class SampleCompanySeeder extends Seeder
                             'tags' => ['planning'],
                         ],
                     ],
+                    'next' => [
+                        [
+                            'title' => '完成 IAM 政策調整',
+                            'content' => '與資安確認角色權限矩陣，建立審核流程。',
+                            'planned_hours' => 10.0,
+                            'tags' => ['planning', 'security'],
+                        ],
+                        [
+                            'title' => 'Kickoff 自動匯出專案',
+                            'content' => '安排跨部門會議，規劃 MVP 需求與時程。',
+                            'planned_hours' => 6.0,
+                            'tags' => ['coordination'],
+                        ],
+                    ],
                 ],
                 [
                     'email' => 'member@acme.test',
                     'status' => WeeklyReport::STATUS_SUBMITTED,
                     'summary' => '完成歡迎頁編輯器雛型，並修復 Tailwind dark mode 問題。',
-                    'items' => [
+                    'current' => [
                         [
                             'title' => '開發歡迎頁即時預覽功能',
                             'content' => '導入 React Hook Form + zod 驗證，改善錯誤訊息呈現。',
@@ -394,6 +408,20 @@ class SampleCompanySeeder extends Seeder
                             'hours' => 7.25,
                             'issue' => 'BUG-554',
                             'tags' => ['frontend', 'bugfix'],
+                        ],
+                    ],
+                    'next' => [
+                        [
+                            'title' => '打造週報表單拖曳排序',
+                            'content' => '調研 dnd-kit 與 react-beautiful-dnd，建立基本顯示。',
+                            'planned_hours' => 8.0,
+                            'tags' => ['frontend'],
+                        ],
+                        [
+                            'title' => '串接複製上一週 API',
+                            'content' => '補上 useForm 整合，確保 next_week 項目帶入。',
+                            'planned_hours' => 5.5,
+                            'tags' => ['frontend', 'integration'],
                         ],
                     ],
                 ],
@@ -449,18 +477,42 @@ class SampleCompanySeeder extends Seeder
 
                 DB::table('weekly_report_items')->where('weekly_report_id', $reportId)->delete();
 
-                foreach ($report['items'] as $index => $item) {
+                $currentItems = $report['current'] ?? [];
+                foreach ($currentItems as $index => $item) {
                     DB::table('weekly_report_items')->insert([
                         'weekly_report_id' => $reportId,
+                        'type' => 'current_week',
                         'sort_order' => $index,
                         'title' => $item['title'],
                         'content' => $item['content'],
                         'hours_spent' => $item['hours'],
+                        'planned_hours' => null,
                         'issue_reference' => $item['issue'],
                         'is_billable' => false,
                         'tags' => json_encode($item['tags'], JSON_THROW_ON_ERROR),
                         'started_at' => $reportingWeek->copy()->startOfWeek()->addDays($index)->setTime(10, 0),
                         'ended_at' => $reportingWeek->copy()->startOfWeek()->addDays($index)->setTime(19, 0),
+                        'metadata' => json_encode(['source' => 'seed'], JSON_THROW_ON_ERROR),
+                        'created_at' => $now,
+                        'updated_at' => $now,
+                    ]);
+                }
+
+                $nextPlans = $report['next'] ?? [];
+                foreach ($nextPlans as $index => $plan) {
+                    DB::table('weekly_report_items')->insert([
+                        'weekly_report_id' => $reportId,
+                        'type' => 'next_week',
+                        'sort_order' => $index,
+                        'title' => $plan['title'],
+                        'content' => $plan['content'],
+                        'hours_spent' => 0,
+                        'planned_hours' => $plan['planned_hours'],
+                        'issue_reference' => $plan['issue'] ?? null,
+                        'is_billable' => false,
+                        'tags' => json_encode($plan['tags'], JSON_THROW_ON_ERROR),
+                        'started_at' => null,
+                        'ended_at' => null,
                         'metadata' => json_encode(['source' => 'seed'], JSON_THROW_ON_ERROR),
                         'created_at' => $now,
                         'updated_at' => $now,

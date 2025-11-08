@@ -101,6 +101,8 @@ class WeeklyReport extends Model
 
     public function items(): HasMany
     {
-        return $this->hasMany(WeeklyReportItem::class);
+        return $this->hasMany(WeeklyReportItem::class)
+            ->orderBy('type')
+            ->orderBy('sort_order');
     }
 }

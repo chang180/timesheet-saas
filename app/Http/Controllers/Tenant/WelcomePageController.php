@@ -17,6 +17,10 @@ class WelcomePageController extends Controller
             'welcome_page' => $request->welcomePagePayload(),
         ]);
 
+        if ($company->onboarded_at === null) {
+            $company->forceFill(['onboarded_at' => now()])->save();
+        }
+
         return response()->json([
             'welcome_page' => $settings->welcome_page,
         ]);

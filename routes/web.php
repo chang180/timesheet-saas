@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\WeeklyReportController;
 use App\Models\Company;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -39,7 +40,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
             Route::get('welcome', [App\Http\Controllers\LandingController::class, 'tenant'])->name('tenant.welcome');
 
-            Route::get('weekly-reports', App\Http\Controllers\WeeklyReportPageController::class)->name('tenant.weekly-reports');
+            Route::get('weekly-reports', [WeeklyReportController::class, 'index'])->name('tenant.weekly-reports');
+            Route::get('weekly-reports/create', [WeeklyReportController::class, 'create'])->name('tenant.weekly-reports.create');
+            Route::post('weekly-reports', [WeeklyReportController::class, 'store'])->name('tenant.weekly-reports.store');
+            Route::get('weekly-reports/{weeklyReport}/edit', [WeeklyReportController::class, 'edit'])->name('tenant.weekly-reports.edit');
+            Route::put('weekly-reports/{weeklyReport}', [WeeklyReportController::class, 'update'])->name('tenant.weekly-reports.update');
 
             Route::get('settings', [App\Http\Controllers\TenantSettingsController::class, 'index'])->name('tenant.settings');
             Route::patch('settings/welcome-page', [App\Http\Controllers\TenantSettingsController::class, 'updateWelcomePage'])->name('tenant.settings.welcome-page');

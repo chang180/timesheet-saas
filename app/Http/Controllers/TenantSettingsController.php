@@ -45,6 +45,10 @@ class TenantSettingsController extends Controller
             ['welcome_page' => $request->validated()]
         );
 
+        if ($company->onboarded_at === null) {
+            $company->forceFill(['onboarded_at' => now()])->save();
+        }
+
         return redirect()->back()->with('success', '歡迎頁設定已更新');
     }
 
@@ -54,6 +58,10 @@ class TenantSettingsController extends Controller
             ['company_id' => $company->id],
             ['login_ip_whitelist' => $request->whitelist()]
         );
+
+        if ($company->onboarded_at === null) {
+            $company->forceFill(['onboarded_at' => now()])->save();
+        }
 
         return redirect()->back()->with('success', 'IP 白名單已更新');
     }
