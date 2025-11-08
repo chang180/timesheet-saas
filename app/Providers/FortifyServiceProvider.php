@@ -4,8 +4,11 @@ namespace App\Providers;
 
 use App\Actions\Fortify\CreateNewUser;
 use App\Actions\Fortify\ResetUserPassword;
+use App\Models\User;
+use App\Tenancy\TenantContext;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Str;
@@ -40,6 +43,32 @@ class FortifyServiceProvider extends ServiceProvider
     {
         Fortify::resetUserPasswordsUsing(ResetUserPassword::class);
         Fortify::createUsersUsing(CreateNewUser::class);
+
+        Fortify::authenticateUsing(function (Request $request): ?User {
+            $email = (string) $request->input('email');
+            $password = (string) $request->input('password');
+
+            if ($email === '' || $password === '') {
+                return null;
+            }
+
+            $tenant = app()->bound(TenantContext::class) ? app(TenantContext::class) : null;
+
+            $user = User::query()
+                ->when(
+                    $tenant,
+                    fn ($query) => $query->where('company_id', $tenant->companyId()),
+                    fn ($query) => $query->whereNull('company_id')
+                )
+                ->where('email', $email)
+                ->first();
+
+            if (! $user || ! Hash::check($password, $user->password)) {
+                return null;
+            }
+
+            return $user;
+        });
     }
 
     /**
@@ -84,6 +113,10 @@ class FortifyServiceProvider extends ServiceProvider
 
         RateLimiter::for('login', function (Request $request) {
             $throttleKey = Str::transliterate(Str::lower($request->input(Fortify::username())).'|'.$request->ip());
+
+            if (app()->bound(TenantContext::class)) {
+                $throttleKey = app(TenantContext::class)->slug().'|'.$throttleKey;
+            }
 
             return Limit::perMinute(5)->by($throttleKey);
         });

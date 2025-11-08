@@ -12,7 +12,7 @@
 
 ## 技術棧
 
-- **後端**：Laravel 12、PHP 8.3、Laravel Breeze（React SPA）
+- **後端**：Laravel 12、PHP 8.3、Laravel Breeze（React SPA）、Laravel Sanctum
 - **前端**：Vite、React 18、TypeScript、React Query、Tailwind CSS
 - **認證**：Laravel Sanctum（SPA）、內建 2FA
 - **資料**：MySQL 8、Redis 7（快取／Queue）
@@ -26,6 +26,7 @@ npm install
 cp .env.example .env
 php artisan key:generate
 php artisan migrate
+php artisan db:seed
 ```
 
 ## 開發啟動
@@ -46,6 +47,29 @@ npm run dev
 ```bash
 npm run build
 ```
+
+## 多租戶後端基礎
+
+- 新增 `config/tenant.php` 管理主網域、slug 模式與 Sanctum stateful domains。
+- `config/sanctum.php` 合併租戶白名單設定，API 採 cookie-based 認證並需透過 `auth:sanctum`。
+- `EnsureTenantScope` middleware 會依 `{company:slug}` 或子網域載入租戶 Context。
+- 核心模型：`Company`、`CompanySetting`、`Division`、`Department`、`Team`、`WeeklyReport`、`AuditLog` 與 `TenantContext`。
+- 路由：
+  - `GET /api/v1/{company}/settings`
+  - `PUT /api/v1/{company}/welcome-page`
+  - `PUT /api/v1/{company}/settings/ip-whitelist`
+  - `POST /api/v1/{company}/members/invite`
+  - `PATCH /api/v1/{company}/members/{id}/roles`
+  - `POST /api/v1/{company}/members/{id}/approve`（暫回 404，預留未來審核流程）
+
+## 測試
+
+```
+php artisan migrate:fresh --seed
+php artisan test tests/Feature/Tenant/SettingsTest.php
+```
+
+> 若環境 PHP 版本低於 8.3，執行測試時可能遇到 `typed class constant` 解析錯誤，需升級 PHP 或調整套件版本。
 
 ## 開發規劃與文件
 

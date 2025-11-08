@@ -1,0 +1,17 @@
+{
+    "The member limit has been reached for this tenant.": "此租戶的成員數已達上限。",
+    "This email address is already in use.": "此電子郵件地址已被使用。",
+    "Selected team does not belong to the provided department.": "選取的小組不屬於指定的部門。",
+    "Selected department does not belong to the provided division.": "選取的部門不屬於指定的事業群。",
+    "Division leads must be assigned to a division.": "事業群主管必須指定事業群。",
+    "Department managers must be assigned to a department.": "部門主管必須指定部門。",
+    "Team leads must be assigned to a team.": "小組主管必須指定小組。",
+    "tenant.members.limit_reached": "此租戶的成員數已達上限。",
+    "tenant.members.email_in_use": "此電子郵件地址已經被使用。",
+    "tenant.members.team_mismatch": "選取的小組不屬於指定的部門。",
+    "tenant.members.department_mismatch": "選取的部門不屬於指定的事業群。",
+    "tenant.members.division_required": "事業群主管必須指定所屬事業群。",
+    "tenant.members.department_required": "部門主管必須指定所屬部門。",
+    "tenant.members.team_required": "小組主管必須指定所屬小組。"
+}
+

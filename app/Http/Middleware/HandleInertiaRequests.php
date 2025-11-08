@@ -2,6 +2,7 @@
 
 namespace App\Http\Middleware;
 
+use App\Tenancy\TenantContext;
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Http\Request;
 use Inertia\Middleware;
@@ -46,6 +47,23 @@ class HandleInertiaRequests extends Middleware
                 'user' => $request->user(),
             ],
             'sidebarOpen' => ! $request->hasCookie('sidebar_state') || $request->cookie('sidebar_state') === 'true',
+            'tenant' => $this->tenantPayload(),
+            'tenantConfig' => [
+                'slugMode' => config('tenant.slug_mode'),
+                'primaryDomain' => config('tenant.primary_domain'),
+            ],
         ];
+    }
+
+    /**
+     * @return array<string, mixed>|null
+     */
+    private function tenantPayload(): ?array
+    {
+        if (! app()->bound(TenantContext::class)) {
+            return null;
+        }
+
+        return app(TenantContext::class)->toArray();
     }
 }

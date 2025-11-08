@@ -1,0 +1,17 @@
+{
+    "The member limit has been reached for this tenant.": "The member limit has been reached for this tenant.",
+    "This email address is already in use.": "This email address is already in use.",
+    "Selected team does not belong to the provided department.": "Selected team does not belong to the provided department.",
+    "Selected department does not belong to the provided division.": "Selected department does not belong to the provided division.",
+    "Division leads must be assigned to a division.": "Division leads must be assigned to a division.",
+    "Department managers must be assigned to a department.": "Department managers must be assigned to a department.",
+    "Team leads must be assigned to a team.": "Team leads must be assigned to a team.",
+    "tenant.members.limit_reached": "The member limit has been reached for this tenant.",
+    "tenant.members.email_in_use": "This email address is already in use.",
+    "tenant.members.team_mismatch": "Selected team does not belong to the provided department.",
+    "tenant.members.department_mismatch": "Selected department does not belong to the provided division.",
+    "tenant.members.division_required": "Division leads must be assigned to a division.",
+    "tenant.members.department_required": "Department managers must be assigned to a department.",
+    "tenant.members.team_required": "Team leads must be assigned to a team."
+}
+
