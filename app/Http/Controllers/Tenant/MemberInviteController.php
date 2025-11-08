@@ -18,14 +18,10 @@ class MemberInviteController extends Controller
 {
     public function store(InviteMemberRequest $request, Company $company): JsonResponse
     {
-        if ($company->current_user_count >= $company->user_limit) {
-            abort(422, __('The member limit has been reached for this tenant.'));
-        }
-
         $email = $request->invitedEmail();
 
         if (User::query()->where('email', $email)->exists()) {
-            abort(422, __('This email address is already in use.'));
+            abort(422, '此電子郵件地址已經被使用。');
         }
 
         $data = $request->validated();
@@ -35,7 +31,7 @@ class MemberInviteController extends Controller
         $team = isset($data['team_id']) ? Team::find($data['team_id']) : null;
 
         if ($team && $department && $team->department_id !== $department->id) {
-            abort(422, __('Selected team does not belong to the provided department.'));
+            abort(422, '選取的小組不屬於指定的部門。');
         }
 
         if ($team && ! $department) {
@@ -44,7 +40,7 @@ class MemberInviteController extends Controller
         }
 
         if ($department && $division && $department->division_id !== $division->id) {
-            abort(422, __('Selected department does not belong to the provided division.'));
+            abort(422, '選取的部門不屬於指定的事業群。');
         }
 
         if ($department && ! $division) {
@@ -55,8 +51,17 @@ class MemberInviteController extends Controller
         $this->assertHierarchyMatchesRole($request->invitedRole(), $division, $department, $team);
 
         $user = DB::transaction(function () use ($request, $company, $division, $department, $team, $email): User {
+            $tenant = Company::query()
+                ->whereKey($company->getKey())
+                ->lockForUpdate()
+                ->firstOrFail();
+
+            if ($tenant->current_user_count >= $tenant->user_limit) {
+                abort(422, '此租戶的成員數已達上限。');
+            }
+
             $user = User::create([
-                'company_id' => $company->getKey(),
+                'company_id' => $tenant->getKey(),
                 'division_id' => $division?->id,
                 'department_id' => $department?->id,
                 'team_id' => $team?->id,
@@ -67,7 +72,7 @@ class MemberInviteController extends Controller
                 'registered_via' => 'invite',
             ]);
 
-            $company->increment('current_user_count');
+            $tenant->increment('current_user_count');
 
             return $user->fresh(['division', 'department', 'team']);
         });
@@ -88,15 +93,15 @@ class MemberInviteController extends Controller
     private function assertHierarchyMatchesRole(string $role, ?Division $division, ?Department $department, ?Team $team): void
     {
         if ($role === 'division_lead' && ! $division) {
-            abort(422, __('Division leads must be assigned to a division.'));
+            abort(422, '事業群主管必須指定所屬事業群。');
         }
 
         if ($role === 'department_manager' && ! $department) {
-            abort(422, __('Department managers must be assigned to a department.'));
+            abort(422, '部門主管必須指定所屬部門。');
         }
 
         if ($role === 'team_lead' && ! $team) {
-            abort(422, __('Team leads must be assigned to a team.'));
+            abort(422, '小組主管必須指定所屬小組。');
         }
     }
 }
