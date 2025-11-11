@@ -11,10 +11,15 @@ export default defineConfig(({ mode }) => {
     const devHost = env.VITE_DEV_SERVER_HOST ?? '0.0.0.0';
     const devPort = Number(env.VITE_DEV_SERVER_PORT ?? '5173');
 
+    // In production builds, base should be '/build/' so Vite generates absolute paths
+    // for dynamic imports that work correctly when loaded from /build/assets/
+    // Only use tenant path prefix in development when using path strategy
     const base =
-        tenantStrategy === 'path'
-            ? env.VITE_TENANT_PATH_PREFIX ?? '/'
-            : env.VITE_DEV_SERVER_BASE ?? '/';
+        mode === 'production'
+            ? '/build/'
+            : tenantStrategy === 'path'
+                ? env.VITE_TENANT_PATH_PREFIX ?? '/'
+                : env.VITE_DEV_SERVER_BASE ?? '/';
 
     const tenantPathRewrite = (path: string): string => path.replace(/^\/[^/]+/, '');
 
@@ -25,6 +30,8 @@ export default defineConfig(({ mode }) => {
                 input: ['resources/css/app.css', 'resources/js/app.tsx'],
                 ssr: 'resources/js/ssr.tsx',
                 refresh: true,
+                detectTls: 'timesheet-saas.test',
+                buildDirectory: 'build',
             }),
             react({
                 babel: {
@@ -74,6 +81,16 @@ export default defineConfig(({ mode }) => {
         preview: {
             host: devHost,
             port: Number(env.VITE_PREVIEW_PORT ?? '4173'),
+        },
+        build: {
+            assetsDir: 'assets',
+            rollupOptions: {
+                output: {
+                    assetFileNames: 'assets/[name].[hash].[ext]',
+                    chunkFileNames: 'assets/[name].[hash].js',
+                    entryFileNames: 'assets/[name].[hash].js',
+                },
+            },
         },
     };
 });
