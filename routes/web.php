@@ -9,10 +9,12 @@ use Inertia\Inertia;
 Route::get('/', [App\Http\Controllers\LandingController::class, 'global'])
     ->name('home');
 
-// 租戶註冊路由（公開，不需要認證）
+// 租戶登入/註冊路由（公開，不需要認證）
 Route::prefix('app/{company:slug}')
     ->middleware('tenant')
     ->group(function () {
+        Route::get('auth', [App\Http\Controllers\Tenant\TenantAuthController::class, 'show'])->name('tenant.auth');
+        // 保留舊的 register 路由以向後兼容
         Route::get('register', [App\Http\Controllers\Tenant\TenantRegisterController::class, 'show'])->name('tenant.register');
     });
 

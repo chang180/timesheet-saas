@@ -13,6 +13,7 @@ use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Str;
 use Inertia\Inertia;
+use Laravel\Fortify\Contracts\LoginResponse;
 use Laravel\Fortify\Contracts\RegisterResponse;
 use Laravel\Fortify\Features;
 use Laravel\Fortify\Fortify;
@@ -24,6 +25,29 @@ class FortifyServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
+        // 自訂登入後的重定向邏輯
+        $this->app->instance(LoginResponse::class, new class implements LoginResponse
+        {
+            public function toResponse($request)
+            {
+                $user = $request->user();
+
+                if (! $user || ! $user->company) {
+                    return redirect(config('fortify.home', '/app'));
+                }
+
+                // 檢查是否為租戶登入（從請求中獲取 company_slug）
+                $companySlug = $request->input('company_slug');
+                if ($companySlug && $user->company && $user->company->slug === $companySlug) {
+                    // 租戶登入：重定向到租戶首頁
+                    return redirect()->route('tenant.home', $user->company);
+                }
+
+                // 一般登入：使用默認重定向邏輯
+                return redirect(config('fortify.home', '/app'));
+            }
+        });
+
         // 自訂註冊後的重定向邏輯
         $this->app->instance(RegisterResponse::class, new class implements RegisterResponse
         {
@@ -74,7 +98,23 @@ class FortifyServiceProvider extends ServiceProvider
                 return null;
             }
 
+            // 檢查是否有租戶上下文（從 middleware 設置）或從請求中獲取 company_slug
             $tenant = app()->bound(TenantContext::class) ? app(TenantContext::class) : null;
+
+            // 如果沒有租戶上下文，但請求中有 company_slug，則嘗試解析租戶
+            if (! $tenant && $request->has('company_slug')) {
+                $companySlug = (string) $request->input('company_slug');
+                if ($companySlug !== '') {
+                    $company = \App\Models\Company::where('slug', $companySlug)
+                        ->where('status', 'active')
+                        ->first();
+
+                    if ($company) {
+                        $tenant = TenantContext::fromCompany($company);
+                        app()->instance(TenantContext::class, $tenant);
+                    }
+                }
+            }
 
             $user = User::query()
                 ->where('email', $email)
@@ -85,6 +125,11 @@ class FortifyServiceProvider extends ServiceProvider
                 ->first();
 
             if (! $user || ! Hash::check($password, $user->password)) {
+                return null;
+            }
+
+            // 如果指定了租戶，驗證用戶是否屬於該租戶
+            if ($tenant && $user->company_id !== $tenant->companyId()) {
                 return null;
             }
 
