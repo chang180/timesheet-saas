@@ -1,0 +1,19 @@
+{
+  "name": "elk-mcp-server",
+  "version": "1.0.0",
+  "description": "ELK Stack MCP Server for Cursor",
+  "main": "elk-mcp.js",
+  "type": "module",
+  "bin": {
+    "elk-mcp": "./elk-mcp.js"
+  },
+  "scripts": {
+    "start": "node elk-mcp.js"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.0.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

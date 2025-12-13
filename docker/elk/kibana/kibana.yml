@@ -1,0 +1,12 @@
+server.host: "0.0.0.0"
+server.shutdownTimeout: "5s"
+
+elasticsearch.hosts: ["http://elasticsearch:9200"]
+
+monitoring.ui.container.elasticsearch.enabled: true
+
+# 啟用 Dark Mode（暗色模式）
+# 選項: true (啟用), false (停用), "system" (跟隨系統設定)
+uiSettings:
+  overrides:
+    "theme:darkMode": true
