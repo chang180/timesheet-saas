@@ -146,7 +146,7 @@ it('can edit existing weekly report', function () {
         ->assertNoJavascriptErrors();
 
     // 更新摘要
-    $page->fill('summary', '更新後的摘要')
+    $page->fill('@summary', '更新後的摘要')
         ->click('@save-weekly-report')
         ->assertSee('已更新')
         ->assertNoJavascriptErrors();

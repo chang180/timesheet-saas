@@ -159,7 +159,14 @@ function SortableCurrentWeekRow({ item, index, updateItem, removeItem, getError 
                     value={item.hours_spent}
                     className="w-20"
                     data-testid={`current_week.${index}.hours_spent`}
-                    onChange={(event) => updateItem('current_week', index, 'hours_spent', event.target.value)}
+                    onChange={(event) =>
+                        updateItem(
+                            'current_week',
+                            index,
+                            'hours_spent',
+                            event.target.value === '' ? 0 : Number(event.target.value),
+                        )
+                    }
                 />
                 <InputError message={getError(`current_week.${index}.hours_spent`)} className="mt-1" />
             </td>
@@ -492,12 +499,13 @@ export default function WeeklyReportForm({ mode, report, defaults, prefill, comp
     const getError = (path: string): string | undefined => form.errors[path] as string | undefined;
 
     // 計算工時合計
+    // hours_spent 和 planned_hours 在表單狀態中已經是數字類型
     const totalCurrentWeekHours = form.data.current_week.reduce(
-        (sum, item) => sum + (Number(item.hours_spent) || 0),
+        (sum, item) => sum + (item.hours_spent || 0),
         0,
     );
     const totalNextWeekHours = form.data.next_week.reduce(
-        (sum, item) => sum + (Number(item.planned_hours) || 0),
+        (sum, item) => sum + (item.planned_hours || 0),
         0,
     );
 
