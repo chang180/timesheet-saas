@@ -37,6 +37,13 @@ class WeeklyReportItemFactory extends Factory
         ];
     }
 
+    public function currentWeek(): self
+    {
+        return $this->state([
+            'type' => WeeklyReportItem::TYPE_CURRENT_WEEK,
+        ]);
+    }
+
     public function nextWeek(): self
     {
         return $this->state([

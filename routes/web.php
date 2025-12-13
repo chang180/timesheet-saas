@@ -44,7 +44,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
             Route::get('weekly-reports/create', [WeeklyReportController::class, 'create'])->name('tenant.weekly-reports.create');
             Route::post('weekly-reports', [WeeklyReportController::class, 'store'])->name('tenant.weekly-reports.store');
             Route::get('weekly-reports/{weeklyReport}/edit', [WeeklyReportController::class, 'edit'])->name('tenant.weekly-reports.edit');
+            Route::get('weekly-reports/{weeklyReport}/preview', [WeeklyReportController::class, 'preview'])->name('tenant.weekly-reports.preview');
             Route::put('weekly-reports/{weeklyReport}', [WeeklyReportController::class, 'update'])->name('tenant.weekly-reports.update');
+            Route::post('weekly-reports/{weeklyReport}/submit', [WeeklyReportController::class, 'submit'])->name('tenant.weekly-reports.submit');
 
             Route::get('settings', [App\Http\Controllers\TenantSettingsController::class, 'index'])->name('tenant.settings');
             Route::patch('settings/welcome-page', [App\Http\Controllers\TenantSettingsController::class, 'updateWelcomePage'])->name('tenant.settings.welcome-page');
