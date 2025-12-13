@@ -102,24 +102,31 @@ export default function WeeklyReportPreview({
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="預覽週報" />
 
-            <div className="space-y-6">
+            <div className="space-y-6 px-4 sm:px-6 lg:px-8">
                 {/* 標題與操作 */}
                 <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
                         {canNavigate ? (
                             <Button asChild variant="ghost" size="sm">
-                                <Link href={weeklyReports.edit.url({ company: companySlug, weeklyReport: report.id })}>
+                                <Link href={weeklyReports.url({ company: companySlug })}>
                                     <ArrowLeft className="mr-2 size-4" />
-                                    返回編輯
+                                    返回工作簿
                                 </Link>
                             </Button>
                         ) : (
                             <Button variant="ghost" size="sm" disabled>
                                 <ArrowLeft className="mr-2 size-4" />
-                                返回編輯
+                                返回工作簿
                             </Button>
                         )}
                     </div>
+                    {canNavigate && (
+                        <Button asChild variant="outline" size="sm">
+                            <Link href={weeklyReports.edit.url({ company: companySlug, weeklyReport: report.id })}>
+                                編輯週報
+                            </Link>
+                        </Button>
+                    )}
                 </div>
 
                 {/* 週報標題區塊 */}
