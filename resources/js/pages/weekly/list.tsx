@@ -70,6 +70,11 @@ export default function WeeklyReportList(props: WeeklyReportListProps) {
     const defaults = props.defaults;
     const latestReport = reports[0];
 
+    // 檢查是否有本週週報
+    const currentWeekReport = reports.find(
+        (report) => report.workYear === defaults.year && report.workWeek === defaults.week,
+    );
+
     const breadcrumbs: BreadcrumbItem[] = [
         {
             title: '週報工作簿',
@@ -81,38 +86,26 @@ export default function WeeklyReportList(props: WeeklyReportListProps) {
     const createHref = canCreate
         ? weeklyRoutes.create.url({ company: companySlug })
         : '#';
+    const editCurrentWeekHref = currentWeekReport && canCreate
+        ? weeklyRoutes.edit.url({ company: companySlug, weeklyReport: currentWeekReport.id })
+        : '#';
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="週報工作簿" />
 
             <div className="flex flex-col gap-6 px-4 sm:px-6 lg:px-8">
-                <header className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-                    <div className="space-y-2">
-                        <h1 className="text-3xl font-bold tracking-tight text-foreground">
-                            {props.company?.name
-                                ? `${props.company.name} 的週報工作簿`
-                                : tenant?.company?.name
-                                  ? `${tenant.company.name} 的週報工作簿`
-                                : '週報工作簿'}
-                        </h1>
-                        <p className="text-sm leading-relaxed text-muted-foreground">
-                            記錄本週每一項任務、支援與會議重點，週會或主管提報時可以立即找到摘要。
-                        </p>
-                    </div>
-                    {canCreate ? (
-                        <Button asChild size="lg" className="gap-2">
-                            <Link href={createHref} data-testid="create-weekly-report">
-                                <SquarePen className="size-4" />
-                                建立本週週報
-                            </Link>
-                        </Button>
-                    ) : (
-                        <Button disabled size="lg" className="gap-2">
-                            <SquarePen className="size-4" />
-                            建立本週週報
-                        </Button>
-                    )}
+                <header className="space-y-2">
+                    <h1 className="text-3xl font-bold tracking-tight text-foreground">
+                        {props.company?.name
+                            ? `${props.company.name} 的週報工作簿`
+                            : tenant?.company?.name
+                              ? `${tenant.company.name} 的週報工作簿`
+                            : '週報工作簿'}
+                    </h1>
+                    <p className="text-sm leading-relaxed text-muted-foreground">
+                        記錄本週每一項任務、支援與會議重點，週會或主管提報時可以立即找到摘要。
+                    </p>
                 </header>
 
                 {(flash?.success || flash?.info || flash?.warning) && (
@@ -152,8 +145,11 @@ export default function WeeklyReportList(props: WeeklyReportListProps) {
                                     asChild
                                     className="mt-auto w-full gap-2 sm:w-auto"
                                 >
-                                    <Link href={createHref} data-testid="goto-weekly-report-create">
-                                        前往填寫
+                                    <Link
+                                        href={currentWeekReport ? editCurrentWeekHref : createHref}
+                                        data-testid={currentWeekReport ? 'goto-weekly-report-edit' : 'goto-weekly-report-create'}
+                                    >
+                                        {currentWeekReport ? '前往編輯' : '前往填寫'}
                                         <ArrowRight className="size-4" />
                                     </Link>
                                 </Button>

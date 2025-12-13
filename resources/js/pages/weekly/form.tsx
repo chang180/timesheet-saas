@@ -9,7 +9,7 @@ import AppLayout from '@/layouts/app-layout';
 import { weeklyReports } from '@/routes/tenant';
 import { type BreadcrumbItem, type SharedData } from '@/types';
 import { Head, Link, router, useForm, usePage } from '@inertiajs/react';
-import { ArrowLeft, GripVertical, PlusCircle, Trash2 } from 'lucide-react';
+import { ArrowLeft, GripVertical, PlusCircle, Trash2, CheckCircle2, Clock, Lock, type LucideIcon } from 'lucide-react';
 import {
     DndContext,
     closestCenter,
@@ -89,6 +89,24 @@ const STATUS_TEXT: Record<string, string> = {
     draft: '草稿',
     submitted: '已送出',
     locked: '已鎖定',
+};
+
+const STATUS_CONFIG: Record<string, { text: string; icon: LucideIcon; className: string }> = {
+    draft: {
+        text: '草稿',
+        icon: Clock,
+        className: 'bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-500/10 dark:text-amber-400 dark:border-amber-500/20',
+    },
+    submitted: {
+        text: '已送出',
+        icon: CheckCircle2,
+        className: 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-500/10 dark:text-emerald-400 dark:border-emerald-500/20',
+    },
+    locked: {
+        text: '已鎖定',
+        icon: Lock,
+        className: 'bg-slate-50 text-slate-700 border-slate-200 dark:bg-slate-500/10 dark:text-slate-400 dark:border-slate-500/20',
+    },
 };
 
 const toFormItem = (
@@ -728,21 +746,35 @@ export default function WeeklyReportForm({
                         </Button>
                     )}
                     <div className="flex-1">
-                        <h1 className="text-2xl font-bold text-foreground">
-                            {isCreate ? '建立週報草稿' : '編輯週報'}
-                        </h1>
-                        <p className="mt-1 text-sm text-muted-foreground">
+                        <div className="flex items-center gap-3">
+                            <h1 className="text-2xl font-bold text-foreground">
+                                {isCreate ? '建立週報草稿' : '編輯週報'}
+                            </h1>
+                            {report && (() => {
+                                const statusConfig = STATUS_CONFIG[report.status] ?? {
+                                    text: report.status,
+                                    icon: Clock,
+                                    className: 'bg-muted text-muted-foreground border-border',
+                                };
+                                const StatusIcon = statusConfig.icon;
+                                return (
+                                    <span
+                                        className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-medium ${statusConfig.className}`}
+                                    >
+                                        <StatusIcon className="size-3" />
+                                        {statusConfig.text}
+                                    </span>
+                                );
+                            })()}
+                        </div>
+                        <p className="mt-2 text-sm text-muted-foreground">
                             {form.data.work_year} 年第 {form.data.work_week} 週
                             {weekDateRange && (
                                 <span className="text-muted-foreground">
                                     {' '}
                                     ({weekDateRange.startDate} ~ {weekDateRange.endDate})
                                 </span>
-                            )}{' '}
-                            ·{' '}
-                            <span className="uppercase text-xs font-medium text-muted-foreground">
-                                {STATUS_TEXT[report?.status ?? 'draft'] ?? '草稿'}
-                            </span>
+                            )}
                         </p>
                     </div>
                 </div>
@@ -957,59 +989,75 @@ export default function WeeklyReportForm({
                     </CardContent>
                 </Card>
 
-                <div className="flex items-center justify-end gap-3 border-t border-border/60 pt-6">
-                    {report && (
-                        <Button
-                            type="button"
-                            variant="outline"
-                            disabled={!canNavigate}
-                            asChild
-                            className="gap-2"
-                        >
-                            <Link
-                                href={canNavigate ? `/app/${companySlug}/weekly-reports/${report.id}/preview` : '#'}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                            >
-                                預覽
-                            </Link>
-                        </Button>
+                <div className="space-y-4 border-t border-border/60 pt-6">
+                    {report && report.status === 'draft' && (
+                        <div className="rounded-lg border-2 border-amber-200 bg-amber-50/50 p-4 dark:border-amber-800 dark:bg-amber-950/20">
+                            <p className="text-sm font-medium text-amber-800 dark:text-amber-300">
+                                💡 提示：此週報目前為「草稿」狀態。點擊「發佈週報」後，狀態將變更為「已送出」，並記錄發佈時間。
+                            </p>
+                        </div>
                     )}
-                    {report?.status === 'draft' && (
+                    {report && report.status === 'submitted' && (
+                        <div className="rounded-lg border-2 border-emerald-200 bg-emerald-50/50 p-4 dark:border-emerald-800 dark:bg-emerald-950/20">
+                            <p className="text-sm font-medium text-emerald-800 dark:text-emerald-300">
+                                ✓ 此週報已發佈。您可以繼續編輯內容，但狀態將保持為「已送出」。
+                            </p>
+                        </div>
+                    )}
+                    <div className="flex items-center justify-end gap-3">
+                        {report && (
+                            <Button
+                                type="button"
+                                variant="outline"
+                                disabled={!canNavigate}
+                                asChild
+                                className="gap-2"
+                            >
+                                <Link
+                                    href={canNavigate ? `/app/${companySlug}/weekly-reports/${report.id}/preview` : '#'}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                >
+                                    預覽
+                                </Link>
+                            </Button>
+                        )}
+                        {report?.status === 'draft' && (
+                            <Button
+                                type="button"
+                                variant="default"
+                                disabled={form.processing || !canNavigate}
+                                className="gap-2"
+                                onClick={() => {
+                                    if (!canNavigate || !report) {
+                                        return;
+                                    }
+                                    router.post(
+                                        `/app/${companySlug}/weekly-reports/${report.id}/submit`,
+                                        {},
+                                        {
+                                            preserveScroll: true,
+                                            onSuccess: () => {
+                                                // 重新載入頁面以更新狀態
+                                                router.reload({ only: ['report'] });
+                                            },
+                                        },
+                                    );
+                                }}
+                                data-testid="submit-weekly-report"
+                            >
+                                發佈週報
+                            </Button>
+                        )}
                         <Button
-                            type="button"
-                            variant="default"
+                            type="submit"
                             disabled={form.processing || !canNavigate}
                             className="gap-2"
-                            onClick={() => {
-                                if (!canNavigate || !report) {
-                                    return;
-                                }
-                                router.post(
-                                    `/app/${companySlug}/weekly-reports/${report.id}/submit`,
-                                    {},
-                                    {
-                                        preserveScroll: true,
-                                        onSuccess: () => {
-                                            // 重新載入頁面以更新狀態
-                                            router.reload({ only: ['report'] });
-                                        },
-                                    },
-                                );
-                            }}
-                            data-testid="submit-weekly-report"
+                            data-testid="save-weekly-report"
                         >
-                            發佈週報
+                            {form.processing ? '儲存中...' : '儲存週報'}
                         </Button>
-                    )}
-                    <Button
-                        type="submit"
-                        disabled={form.processing || !canNavigate}
-                        className="gap-2"
-                        data-testid="save-weekly-report"
-                    >
-                        {form.processing ? '儲存中...' : '儲存週報'}
-                    </Button>
+                    </div>
                 </div>
             </form>
         </AppLayout>
