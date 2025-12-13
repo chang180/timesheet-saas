@@ -8,6 +8,7 @@ use App\Models\Company;
 use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -21,6 +22,11 @@ class MemberController extends Controller
         $user = $request->user();
 
         if (! $user || ! $user->belongsToCompany($company->getKey())) {
+            Log::warning('User not allowed to access tenant', [
+                'user_id' => $user?->id,
+                'user_company_id' => $user?->company_id,
+                'requested_company_id' => $company->getKey(),
+            ]);
             abort(403, __('You are not allowed to access this tenant.'));
         }
 
@@ -54,24 +60,28 @@ class MemberController extends Controller
             $query->where('team_id', $user->team_id);
         } else {
             // 一般成員無法查看其他成員列表
+            Log::warning('User does not have permission to view members', [
+                'user_id' => $user->id,
+                'user_role' => $user->role,
+            ]);
             abort(403, __('You do not have permission to view members.'));
         }
 
         $filters = $request->validated();
 
-        if (isset($filters['role'])) {
+        if (isset($filters['role']) && $filters['role'] !== '' && $filters['role'] !== 'all') {
             $query->where('role', $filters['role']);
         }
 
-        if (isset($filters['division_id'])) {
+        if (isset($filters['division_id']) && $filters['division_id'] !== '' && $filters['division_id'] !== 'all') {
             $query->where('division_id', $filters['division_id']);
         }
 
-        if (isset($filters['department_id'])) {
+        if (isset($filters['department_id']) && $filters['department_id'] !== '' && $filters['department_id'] !== 'all') {
             $query->where('department_id', $filters['department_id']);
         }
 
-        if (isset($filters['team_id'])) {
+        if (isset($filters['team_id']) && $filters['team_id'] !== '' && $filters['team_id'] !== 'all') {
             $query->where('team_id', $filters['team_id']);
         }
 
@@ -108,7 +118,7 @@ class MemberController extends Controller
                 'last_active_at' => $member->last_active_at?->toIso8601String(),
                 'invitation_sent_at' => $member->invitation_sent_at?->toIso8601String(),
                 'invitation_accepted_at' => $member->invitation_accepted_at?->toIso8601String(),
-            ]),
+            ])->values()->all(),
             'pagination' => [
                 'current_page' => $members->currentPage(),
                 'last_page' => $members->lastPage(),

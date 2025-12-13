@@ -67,10 +67,10 @@ export default function MemberManagementPage(props: PageProps) {
         total: 0,
     });
     const [filters, setFilters] = useState({
-        role: '',
-        division_id: '',
-        department_id: '',
-        team_id: '',
+        role: 'all',
+        division_id: 'all',
+        department_id: 'all',
+        team_id: 'all',
         keyword: '',
     });
     const [inviteDialogOpen, setInviteDialogOpen] = useState(false);
@@ -87,20 +87,20 @@ export default function MemberManagementPage(props: PageProps) {
                 per_page: '15',
             });
 
-            if (filters.role) {
+            if (filters.role && filters.role !== 'all') {
                 params.append('role', filters.role);
             }
-            if (filters.division_id) {
+            if (filters.division_id && filters.division_id !== 'all') {
                 params.append('division_id', filters.division_id);
             }
-            if (filters.department_id) {
+            if (filters.department_id && filters.department_id !== 'all') {
                 params.append('department_id', filters.department_id);
             }
-            if (filters.team_id) {
+            if (filters.team_id && filters.team_id !== 'all') {
                 params.append('team_id', filters.team_id);
             }
-            if (filters.keyword) {
-                params.append('keyword', filters.keyword);
+            if (filters.keyword && filters.keyword.trim() !== '') {
+                params.append('keyword', filters.keyword.trim());
             }
 
             const url = membersApi.index.url({ company: companySlug }) + '?' + params.toString();
@@ -113,8 +113,18 @@ export default function MemberManagementPage(props: PageProps) {
             }
 
             const data = await response.json();
-            setMembers(data.members);
-            setPagination(data.pagination);
+            
+            // 確保 members 是數組
+            const membersArray = Array.isArray(data.members) ? data.members : [];
+            const paginationData = data.pagination || {
+                current_page: 1,
+                last_page: 1,
+                per_page: 15,
+                total: 0,
+            };
+            
+            setMembers(membersArray);
+            setPagination(paginationData);
         } catch (error) {
             console.error('Error fetching members:', error);
         } finally {
@@ -124,7 +134,8 @@ export default function MemberManagementPage(props: PageProps) {
 
     useEffect(() => {
         fetchMembers(1);
-    }, [filters, companySlug]);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [filters.role, filters.division_id, filters.department_id, filters.team_id, filters.keyword, companySlug]);
 
     const handleInviteSuccess = () => {
         setInviteDialogOpen(false);
@@ -203,7 +214,7 @@ export default function MemberManagementPage(props: PageProps) {
                                 <Select
                                     value={filters.role || 'all'}
                                     onValueChange={(value) =>
-                                        setFilters({ ...filters, role: value === 'all' ? '' : value })
+                                        setFilters({ ...filters, role: value === 'all' ? 'all' : value })
                                     }
                                 >
                                     <SelectTrigger>
@@ -225,7 +236,7 @@ export default function MemberManagementPage(props: PageProps) {
                                 <Select
                                     value={filters.division_id || 'all'}
                                     onValueChange={(value) =>
-                                        setFilters({ ...filters, division_id: value === 'all' ? '' : value, department_id: '', team_id: '' })
+                                        setFilters({ ...filters, division_id: value === 'all' ? 'all' : value, department_id: 'all', team_id: 'all' })
                                     }
                                 >
                                     <SelectTrigger>
@@ -245,9 +256,9 @@ export default function MemberManagementPage(props: PageProps) {
                                 <Select
                                     value={filters.department_id || 'all'}
                                     onValueChange={(value) =>
-                                        setFilters({ ...filters, department_id: value === 'all' ? '' : value, team_id: '' })
+                                        setFilters({ ...filters, department_id: value === 'all' ? 'all' : value, team_id: 'all' })
                                     }
-                                    disabled={!filters.division_id}
+                                    disabled={!filters.division_id || filters.division_id === 'all'}
                                 >
                                     <SelectTrigger>
                                         <SelectValue placeholder="所有部門" />
