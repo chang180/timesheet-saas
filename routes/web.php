@@ -9,6 +9,13 @@ use Inertia\Inertia;
 Route::get('/', [App\Http\Controllers\LandingController::class, 'global'])
     ->name('home');
 
+// 租戶註冊路由（公開，不需要認證）
+Route::prefix('app/{company:slug}')
+    ->middleware('tenant')
+    ->group(function () {
+        Route::get('register', [App\Http\Controllers\Tenant\TenantRegisterController::class, 'show'])->name('tenant.register');
+    });
+
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('dashboard', function (Request $request) {
         $user = $request->user();
@@ -30,6 +37,17 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('app', function (Request $request) {
         $user = $request->user();
         $company = $user?->company;
+
+        // 檢查是否為租戶註冊後的重定向
+        $tenantSlug = $request->session()->pull('tenant_registration_company_slug');
+        if ($tenantSlug && $company && $company->slug === $tenantSlug) {
+            $isManager = in_array($user->role, ['owner', 'admin', 'company_admin'], true);
+            if ($isManager && $company->onboarded_at === null) {
+                return redirect()->route('tenant.settings', $company);
+            }
+
+            return redirect()->route('tenant.home', $company);
+        }
 
         if (! $company) {
             return redirect()->route('landing.global');

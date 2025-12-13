@@ -1,6 +1,9 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Building2, Users, Link as LinkIcon } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Building2, Users, Link as LinkIcon, Copy, Check } from 'lucide-react';
+import { useState } from 'react';
+import tenantRoutes from '@/routes/tenant';
 
 interface CompanyInfoCardProps {
     companyName: string;
@@ -17,6 +20,25 @@ export function CompanyInfoCard({
 }: CompanyInfoCardProps) {
     const usagePercentage = (currentUserCount / maxUserLimit) * 100;
     const isNearLimit = usagePercentage >= 80;
+    const [copied, setCopied] = useState(false);
+    
+    // 安全地獲取註冊 URL
+    const registrationUrl = tenantRoutes?.register?.url 
+        ? tenantRoutes.register.url({ company: companySlug })
+        : `/app/${companySlug}/register`;
+    const fullRegistrationUrl = typeof window !== 'undefined' 
+        ? `${window.location.origin}${registrationUrl}`
+        : registrationUrl;
+
+    const handleCopy = async () => {
+        try {
+            await navigator.clipboard.writeText(fullRegistrationUrl);
+            setCopied(true);
+            setTimeout(() => setCopied(false), 2000);
+        } catch (err) {
+            console.error('Failed to copy:', err);
+        }
+    };
 
     return (
         <Card>
@@ -37,14 +59,31 @@ export function CompanyInfoCard({
 
                     <div className="space-y-2">
                         <div className="text-sm font-medium text-muted-foreground">
-                            公司網址
+                            公司註冊網址
                         </div>
                         <div className="flex items-center gap-2">
-                            <LinkIcon className="h-4 w-4 text-muted-foreground" />
-                            <code className="text-sm font-mono bg-muted px-2 py-1 rounded">
-                                {companySlug}.test
+                            <LinkIcon className="h-4 w-4 text-muted-foreground shrink-0" />
+                            <code className="text-sm font-mono bg-muted px-2 py-1 rounded flex-1 truncate">
+                                {fullRegistrationUrl}
                             </code>
+                            <Button
+                                type="button"
+                                variant="ghost"
+                                size="sm"
+                                className="h-8 w-8 p-0 shrink-0"
+                                onClick={handleCopy}
+                                title="複製網址"
+                            >
+                                {copied ? (
+                                    <Check className="h-4 w-4 text-emerald-600" />
+                                ) : (
+                                    <Copy className="h-4 w-4" />
+                                )}
+                            </Button>
                         </div>
+                        <p className="text-xs text-muted-foreground">
+                            分享此網址給團隊成員，他們可透過此頁面註冊並自動加入公司
+                        </p>
                     </div>
 
                     <div className="space-y-2">

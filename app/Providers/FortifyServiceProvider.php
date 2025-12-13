@@ -13,6 +13,7 @@ use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Str;
 use Inertia\Inertia;
+use Laravel\Fortify\Contracts\RegisterResponse;
 use Laravel\Fortify\Features;
 use Laravel\Fortify\Fortify;
 
@@ -23,7 +24,28 @@ class FortifyServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        //
+        // 自訂註冊後的重定向邏輯
+        $this->app->instance(RegisterResponse::class, new class implements RegisterResponse
+        {
+            public function toResponse($request)
+            {
+                $user = $request->user();
+
+                if (! $user) {
+                    return redirect(config('fortify.home', '/app'));
+                }
+
+                // 檢查是否為租戶註冊
+                $tenantSlug = $request->session()->pull('tenant_registration_company_slug');
+                if ($tenantSlug && $user->company && $user->company->slug === $tenantSlug) {
+                    // 租戶註冊：重定向到租戶首頁
+                    return redirect()->route('tenant.home', $user->company);
+                }
+
+                // 一般註冊：使用默認重定向
+                return redirect(config('fortify.home', '/app'));
+            }
+        });
     }
 
     /**
