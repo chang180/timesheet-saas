@@ -86,18 +86,29 @@ const toFormItem = (
     prefix: string,
     index: number,
     defaults: { hours_spent?: number; planned_hours?: number | null } = {},
-): WeeklyReportItemInput => ({
-    id: item.id,
-    localKey: `${prefix}-${item.id ?? `new-${index}`}-${Date.now()}`,
-    title: item.title ?? '',
-    content: item.content ?? '',
-    hours_spent: item.hours_spent ?? defaults.hours_spent ?? 0,
-    planned_hours: item.planned_hours ?? defaults.planned_hours ?? null,
-    issue_reference: item.issue_reference ?? '',
-    is_billable: item.is_billable ?? false,
-    tags: item.tags ?? [],
-    tagsText: (item.tags ?? []).join(', '),
-});
+): WeeklyReportItemInput => {
+    // 確保 hours_spent 和 planned_hours 始終是數字類型，避免後端返回字符串時導致計算錯誤
+    const hoursSpent = item.hours_spent ?? defaults.hours_spent ?? 0;
+    const plannedHours = item.planned_hours ?? defaults.planned_hours ?? null;
+
+    return {
+        id: item.id,
+        localKey: `${prefix}-${item.id ?? `new-${index}`}-${Date.now()}`,
+        title: item.title ?? '',
+        content: item.content ?? '',
+        hours_spent: typeof hoursSpent === 'number' ? hoursSpent : Number(hoursSpent) || 0,
+        planned_hours:
+            plannedHours === null || plannedHours === undefined
+                ? null
+                : typeof plannedHours === 'number'
+                  ? plannedHours
+                  : Number(plannedHours) || null,
+        issue_reference: item.issue_reference ?? '',
+        is_billable: item.is_billable ?? false,
+        tags: item.tags ?? [],
+        tagsText: (item.tags ?? []).join(', '),
+    };
+};
 
 type SortableCurrentWeekRowProps = {
     item: WeeklyReportItemInput;
