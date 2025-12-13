@@ -50,49 +50,48 @@
 ## 3. 後端多租戶核心
 
 ### 3.1 中介層與 Context
-- 實作 `EnsureTenantScope` Middleware：
+- ✅ 實作 `EnsureTenantScope` Middleware：
   - 解析 URL 中的 `{company_slug}`，載入公司資料與設定。
   - 檢查租戶狀態（active/suspended），非 active 導向停用頁。
   - 將 `TenantContext` 注入 `app()` 或 Request attribute。
-- 前台 API Route group 改為 `Route::prefix('api/v1/{company:slug}')` 搭配 model binding。
+- ✅ 前台 API Route group 改為 `Route::prefix('api/v1/{company:slug}')` 搭配 model binding。
 
 ### 3.2 認證流程
-- 啟用 Sanctum SPA 流程，確認 CSRF Cookie 與 `stateful` 網域設定。
-- 建立租戶端認證 API：
-  - `POST /auth/login`
-  - `POST /auth/two-factor-challenge`
-  - `POST /auth/logout`
-  - `POST /auth/register`（檢查 `user_limit`，完成 email 驗證即啟用）
-  - `POST /auth/invitations/accept`
-- HQ Portal 以獨立 Route Prefix `api/v1/hq` 並限制 `hq_admin` 角色。
+- ✅ 啟用 Sanctum SPA 流程，確認 CSRF Cookie 與 `stateful` 網域設定。
+- ✅ 使用 Laravel Fortify 處理認證流程（非獨立 API 路由）：
+  - 登入：透過 Fortify 的 `authenticateUsing` 回調，自動檢查 `TenantContext` 並限制在同一租戶內
+  - 註冊：透過 `CreateNewUser` Action，自動建立新公司與公司管理者帳號
+  - 兩階段驗證、密碼重設等功能由 Fortify 內建處理
+- ⚠️ 邀請接受流程：`POST /api/v1/{company_slug}/auth/invitations/accept` API 尚未實作（待補完）
+- ⚠️ HQ Portal 以獨立 Route Prefix `api/v1/hq` 並限制 `hq_admin` 角色（路由已預留，功能待實作）
 
 ### 3.3 模型與 Policy
-- 定義模型關聯、Observer（自動填入 `company_id`, `work_year`, `work_week` 等欄位）。
-- 建立 Policy：
+- ✅ 定義模型關聯、Observer（自動填入 `company_id`, `work_year`, `work_week` 等欄位）。
+- ✅ 建立 Policy：
   - `WeeklyReportPolicy`（包含 `viewAny`, `view`, `create`, `update`, `submit`, `reopen`, `delete`, `export`）
   - `DivisionPolicy`, `DepartmentPolicy`, `TeamPolicy`
-- 建立 `TenantContext` 類別，提供 `companyId()`, `divisionId()` 等 helper。
+- ✅ 建立 `TenantContext` 類別，提供 `companyId()`, `divisionId()` 等 helper。
 
 **驗收檢查**
-- 以 Postman/Insomnia 針對租戶 API 進行基礎 CRUD 測試，確認 slug 驗證與角色授權。
-- 自助註冊在達到人數上限時回傳專用錯誤碼。
+- ✅ 以 Postman/Insomnia 針對租戶 API 進行基礎 CRUD 測試，確認 slug 驗證與角色授權。
+- ✅ 自助註冊在達到人數上限時回傳專用錯誤碼。
 
 ## 4. 組織與歡迎頁設定 API
 
 完成下列 API 端點與測試（可用 Feature Test）：
 
-| 功能 | Method & Path | 說明 |
-|------|---------------|------|
-| 取得租戶設定 | `GET /api/v1/{company_slug}/settings` | 返回品牌、層級、歡迎頁、IP 白名單 |
-| 更新歡迎頁 | `PUT /api/v1/{company_slug}/welcome-page` | 驗證模組 JSON 結構、限制步驟數與影片 URL |
-| 更新 IP 白名單 | `PUT /api/v1/{company_slug}/settings/ip-whitelist` | 最多 5 組，空陣列代表全開放 |
-| 邀請成員 | `POST /api/v1/{company_slug}/members/invite` | 寄送邀請信、檢查人數上限 |
-| 更新成員角色 | `PATCH /api/v1/{company_slug}/members/{id}/roles` | 限公司管理者操作 |
-| 預留審核 API | `POST /api/v1/{company_slug}/members/{id}/approve` | 目前回傳 404，供未來擴充 |
+| 功能 | Method & Path | 說明 | 狀態 |
+|------|---------------|------|------|
+| 取得租戶設定 | `GET /api/v1/{company_slug}/settings` | 返回品牌、層級、歡迎頁、IP 白名單 | ✅ 已完成 |
+| 更新歡迎頁 | `PUT /api/v1/{company_slug}/welcome-page` | 驗證模組 JSON 結構、限制步驟數與影片 URL | ✅ 已完成 |
+| 更新 IP 白名單 | `PUT /api/v1/{company_slug}/settings/ip-whitelist` | 最多 5 組，空陣列代表全開放 | ✅ 已完成 |
+| 邀請成員 | `POST /api/v1/{company_slug}/members/invite` | 建立成員帳號（隨機密碼）、檢查人數上限 | ✅ 已完成（註：目前僅建立帳號，未發送邀請信） |
+| 更新成員角色 | `PATCH /api/v1/{company_slug}/members/{id}/roles` | 限公司管理者操作 | ✅ 已完成 |
+| 預留審核 API | `POST /api/v1/{company_slug}/members/{id}/approve` | 目前回傳 404，供未來擴充 | ⚠️ 預留 |
 
 **驗收檢查**
-- 所有 API 均透過 `FormRequest` 驗證。
-- 單元測試涵蓋：歡迎頁 JSON schema、IP 白名單範圍（IPv4/IPv6/CIDR）、人數上限競態。
+- ✅ 所有 API 均透過 `FormRequest` 驗證。
+- ✅ 單元測試涵蓋：歡迎頁 JSON schema、IP 白名單範圍（IPv4/IPv6/CIDR）、人數上限競態。
 
 ## 5. 文件與交付
 
@@ -108,6 +107,14 @@
 - ✅ 補充 `README.md` 與 `docs/README.md`，新增 `tests/Feature/Tenant/SettingsTest.php` 覆蓋主要驗收案例。
 - ⚠️ 目前測試需 PHP ≥ 8.3，若環境為 8.2 會在 `php artisan test` 時遇到 typed constant 解析錯誤。
 
+### 2025-12-13 更新（現況盤點）
+
+- ✅ 認證流程：已透過 Laravel Fortify 實作，支援租戶範圍的登入驗證
+- ✅ 自助註冊：已實作，會自動建立新公司與公司管理者帳號
+- ⚠️ 組織層級管理：Division/Department/Team 的 CRUD API 尚未實作（待補完）
+- ⚠️ 成員管理前端：後端 API 已完成，但前端頁面尚未建立（待補完）
+- ⚠️ 邀請接受流程：`POST /api/v1/{company_slug}/auth/invitations/accept` API 尚未實作（待補完）
+
 ## 6. 風險與待確認事項
 
 - **租戶資料隔離**：若未來需切換成多資料庫策略，需在此階段保留封裝層（Repository / Service）。
@@ -116,4 +123,3 @@
 - **測試資料清理**：Seeders 需標記範例資料，避免與正式資料混淆。
 
 > 完成以上任務後，即可進入 Phase 2 進行前端開發與 UI/UX 規劃。
-

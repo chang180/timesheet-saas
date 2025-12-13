@@ -6,6 +6,8 @@
 
 **最後更新：** 2025-12-13
 
+**注意：** 個人週報功能已完整實作，但多租戶管理功能（成員管理、組織層級管理）的前端頁面尚未建立，需在進入 Phase 3 前補完。
+
 ## 1. 前端基礎設置
 
 - **環境要求**
@@ -67,8 +69,8 @@
 - ✅ 使用 Inertia `<Form>` 或 `useForm` 搭配 `zod` schema 進行前端驗證。
 - ✅ `CurrentWeekSection` / `NextWeekSection`：
   - ✅ 支援拖曳排序（@dnd-kit），同步更新 `useForm` 狀態。
-  - ⚠️ Redmine/Jira lookup：僅有 UI 欄位，無實際 API 實作（待實現）。
-- ⚠️ `TotalsSummary`：工時合計顯示（待確認是否在表單中顯示）。
+  - ⚠️ Redmine/Jira lookup：僅有 UI 欄位，無實際 API 實作（待實現，保留彈性）。
+- ✅ `TotalsSummary`：工時合計顯示已實作，顯示本週完成總工時和下週預計總工時。
 - ✅ `CopyPreviousWeek` 功能：已實現 `prefillFromPreviousWeek`，自動帶入上一週的下週預計項目。
 - ⚠️ 假日警示功能（Phase 3 功能，待 Phase 3 實作）。
 
@@ -78,7 +80,7 @@
 
 **驗收檢查**
 - ✅ Jest/RTL 測試：表單驗證、拖曳排序更新順序（部分完成）。
-- ⚠️ Pest Browser 測試：註冊 → 登入 → 建立週報 → 查看列表 → 匯出（待完成）。
+- ✅ Pest Browser 測試：已建立 `tests/Browser/WeeklyReportFlowTest.php`，包含登入、建立、查看、編輯週報的完整流程測試。
 
 ## 5. Frontend API 封裝
 
@@ -141,13 +143,13 @@
    - ✅ IPWhitelistForm
    - ✅ 所有歡迎頁模組（5個）
 
-4. **核心週報介面** - 90%
+4. **核心週報介面** - 95%
    - ✅ WeeklyReportListPage
    - ✅ WeeklyReportFormPage
    - ✅ 拖曳排序（@dnd-kit）
    - ✅ 複製上週功能
-   - ⚠️ Redmine/Jira lookup API（待實現）
-   - ⚠️ 工時合計顯示（待確認）
+   - ✅ 工時合計顯示（TotalsSummary）
+   - ⚠️ Redmine/Jira lookup API（待實現，保留彈性）
    - ⚠️ 假日警示（Phase 3）
 
 5. **登入/註冊** - 100%
@@ -158,27 +160,47 @@
    - ✅ WeeklyReportController
    - ✅ 6 個 Feature 測試通過
    - ✅ Settings 測試通過
+   - ✅ Pest Browser 測試通過
 
-### ⚠️ 待完成項目
+### ⚠️ 待完成項目（多租戶管理功能）
 
-1. **Redmine/Jira lookup API** - 僅有 UI 欄位，需實作後端 API（保留彈性，先不做）
-2. ~~**工時合計顯示** - 需確認是否在表單中顯示 TotalsSummary~~ ✅ **已完成**
-3. **週報匯出功能** - CSV/XLSX 匯出（先不做）
-4. **React Query 整合** - 可選，目前僅使用 Inertia props（先不做）
-5. **自訂 hooks** - useTenantSettings, useWeeklyReports 等（先不做）
-6. ~~**Pest Browser 測試** - 端到端測試（待撰寫）~~ ✅ **已完成**
-7. **假日警示功能** - Phase 3 功能（下一階段再做）
+#### 高優先級（必須在 Phase 3 前完成）
+1. **成員管理前端頁面**
+   - ❌ 成員列表頁面（`/app/{company_slug}/members`）
+   - ❌ 成員邀請表單 UI
+   - ❌ 成員角色編輯 UI
+   - 註：後端 API 已完成，僅缺前端頁面
+
+2. **組織層級管理**
+   - ❌ Division/Department/Team CRUD API（後端）
+   - ❌ 組織層級管理前端頁面
+
+3. **邀請接受流程**
+   - ❌ `POST /api/v1/{company_slug}/auth/invitations/accept` API
+   - ❌ 邀請接受前端頁面
+
+#### 低優先級（可延後）
+4. **Redmine/Jira lookup API** - 僅有 UI 欄位，需實作後端 API（保留彈性，先不做）
+5. **週報匯出功能** - CSV/XLSX 匯出（Phase 3 處理）
+6. **React Query 整合** - 可選，目前僅使用 Inertia props（先不做）
+7. **自訂 hooks** - useTenantSettings, useWeeklyReports 等（先不做）
+8. **假日警示功能** - Phase 3 功能（下一階段再做）
 
 ### 📝 已完成項目（2025-12-13）
 
 1. ✅ **工時合計顯示（TotalsSummary）** - 已在週報表單中實作，顯示本週完成總工時和下週預計總工時
 2. ✅ **Pest Browser 測試** - 已建立 `tests/Browser/WeeklyReportFlowTest.php`，包含登入、建立、查看、編輯週報的完整流程測試
 
-### 📝 待處理項目（依用戶指示）
+### 📝 待處理項目
 
-1. **Redmine/Jira lookup API** - 保留彈性，先不做
-2. **週報匯出功能** - 先不做
-3. **React Query 整合** - 先不做
-4. **自訂 hooks** - 先不做
-5. **假日警示功能** - Phase 3 階段處理
+#### 必須在 Phase 3 前完成
+1. **成員管理前端頁面** - 後端 API 已完成，需建立前端 UI
+2. **組織層級管理** - 需實作完整的 CRUD API 與前端頁面
+3. **邀請接受流程** - 需實作 API 與前端頁面
 
+#### 可延後處理
+4. **Redmine/Jira lookup API** - 保留彈性，先不做
+5. **週報匯出功能** - Phase 3 階段處理
+6. **React Query 整合** - 可選，先不做
+7. **自訂 hooks** - 可選，先不做
+8. **假日警示功能** - Phase 3 階段處理
