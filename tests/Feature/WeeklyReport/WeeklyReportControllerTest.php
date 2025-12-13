@@ -94,7 +94,8 @@ it('prefills create page with previous next week plans', function () {
         ->assertInertia(fn (AssertableInertia $page) => $page
             ->component('weekly/form')
             ->where('prefill.currentWeek.0.title', '準備 API 試跑')
-            ->where('prefill.currentWeek.0.hours_spent', 5)
+            ->where('prefill.currentWeek.0.hours_spent', 0) // 實際工時初始為0
+            ->where('prefill.currentWeek.0.planned_hours', 5) // 預計工時從上週帶入
         );
 });
 
@@ -207,5 +208,112 @@ it('updates weekly report items', function () {
     expect($report->items()->count())->toBe(2);
     expect($report->items()->where('type', WeeklyReportItem::TYPE_CURRENT_WEEK)->first()->title)->toBe('調整授權流程');
     expect($report->summary)->toBe('更新週報內容');
+});
+
+it('stores weekly report with planned_hours for current week items', function () {
+    $user = createUserWithCompany(['role' => 'member'], ['onboarded_at' => now()]);
+    $company = $user->company;
+
+    $payload = [
+        'work_year' => now()->isoFormat('GGGG'),
+        'work_week' => now()->isoWeek(),
+        'summary' => '測試預計工時',
+        'current_week' => [
+            [
+                'title' => '功能開發',
+                'content' => '實作新功能',
+                'hours_spent' => 8.0,
+                'planned_hours' => 6.0,
+                'tags' => [],
+            ],
+        ],
+        'next_week' => [],
+    ];
+
+    $response = actingAs($user)->post(route('tenant.weekly-reports.store', $company), $payload);
+
+    $response->assertRedirect();
+
+    $report = WeeklyReport::query()->where('company_id', $company->id)->where('user_id', $user->id)->first();
+    $currentWeekItem = $report->items()->where('type', WeeklyReportItem::TYPE_CURRENT_WEEK)->first();
+    expect($currentWeekItem->planned_hours)->toBe(6.0);
+    expect($currentWeekItem->hours_spent)->toBe(8.0);
+});
+
+it('submits weekly report and updates status', function () {
+    $user = createUserWithCompany(['role' => 'member'], ['onboarded_at' => now()]);
+    $company = $user->company;
+
+    $report = WeeklyReport::factory()
+        ->forCompany($company, $user)
+        ->create([
+            'work_year' => now()->isoFormat('GGGG'),
+            'work_week' => now()->isoWeek(),
+            'status' => WeeklyReport::STATUS_DRAFT,
+        ]);
+
+    $response = actingAs($user)->post(route('tenant.weekly-reports.submit', [$company, $report]));
+
+    $response->assertRedirect(route('tenant.weekly-reports.edit', [$company, $report]));
+
+    $report->refresh();
+    expect($report->status)->toBe(WeeklyReport::STATUS_SUBMITTED);
+    expect($report->submitted_at)->not->toBeNull();
+    expect($report->submitted_by)->toBe($user->id);
+});
+
+it('prevents submitting non-draft weekly report', function () {
+    $user = createUserWithCompany(['role' => 'member'], ['onboarded_at' => now()]);
+    $company = $user->company;
+
+    $report = WeeklyReport::factory()
+        ->forCompany($company, $user)
+        ->create([
+            'work_year' => now()->isoFormat('GGGG'),
+            'work_week' => now()->isoWeek(),
+            'status' => WeeklyReport::STATUS_SUBMITTED,
+        ]);
+
+    $response = actingAs($user)->post(route('tenant.weekly-reports.submit', [$company, $report]));
+
+    $response->assertRedirect(route('tenant.weekly-reports.edit', [$company, $report]));
+    $response->assertSessionHas('warning');
+});
+
+it('renders preview page for weekly report', function () {
+    $user = createUserWithCompany(['role' => 'member'], ['onboarded_at' => now()]);
+    $company = $user->company;
+
+    $report = WeeklyReport::create([
+        'company_id' => $company->id,
+        'user_id' => $user->id,
+        'division_id' => $user->division_id,
+        'department_id' => $user->department_id,
+        'team_id' => $user->team_id,
+        'work_year' => (int) now()->isoFormat('GGGG'),
+        'work_week' => (int) now()->isoWeek(),
+        'status' => WeeklyReport::STATUS_DRAFT,
+        'summary' => '預覽測試摘要',
+    ]);
+
+    WeeklyReportItem::create([
+        'weekly_report_id' => $report->id,
+        'type' => WeeklyReportItem::TYPE_CURRENT_WEEK,
+        'sort_order' => 0,
+        'title' => '完成功能開發',
+        'hours_spent' => 8.0,
+        'planned_hours' => 6.0,
+    ]);
+
+    $response = actingAs($user)->get(route('tenant.weekly-reports.preview', [$company, $report]));
+
+    $response->assertOk()
+        ->assertInertia(fn (AssertableInertia $page) => $page
+            ->component('weekly/preview')
+            ->where('report.summary', '預覽測試摘要')
+            ->where('report.currentWeek.0.title', '完成功能開發')
+            ->where('report.currentWeek.0.hours_spent', 8)
+            ->where('report.currentWeek.0.planned_hours', 6)
+        );
 });
 

@@ -44,6 +44,15 @@ class WeeklyReportController extends Controller
         $currentWeek = CarbonImmutable::now($company->timezone ?? config('app.timezone'))
             ->startOfWeek();
 
+        $currentYear = (int) $currentWeek->isoFormat('GGGG');
+        $currentWeekNumber = (int) $currentWeek->isoWeek();
+
+        $weekDateRange = $this->getWeekDateRange(
+            $currentYear,
+            $currentWeekNumber,
+            $company->timezone ?? config('app.timezone'),
+        );
+
         return Inertia::render('weekly/list', [
             'reports' => $reports,
             'company' => [
@@ -52,9 +61,10 @@ class WeeklyReportController extends Controller
                 'name' => $company->name,
             ],
             'defaults' => [
-                'year' => (int) $currentWeek->isoFormat('GGGG'),
-                'week' => (int) $currentWeek->isoWeek(),
+                'year' => $currentYear,
+                'week' => $currentWeekNumber,
             ],
+            'weekDateRange' => $weekDateRange,
         ]);
     }
 
@@ -83,6 +93,24 @@ class WeeklyReportController extends Controller
 
         $prefill = $this->prefillFromPreviousWeek($company, $user->id, $year, $week);
 
+        $weekDateRange = $this->getWeekDateRange(
+            $year,
+            $week,
+            $company->timezone ?? config('app.timezone'),
+        );
+
+        // 計算下一週的日期範圍
+        $nextWeekDate = CarbonImmutable::now($company->timezone ?? config('app.timezone'))
+            ->setISODate($year, $week)
+            ->addWeek();
+        $nextWeekYear = (int) $nextWeekDate->isoFormat('GGGG');
+        $nextWeekNumber = (int) $nextWeekDate->isoWeek();
+        $nextWeekDateRange = $this->getWeekDateRange(
+            $nextWeekYear,
+            $nextWeekNumber,
+            $company->timezone ?? config('app.timezone'),
+        );
+
         return Inertia::render('weekly/form', [
             'mode' => 'create',
             'report' => null,
@@ -95,6 +123,8 @@ class WeeklyReportController extends Controller
                 'year' => $year,
                 'week' => $week,
             ],
+            'weekDateRange' => $weekDateRange,
+            'nextWeekDateRange' => $nextWeekDateRange,
             'prefill' => $prefill,
         ]);
     }
@@ -155,6 +185,24 @@ class WeeklyReportController extends Controller
 
         $weeklyReport->load('items');
 
+        $weekDateRange = $this->getWeekDateRange(
+            $weeklyReport->work_year,
+            $weeklyReport->work_week,
+            $company->timezone ?? config('app.timezone'),
+        );
+
+        // 計算下一週的日期範圍
+        $nextWeekDate = CarbonImmutable::now($company->timezone ?? config('app.timezone'))
+            ->setISODate($weeklyReport->work_year, $weeklyReport->work_week)
+            ->addWeek();
+        $nextWeekYear = (int) $nextWeekDate->isoFormat('GGGG');
+        $nextWeekNumber = (int) $nextWeekDate->isoWeek();
+        $nextWeekDateRange = $this->getWeekDateRange(
+            $nextWeekYear,
+            $nextWeekNumber,
+            $company->timezone ?? config('app.timezone'),
+        );
+
         return Inertia::render('weekly/form', [
             'mode' => 'edit',
             'report' => [
@@ -181,6 +229,8 @@ class WeeklyReportController extends Controller
                 'year' => $weeklyReport->work_year,
                 'week' => $weeklyReport->work_week,
             ],
+            'weekDateRange' => $weekDateRange,
+            'nextWeekDateRange' => $nextWeekDateRange,
             'prefill' => [
                 'currentWeek' => [],
                 'nextWeek' => [],
@@ -212,6 +262,95 @@ class WeeklyReportController extends Controller
             ->with('success', '週報已更新。');
     }
 
+    public function submit(Request $request, Company $company, WeeklyReport $weeklyReport): RedirectResponse
+    {
+        $user = $request->user();
+        $this->assertBelongsToCompany($user->company_id ?? null, $company);
+
+        if ($weeklyReport->user_id !== $user->id) {
+            abort(403, '無權限存取此週報');
+        }
+
+        if ($weeklyReport->status !== WeeklyReport::STATUS_DRAFT) {
+            return redirect()
+                ->route('tenant.weekly-reports.edit', [$company, $weeklyReport])
+                ->with('warning', '只有草稿狀態的週報可以發佈。');
+        }
+
+        $weeklyReport->update([
+            'status' => WeeklyReport::STATUS_SUBMITTED,
+            'submitted_at' => now(),
+            'submitted_by' => $user->id,
+        ]);
+
+        return redirect()
+            ->route('tenant.weekly-reports.edit', [$company, $weeklyReport])
+            ->with('success', '週報已成功發佈。');
+    }
+
+    public function preview(Request $request, Company $company, WeeklyReport $weeklyReport): Response|RedirectResponse
+    {
+        $user = $request->user();
+        $this->assertBelongsToCompany($user->company_id ?? null, $company);
+
+        if ($weeklyReport->user_id !== $user->id) {
+            abort(403, '無權限存取此週報');
+        }
+
+        if ($redirect = $this->ensureOnboarded($company, $user->role ?? null)) {
+            return $redirect;
+        }
+
+        $weeklyReport->load(['items', 'user']);
+
+        $weekDateRange = $this->getWeekDateRange(
+            $weeklyReport->work_year,
+            $weeklyReport->work_week,
+            $company->timezone ?? config('app.timezone'),
+        );
+
+        // 計算下一週的日期範圍
+        $nextWeekDate = CarbonImmutable::now($company->timezone ?? config('app.timezone'))
+            ->setISODate($weeklyReport->work_year, $weeklyReport->work_week)
+            ->addWeek();
+        $nextWeekYear = (int) $nextWeekDate->isoFormat('GGGG');
+        $nextWeekNumber = (int) $nextWeekDate->isoWeek();
+        $nextWeekDateRange = $this->getWeekDateRange(
+            $nextWeekYear,
+            $nextWeekNumber,
+            $company->timezone ?? config('app.timezone'),
+        );
+
+        return Inertia::render('weekly/preview', [
+            'report' => [
+                'id' => $weeklyReport->id,
+                'workYear' => $weeklyReport->work_year,
+                'workWeek' => $weeklyReport->work_week,
+                'status' => $weeklyReport->status,
+                'summary' => $weeklyReport->summary,
+                'user' => [
+                    'name' => $weeklyReport->user->name,
+                    'email' => $weeklyReport->user->email,
+                ],
+                'currentWeek' => $weeklyReport->items
+                    ->where('type', WeeklyReportItem::TYPE_CURRENT_WEEK)
+                    ->values()
+                    ->map(fn (WeeklyReportItem $item) => $this->transformCurrentItem($item)),
+                'nextWeek' => $weeklyReport->items
+                    ->where('type', WeeklyReportItem::TYPE_NEXT_WEEK)
+                    ->values()
+                    ->map(fn (WeeklyReportItem $item) => $this->transformNextItem($item)),
+            ],
+            'company' => [
+                'id' => $company->id,
+                'slug' => $company->slug,
+                'name' => $company->name,
+            ],
+            'weekDateRange' => $weekDateRange,
+            'nextWeekDateRange' => $nextWeekDateRange,
+        ]);
+    }
+
     private function syncItems(WeeklyReport $report, array $current, array $next): void
     {
         $report->items()->delete();
@@ -225,10 +364,12 @@ class WeeklyReportController extends Controller
                 'title' => $item['title'],
                 'content' => $item['content'],
                 'hours_spent' => $item['hours_spent'],
-                'planned_hours' => null,
+                'planned_hours' => $item['planned_hours'] ?? null,
                 'issue_reference' => $item['issue_reference'],
                 'is_billable' => $item['is_billable'],
                 'tags' => $item['tags'],
+                'started_at' => ! empty($item['started_at']) ? $item['started_at'] : null,
+                'ended_at' => ! empty($item['ended_at']) ? $item['ended_at'] : null,
             ];
         }
 
@@ -243,6 +384,8 @@ class WeeklyReportController extends Controller
                 'issue_reference' => $item['issue_reference'],
                 'is_billable' => false,
                 'tags' => $item['tags'],
+                'started_at' => ! empty($item['started_at']) ? $item['started_at'] : null,
+                'ended_at' => ! empty($item['ended_at']) ? $item['ended_at'] : null,
             ];
         }
 
@@ -296,7 +439,8 @@ class WeeklyReportController extends Controller
                     return [
                         'title' => $plan['title'],
                         'content' => $plan['content'],
-                        'hours_spent' => $plan['hours_spent'],
+                        'hours_spent' => 0, // 實際工時初始為0，由用戶輸入
+                        'planned_hours' => $plan['planned_hours'] ?? 0, // 保留預計工時
                         'issue_reference' => $plan['issue_reference'],
                         'is_billable' => $plan['is_billable'],
                         'tags' => $plan['tags'],
@@ -315,9 +459,12 @@ class WeeklyReportController extends Controller
             'title' => $item->title,
             'content' => $item->content,
             'hours_spent' => $item->hours_spent,
+            'planned_hours' => $item->planned_hours,
             'issue_reference' => $item->issue_reference,
             'is_billable' => $item->is_billable,
             'tags' => $item->tags ?? [],
+            'started_at' => $item->started_at?->format('Y-m-d'),
+            'ended_at' => $item->ended_at?->format('Y-m-d'),
         ];
     }
 
@@ -330,6 +477,8 @@ class WeeklyReportController extends Controller
             'planned_hours' => $item->planned_hours,
             'issue_reference' => $item->issue_reference,
             'tags' => $item->tags ?? [],
+            'started_at' => $item->started_at?->format('Y-m-d'),
+            'ended_at' => $item->ended_at?->format('Y-m-d'),
         ];
     }
 
@@ -367,5 +516,22 @@ class WeeklyReportController extends Controller
         $week = max(1, min(53, $week));
 
         return [$year, $week];
+    }
+
+    /**
+     * 計算 ISO 週的開始日期（週一）和結束日期（週日）
+     *
+     * @return array{startDate: string, endDate: string}
+     */
+    private function getWeekDateRange(int $year, int $week, string $timezone): array
+    {
+        $date = CarbonImmutable::now($timezone)->setISODate($year, $week);
+        $startDate = $date->startOfWeek()->format('Y-m-d');
+        $endDate = $date->endOfWeek()->format('Y-m-d');
+
+        return [
+            'startDate' => $startDate,
+            'endDate' => $endDate,
+        ];
     }
 }

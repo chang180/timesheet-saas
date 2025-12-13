@@ -28,6 +28,10 @@ interface WeeklyReportListProps {
         year: number;
         week: number;
     };
+    weekDateRange?: {
+        startDate: string;
+        endDate: string;
+    };
 }
 
 const STATUS_TEXT: Record<string, string> = {
@@ -176,6 +180,11 @@ export default function WeeklyReportList(props: WeeklyReportListProps) {
                     <div className="flex items-center justify-between">
                         <h2 className="text-lg font-semibold text-foreground">
                             最近週報 · 第 {defaults.year} 年第 {defaults.week} 週
+                            {props.weekDateRange && (
+                                <span className="ml-2 text-sm font-normal text-muted-foreground">
+                                    ({props.weekDateRange.startDate} ~ {props.weekDateRange.endDate})
+                                </span>
+                            )}
                         </h2>
                         <span className="text-xs uppercase text-muted-foreground">
                             共 {reports.length} 筆
@@ -200,47 +209,70 @@ export default function WeeklyReportList(props: WeeklyReportListProps) {
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-border/40 bg-card">
-                                    {reports.map((report) => (
-                                        <tr key={report.id}>
-                                            <td className="px-4 py-3 text-foreground">
-                                                {report.workYear} 年第 {report.workWeek} 週
-                                            </td>
-                                            <td className="px-4 py-3">
-                                                <span className="inline-flex items-center rounded-full bg-muted px-2 py-1 text-xs font-medium uppercase text-muted-foreground">
-                                                    {STATUS_TEXT[report.status] ?? report.status}
-                                                </span>
-                                            </td>
-                                            <td className="px-4 py-3 text-foreground">
-                                                {report.totalHours.toFixed(1)} 小時
-                                            </td>
-                                            <td className="px-4 py-3 text-muted-foreground">
-                                                {report.summary ?? '—'}
-                                            </td>
-                                            <td className="px-4 py-3 text-muted-foreground">
-                                                {report.updatedAt
-                                                    ? new Date(report.updatedAt).toLocaleString()
-                                                    : '—'}
-                                            </td>
-                                            <td className="px-4 py-3 text-right">
-                                                <Button
-                                                    asChild
-                                                    variant="ghost"
-                                                    size="sm"
-                                                    data-testid={`edit-report-${report.id}`}
-                                                >
-                                                    <Link
-                                                        href={weeklyRoutes.edit.url({
-                                                            company: companySlug,
-                                                            weeklyReport: report.id,
-                                                        })}
+                                    {reports.map((report) => {
+                                        // 計算 ISO 週的日期範圍
+                                        // ISO 週從週一開始，週日結束
+                                        const getISOWeeks = (year: number): Date[] => {
+                                            const jan4 = new Date(year, 0, 4);
+                                            const jan4Day = jan4.getDay() || 7;
+                                            const week1Start = new Date(jan4);
+                                            week1Start.setDate(jan4.getDate() - jan4Day + 1);
+                                            return [week1Start];
+                                        };
+
+                                        const week1Start = getISOWeeks(report.workYear)[0];
+                                        const weekStart = new Date(week1Start);
+                                        weekStart.setDate(week1Start.getDate() + (report.workWeek - 1) * 7);
+                                        const weekEnd = new Date(weekStart);
+                                        weekEnd.setDate(weekStart.getDate() + 6);
+                                        const startDateStr = weekStart.toISOString().split('T')[0];
+                                        const endDateStr = weekEnd.toISOString().split('T')[0];
+
+                                        return (
+                                            <tr key={report.id}>
+                                                <td className="px-4 py-3 text-foreground">
+                                                    {report.workYear} 年第 {report.workWeek} 週{' '}
+                                                    <span className="text-xs text-muted-foreground">
+                                                        ({startDateStr} ~ {endDateStr})
+                                                    </span>
+                                                </td>
+                                                <td className="px-4 py-3">
+                                                    <span className="inline-flex items-center rounded-full bg-muted px-2 py-1 text-xs font-medium uppercase text-muted-foreground">
+                                                        {STATUS_TEXT[report.status] ?? report.status}
+                                                    </span>
+                                                </td>
+                                                <td className="px-4 py-3 text-foreground">
+                                                    {report.totalHours.toFixed(1)} 小時
+                                                </td>
+                                                <td className="px-4 py-3 text-muted-foreground">
+                                                    {report.summary ?? '—'}
+                                                </td>
+                                                <td className="px-4 py-3 text-muted-foreground">
+                                                    {report.updatedAt
+                                                        ? new Date(report.updatedAt).toLocaleString()
+                                                        : '—'}
+                                                </td>
+                                                <td className="px-4 py-3 text-right">
+                                                    <Button
+                                                        asChild
+                                                        variant="ghost"
+                                                        size="sm"
+                                                        data-testid={`edit-report-${report.id}`}
                                                     >
-                                                        編輯
-                                                        <ArrowRight className="ml-1 size-4" />
-                                                    </Link>
-                                                </Button>
-                                            </td>
-                                        </tr>
-                                    ))}
+                                                        <Link
+                                                            href={weeklyRoutes.edit.url({
+                                                                company: companySlug,
+                                                                weeklyReport: report.id,
+                                                            })}
+                                                        >
+                                                            編輯
+                                                            <ArrowRight className="ml-1 size-4" />
+                                                        </Link>
+                                                    </Button>
+                                                </td>
+                                            </tr>
+                                        );
+                                    })}
                                 </tbody>
                             </table>
                         </div>

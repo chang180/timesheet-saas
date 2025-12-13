@@ -8,7 +8,7 @@ import { Textarea } from '@/components/ui/textarea';
 import AppLayout from '@/layouts/app-layout';
 import { weeklyReports } from '@/routes/tenant';
 import { type BreadcrumbItem, type SharedData } from '@/types';
-import { Head, Link, useForm, usePage } from '@inertiajs/react';
+import { Head, Link, router, useForm, usePage } from '@inertiajs/react';
 import { ArrowLeft, GripVertical, PlusCircle, Trash2 } from 'lucide-react';
 import {
     DndContext,
@@ -39,6 +39,8 @@ type WeeklyReportItemInput = {
     is_billable?: boolean;
     tags?: string[];
     tagsText?: string;
+    started_at?: string | null;
+    ended_at?: string | null;
 };
 
 interface WeeklyReportFormProps {
@@ -60,6 +62,14 @@ interface WeeklyReportFormProps {
     defaults: {
         year: number;
         week: number;
+    };
+    weekDateRange?: {
+        startDate: string;
+        endDate: string;
+    };
+    nextWeekDateRange?: {
+        startDate: string;
+        endDate: string;
     };
     prefill: {
         currentWeek: Omit<WeeklyReportItemInput, 'localKey' | 'tagsText'>[];
@@ -91,6 +101,18 @@ const toFormItem = (
     const hoursSpent = item.hours_spent ?? defaults.hours_spent ?? 0;
     const plannedHours = item.planned_hours ?? defaults.planned_hours ?? null;
 
+    // 處理日期：如果後端返回的是 ISO 字符串，轉換為 YYYY-MM-DD 格式
+    const formatDate = (date: string | null | undefined): string | null => {
+        if (!date) {
+            return null;
+        }
+        if (typeof date === 'string') {
+            // 如果是 ISO 格式，提取日期部分
+            return date.split('T')[0];
+        }
+        return null;
+    };
+
     return {
         id: item.id,
         localKey: `${prefix}-${item.id ?? `new-${index}`}-${Date.now()}`,
@@ -107,6 +129,8 @@ const toFormItem = (
         is_billable: item.is_billable ?? false,
         tags: item.tags ?? [],
         tagsText: (item.tags ?? []).join(', '),
+        started_at: formatDate(item.started_at),
+        ended_at: formatDate(item.ended_at),
     };
 };
 
@@ -121,9 +145,32 @@ type SortableCurrentWeekRowProps = {
     ) => void;
     removeItem: (type: 'current_week' | 'next_week', index: number) => void;
     getError: (path: string) => string | undefined;
+    weekDateRange?: {
+        startDate: string;
+        endDate: string;
+    };
 };
 
-function SortableCurrentWeekRow({ item, index, updateItem, removeItem, getError }: SortableCurrentWeekRowProps) {
+function SortableCurrentWeekRow({
+    item,
+    index,
+    updateItem,
+    removeItem,
+    getError,
+    weekDateRange,
+}: SortableCurrentWeekRowProps) {
+    // 檢查日期是否為週六或週日
+    const isWeekend = (dateStr: string | null | undefined): boolean => {
+        if (!dateStr) {
+            return false;
+        }
+        const date = new Date(dateStr);
+        const day = date.getDay();
+        return day === 0 || day === 6; // 0 = 週日, 6 = 週六
+    };
+
+    const startedAtIsWeekend = isWeekend(item.started_at);
+    const endedAtIsWeekend = isWeekend(item.ended_at);
     const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
         id: item.localKey,
     });
@@ -135,40 +182,111 @@ function SortableCurrentWeekRow({ item, index, updateItem, removeItem, getError 
     };
 
     return (
-        <tr ref={setNodeRef} style={style} className="hover:bg-muted/20">
-            <td className="px-3 py-2 cursor-move" {...attributes} {...listeners}>
-                <div className="flex items-center justify-center text-muted-foreground">
+        <tr ref={setNodeRef} style={style} className="transition-colors hover:bg-muted/30">
+            <td className="px-4 py-3 cursor-move" {...attributes} {...listeners}>
+                <div className="flex items-center justify-center text-muted-foreground hover:text-foreground">
                     <GripVertical className="size-4" />
                 </div>
             </td>
-            <td className="px-3 py-2">
+            <td className="px-4 py-3">
                 <Input
                     value={item.title}
                     placeholder="任務名稱"
-                    className="min-w-[180px]"
+                    className="min-w-[180px] border-border/60 focus:border-primary focus:ring-primary"
                     data-testid={`current_week.${index}.title`}
                     onChange={(event) => updateItem('current_week', index, 'title', event.target.value)}
                 />
                 <InputError message={getError(`current_week.${index}.title`)} className="mt-1" />
             </td>
-            <td className="px-3 py-2">
+            <td className="px-4 py-3">
                 <Textarea
                     rows={2}
                     value={item.content ?? ''}
                     placeholder="詳細說明"
-                    className="min-w-[200px]"
+                    className="min-w-[200px] border-border/60 focus:border-primary focus:ring-primary"
                     data-testid={`current_week.${index}.content`}
                     onChange={(event) => updateItem('current_week', index, 'content', event.target.value)}
                 />
                 <InputError message={getError(`current_week.${index}.content`)} className="mt-1" />
             </td>
-            <td className="px-3 py-2">
+            <td className="px-4 py-3">
+                <div className="space-y-2">
+                    <div>
+                        <Label htmlFor={`started_at_${item.localKey}`} className="text-xs text-muted-foreground">
+                            開始日期
+                        </Label>
+                        <Input
+                            id={`started_at_${item.localKey}`}
+                            type="date"
+                            value={item.started_at ?? ''}
+                            min={weekDateRange?.startDate}
+                            max={weekDateRange?.endDate}
+                            className={`w-full border-border/60 focus:border-primary focus:ring-primary ${startedAtIsWeekend ? 'bg-yellow-50 dark:bg-yellow-950/20 border-yellow-300 dark:border-yellow-700' : ''} ${item.ended_at && item.started_at && item.started_at > item.ended_at ? 'border-red-500 dark:border-red-500' : ''}`}
+                            onChange={(event) => {
+                                const newStartedAt = event.target.value || null;
+                                updateItem('current_week', index, 'started_at', newStartedAt);
+                                // 如果新的開始日期晚於結束日期，清除結束日期或顯示錯誤
+                                if (newStartedAt && item.ended_at && newStartedAt > item.ended_at) {
+                                    // 保持結束日期，讓後端驗證處理錯誤訊息
+                                }
+                            }}
+                        />
+                        {startedAtIsWeekend && (
+                            <p className="text-xs text-yellow-600 dark:text-yellow-400 mt-1">週末日期</p>
+                        )}
+                    </div>
+                    <div>
+                        <Label htmlFor={`ended_at_${item.localKey}`} className="text-xs text-muted-foreground">
+                            結束日期
+                        </Label>
+                        <Input
+                            id={`ended_at_${item.localKey}`}
+                            type="date"
+                            value={item.ended_at ?? ''}
+                            min={item.started_at || weekDateRange?.startDate}
+                            max={weekDateRange?.endDate}
+                            className={`w-full border-border/60 focus:border-primary focus:ring-primary ${endedAtIsWeekend ? 'bg-yellow-50 dark:bg-yellow-950/20 border-yellow-300 dark:border-yellow-700' : ''} ${item.started_at && item.ended_at && item.ended_at < item.started_at ? 'border-red-500 dark:border-red-500' : ''}`}
+                            onChange={(event) =>
+                                updateItem('current_week', index, 'ended_at', event.target.value || null)
+                            }
+                        />
+                        {item.started_at && item.ended_at && item.ended_at < item.started_at && (
+                            <p className="text-xs text-red-600 dark:text-red-400 mt-1">結束日期不能早於開始日期</p>
+                        )}
+                        {endedAtIsWeekend && (
+                            <p className="text-xs text-yellow-600 dark:text-yellow-400 mt-1">週末日期</p>
+                        )}
+                    </div>
+                </div>
+                <InputError message={getError(`current_week.${index}.started_at`)} className="mt-1" />
+                <InputError message={getError(`current_week.${index}.ended_at`)} className="mt-1" />
+            </td>
+            <td className="px-4 py-3">
+                <Input
+                    type="number"
+                    step="0.5"
+                    min="0"
+                    value={item.planned_hours ?? ''}
+                    className="w-20 border-border/60 focus:border-primary focus:ring-primary"
+                    data-testid={`current_week.${index}.planned_hours`}
+                    onChange={(event) =>
+                        updateItem(
+                            'current_week',
+                            index,
+                            'planned_hours',
+                            event.target.value === '' ? null : Number(event.target.value),
+                        )
+                    }
+                />
+                <InputError message={getError(`current_week.${index}.planned_hours`)} className="mt-1" />
+            </td>
+            <td className="px-4 py-3">
                 <Input
                     type="number"
                     step="0.5"
                     min="0"
                     value={item.hours_spent}
-                    className="w-20"
+                    className="w-20 border-border/60 focus:border-primary focus:ring-primary font-medium"
                     data-testid={`current_week.${index}.hours_spent`}
                     onChange={(event) =>
                         updateItem(
@@ -181,42 +299,31 @@ function SortableCurrentWeekRow({ item, index, updateItem, removeItem, getError 
                 />
                 <InputError message={getError(`current_week.${index}.hours_spent`)} className="mt-1" />
             </td>
-            <td className="px-3 py-2">
-                <div className="flex items-center justify-center">
-                    <Checkbox
-                        id={`is-billable-${item.localKey}`}
-                        checked={Boolean(item.is_billable)}
-                        onCheckedChange={(checked) =>
-                            updateItem('current_week', index, 'is_billable', Boolean(checked))
-                        }
-                    />
-                </div>
-            </td>
-            <td className="px-3 py-2">
+            <td className="px-4 py-3">
                 <Input
                     value={item.issue_reference ?? ''}
                     placeholder="JIRA-1234"
-                    className="min-w-[120px]"
+                    className="min-w-[120px] border-border/60 focus:border-primary focus:ring-primary"
                     onChange={(event) => updateItem('current_week', index, 'issue_reference', event.target.value)}
                 />
                 <InputError message={getError(`current_week.${index}.issue_reference`)} className="mt-1" />
             </td>
-            <td className="px-3 py-2">
+            <td className="px-4 py-3">
                 <Input
                     value={item.tagsText ?? ''}
                     placeholder="標籤"
-                    className="min-w-[120px]"
+                    className="min-w-[120px] border-border/60 focus:border-primary focus:ring-primary"
                     onChange={(event) => updateItem('current_week', index, 'tagsText', event.target.value)}
                 />
                 <InputError message={getError(`current_week.${index}.tags`)} className="mt-1" />
             </td>
-            <td className="px-3 py-2 text-center">
+            <td className="px-4 py-3 text-center">
                 <Button
                     type="button"
                     variant="ghost"
                     size="icon"
                     onClick={() => removeItem('current_week', index)}
-                    className="text-muted-foreground hover:text-destructive"
+                    className="text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive"
                 >
                     <Trash2 className="size-4" />
                 </Button>
@@ -236,9 +343,13 @@ type SortableNextWeekRowProps = {
     ) => void;
     removeItem: (type: 'current_week' | 'next_week', index: number) => void;
     getError: (path: string) => string | undefined;
+    nextWeekDateRange?: {
+        startDate: string;
+        endDate: string;
+    };
 };
 
-function SortableNextWeekRow({ item, index, updateItem, removeItem, getError }: SortableNextWeekRowProps) {
+function SortableNextWeekRow({ item, index, updateItem, removeItem, getError, nextWeekDateRange }: SortableNextWeekRowProps) {
     const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
         id: item.localKey,
     });
@@ -249,41 +360,101 @@ function SortableNextWeekRow({ item, index, updateItem, removeItem, getError }: 
         opacity: isDragging ? 0.5 : 1,
     };
 
+    const isWeekend = (dateStr: string | null | undefined): boolean => {
+        if (!dateStr) {
+            return false;
+        }
+        const date = new Date(dateStr);
+        const day = date.getDay();
+        return day === 0 || day === 6; // 0 = Sunday, 6 = Saturday
+    };
+
+    const startedAtIsWeekend = isWeekend(item.started_at);
+    const endedAtIsWeekend = isWeekend(item.ended_at);
+
     return (
-        <tr ref={setNodeRef} style={style} className="hover:bg-muted/20">
-            <td className="px-3 py-2 cursor-move" {...attributes} {...listeners}>
-                <div className="flex items-center justify-center text-muted-foreground">
+        <tr ref={setNodeRef} style={style} className="transition-colors hover:bg-muted/30">
+            <td className="px-4 py-3 cursor-move" {...attributes} {...listeners}>
+                <div className="flex items-center justify-center text-muted-foreground hover:text-foreground">
                     <GripVertical className="size-4" />
                 </div>
             </td>
-            <td className="px-3 py-2">
+            <td className="px-4 py-3">
                 <Input
                     value={item.title}
                     placeholder="預計事項"
-                    className="min-w-[180px]"
+                    className="min-w-[180px] border-border/60 focus:border-primary focus:ring-primary"
                     data-testid={`next_week.${index}.title`}
                     onChange={(event) => updateItem('next_week', index, 'title', event.target.value)}
                 />
                 <InputError message={getError(`next_week.${index}.title`)} className="mt-1" />
             </td>
-            <td className="px-3 py-2">
+            <td className="px-4 py-3">
                 <Textarea
                     rows={2}
                     value={item.content ?? ''}
                     placeholder="說明"
-                    className="min-w-[200px]"
+                    className="min-w-[200px] border-border/60 focus:border-primary focus:ring-primary"
                     data-testid={`next_week.${index}.content`}
                     onChange={(event) => updateItem('next_week', index, 'content', event.target.value)}
                 />
                 <InputError message={getError(`next_week.${index}.content`)} className="mt-1" />
             </td>
-            <td className="px-3 py-2">
+            <td className="px-4 py-3">
+                <div className="space-y-2">
+                    <div>
+                        <Label htmlFor={`next_started_at_${item.localKey}`} className="text-xs text-muted-foreground">
+                            開始日期
+                        </Label>
+                        <Input
+                            id={`next_started_at_${item.localKey}`}
+                            type="date"
+                            value={item.started_at ?? ''}
+                            min={nextWeekDateRange?.startDate}
+                            max={nextWeekDateRange?.endDate}
+                            className={`w-full border-border/60 focus:border-primary focus:ring-primary ${startedAtIsWeekend ? 'bg-yellow-50 dark:bg-yellow-950/20 border-yellow-300 dark:border-yellow-700' : ''} ${item.ended_at && item.started_at && item.started_at > item.ended_at ? 'border-red-500 dark:border-red-500' : ''}`}
+                            onChange={(event) => {
+                                const newStartedAt = event.target.value || null;
+                                updateItem('next_week', index, 'started_at', newStartedAt);
+                            }}
+                        />
+                        {startedAtIsWeekend && (
+                            <p className="text-xs text-yellow-600 dark:text-yellow-400 mt-1">週末日期</p>
+                        )}
+                    </div>
+                    <div>
+                        <Label htmlFor={`next_ended_at_${item.localKey}`} className="text-xs text-muted-foreground">
+                            結束日期
+                        </Label>
+                        <Input
+                            id={`next_ended_at_${item.localKey}`}
+                            type="date"
+                            value={item.ended_at ?? ''}
+                            min={item.started_at || nextWeekDateRange?.startDate}
+                            max={nextWeekDateRange?.endDate}
+                            className={`w-full border-border/60 focus:border-primary focus:ring-primary ${endedAtIsWeekend ? 'bg-yellow-50 dark:bg-yellow-950/20 border-yellow-300 dark:border-yellow-700' : ''} ${item.started_at && item.ended_at && item.ended_at < item.started_at ? 'border-red-500 dark:border-red-500' : ''}`}
+                            onChange={(event) =>
+                                updateItem('next_week', index, 'ended_at', event.target.value || null)
+                            }
+                        />
+                        {item.started_at && item.ended_at && item.ended_at < item.started_at && (
+                            <p className="text-xs text-red-600 dark:text-red-400 mt-1">結束日期不能早於開始日期</p>
+                        )}
+                        {endedAtIsWeekend && (
+                            <p className="text-xs text-yellow-600 dark:text-yellow-400 mt-1">週末日期</p>
+                        )}
+                    </div>
+                </div>
+                <InputError message={getError(`next_week.${index}.started_at`)} className="mt-1" />
+                <InputError message={getError(`next_week.${index}.ended_at`)} className="mt-1" />
+            </td>
+            <td className="px-4 py-3">
                 <Input
                     type="number"
                     step="0.5"
                     min="0"
                     value={item.planned_hours ?? ''}
-                    className="w-20"
+                    className="w-20 border-border/60 focus:border-primary focus:ring-primary font-medium"
                     data-testid={`next_week.${index}.planned_hours`}
                     onChange={(event) =>
                         updateItem(
@@ -296,31 +467,31 @@ function SortableNextWeekRow({ item, index, updateItem, removeItem, getError }: 
                 />
                 <InputError message={getError(`next_week.${index}.planned_hours`)} className="mt-1" />
             </td>
-            <td className="px-3 py-2">
+            <td className="px-4 py-3">
                 <Input
                     value={item.issue_reference ?? ''}
                     placeholder="JIRA-2030"
-                    className="min-w-[120px]"
+                    className="min-w-[120px] border-border/60 focus:border-primary focus:ring-primary"
                     onChange={(event) => updateItem('next_week', index, 'issue_reference', event.target.value)}
                 />
                 <InputError message={getError(`next_week.${index}.issue_reference`)} className="mt-1" />
             </td>
-            <td className="px-3 py-2">
+            <td className="px-4 py-3">
                 <Input
                     value={item.tagsText ?? ''}
                     placeholder="標籤"
-                    className="min-w-[120px]"
+                    className="min-w-[120px] border-border/60 focus:border-primary focus:ring-primary"
                     onChange={(event) => updateItem('next_week', index, 'tagsText', event.target.value)}
                 />
                 <InputError message={getError(`next_week.${index}.tags`)} className="mt-1" />
             </td>
-            <td className="px-3 py-2 text-center">
+            <td className="px-4 py-3 text-center">
                 <Button
                     type="button"
                     variant="ghost"
                     size="icon"
                     onClick={() => removeItem('next_week', index)}
-                    className="text-muted-foreground hover:text-destructive"
+                    className="text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive"
                 >
                     <Trash2 className="size-4" />
                 </Button>
@@ -329,7 +500,15 @@ function SortableNextWeekRow({ item, index, updateItem, removeItem, getError }: 
     );
 }
 
-export default function WeeklyReportForm({ mode, report, defaults, prefill, company }: WeeklyReportFormProps) {
+export default function WeeklyReportForm({
+    mode,
+    report,
+    defaults,
+    weekDateRange,
+    nextWeekDateRange,
+    prefill,
+    company,
+}: WeeklyReportFormProps) {
     const { tenant, flash } = usePage<
         SharedData & { flash: { success?: string; info?: string; warning?: string } }
     >().props;
@@ -416,6 +595,7 @@ export default function WeeklyReportForm({ mode, report, defaults, prefill, comp
                 title: '',
                 content: '',
                 hours_spent: 0,
+                planned_hours: null,
                 issue_reference: '',
                 is_billable: false,
                 tags: [],
@@ -470,9 +650,15 @@ export default function WeeklyReportForm({ mode, report, defaults, prefill, comp
                 title: item.title.trim(),
                 content: item.content?.trim() || null,
                 hours_spent: Number(item.hours_spent) || 0,
+                planned_hours:
+                    item.planned_hours === null || item.planned_hours === undefined
+                        ? null
+                        : Number(item.planned_hours),
                 issue_reference: item.issue_reference?.trim() || null,
                 is_billable: Boolean(item.is_billable),
                 tags: parseTags(item.tagsText, item.tags),
+                started_at: item.started_at || null,
+                ended_at: item.ended_at || null,
             })),
             next_week: data.next_week.map((item) => ({
                 id: item.id,
@@ -484,6 +670,8 @@ export default function WeeklyReportForm({ mode, report, defaults, prefill, comp
                         : Number(item.planned_hours),
                 issue_reference: item.issue_reference?.trim() || null,
                 tags: parseTags(item.tagsText, item.tags),
+                started_at: item.started_at || null,
+                ended_at: item.ended_at || null,
             })),
         }));
 
@@ -525,27 +713,34 @@ export default function WeeklyReportForm({ mode, report, defaults, prefill, comp
             <Head title={isCreate ? '建立週報' : '編輯週報'} />
 
             <form onSubmit={handleSubmit} className="space-y-6">
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-4">
                     {canNavigate ? (
-                        <Button asChild variant="ghost" size="sm">
+                        <Button asChild variant="ghost" size="sm" className="gap-2">
                             <Link href={weeklyReports.url({ company: companySlug })}>
-                                <ArrowLeft className="mr-2 size-4" />
+                                <ArrowLeft className="size-4" />
                                 返回列表
                             </Link>
                         </Button>
                     ) : (
-                        <Button variant="ghost" size="sm" disabled>
-                            <ArrowLeft className="mr-2 size-4" />
+                        <Button variant="ghost" size="sm" disabled className="gap-2">
+                            <ArrowLeft className="size-4" />
                             返回列表
                         </Button>
                     )}
-                    <div>
-                        <h1 className="text-xl font-semibold text-foreground">
+                    <div className="flex-1">
+                        <h1 className="text-2xl font-bold text-foreground">
                             {isCreate ? '建立週報草稿' : '編輯週報'}
                         </h1>
-                        <p className="text-sm text-muted-foreground">
-                            {form.data.work_year} 年第 {form.data.work_week} 週 ·{' '}
-                            <span className="uppercase text-xs text-muted-foreground">
+                        <p className="mt-1 text-sm text-muted-foreground">
+                            {form.data.work_year} 年第 {form.data.work_week} 週
+                            {weekDateRange && (
+                                <span className="text-muted-foreground">
+                                    {' '}
+                                    ({weekDateRange.startDate} ~ {weekDateRange.endDate})
+                                </span>
+                            )}{' '}
+                            ·{' '}
+                            <span className="uppercase text-xs font-medium text-muted-foreground">
                                 {STATUS_TEXT[report?.status ?? 'draft'] ?? '草稿'}
                             </span>
                         </p>
@@ -553,84 +748,44 @@ export default function WeeklyReportForm({ mode, report, defaults, prefill, comp
                 </div>
 
                 {(flash?.success || flash?.info || flash?.warning) && (
-                    <div className="rounded-md border border-border/60 bg-muted/40 p-4 text-sm text-muted-foreground">
-                        {flash.success && <p className="text-emerald-600">{flash.success}</p>}
-                        {flash.info && <p className="text-sky-600">{flash.info}</p>}
-                        {flash.warning && <p className="text-amber-600">{flash.warning}</p>}
+                    <div className="rounded-lg border border-border/60 bg-muted/40 p-4 shadow-sm">
+                        {flash.success && (
+                            <p className="text-sm font-medium text-emerald-600 dark:text-emerald-400">{flash.success}</p>
+                        )}
+                        {flash.info && (
+                            <p className="text-sm font-medium text-sky-600 dark:text-sky-400">{flash.info}</p>
+                        )}
+                        {flash.warning && (
+                            <p className="text-sm font-medium text-amber-600 dark:text-amber-400">{flash.warning}</p>
+                        )}
                     </div>
                 )}
 
                 {isCreate && prefill.currentWeek.length > 0 && (
-                    <div className="rounded-md border border-indigo-200 bg-indigo-50/70 p-4 text-sm text-indigo-900 shadow-sm dark:border-indigo-500/30 dark:bg-indigo-500/10 dark:text-indigo-100">
-                        <p className="font-medium">
+                    <div className="rounded-lg border-2 border-indigo-200 bg-gradient-to-r from-indigo-50 to-indigo-100/50 p-4 shadow-sm dark:border-indigo-500/30 dark:from-indigo-500/10 dark:to-indigo-500/5">
+                        <p className="text-sm font-semibold text-indigo-900 dark:text-indigo-100">
                             已帶入上一週的「下週預計」項目，記得調整內容與工時。
                         </p>
                     </div>
                 )}
 
-                <Card>
-                    <CardHeader>
-                        <CardTitle className="text-lg">週報摘要</CardTitle>
-                    </CardHeader>
-                    <CardContent className="space-y-4">
-                        <div className="grid gap-4 sm:grid-cols-2">
-                            <div>
-                                <Label htmlFor="work-year">年度</Label>
-                                <Input
-                                    id="work-year"
-                                    type="number"
-                                    min={2000}
-                                    max={2100}
-                                    value={form.data.work_year}
-                                    onChange={(event) =>
-                                        form.setData('work_year', Number(event.target.value) || defaults.year)
-                                    }
-                                />
-                                <InputError message={form.errors.work_year} className="mt-2" />
-                            </div>
-                            <div>
-                                <Label htmlFor="work-week">週次</Label>
-                                <Input
-                                    id="work-week"
-                                    type="number"
-                                    min={1}
-                                    max={53}
-                                    value={form.data.work_week}
-                                    onChange={(event) =>
-                                        form.setData('work_week', Number(event.target.value) || defaults.week)
-                                    }
-                                />
-                                <InputError message={form.errors.work_week} className="mt-2" />
-                            </div>
+                <Card className="border-border/60 shadow-sm">
+                    <CardHeader className="border-b border-border/40 bg-muted/30 pb-4">
+                        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                            <CardTitle className="text-xl font-semibold">本週完成事項</CardTitle>
+                            <Button type="button" size="sm" variant="default" onClick={addCurrentItem} className="gap-2">
+                                <PlusCircle className="size-4" />
+                                新增項目
+                            </Button>
                         </div>
-                        <div>
-                            <Label htmlFor="summary">摘要</Label>
-                            <Textarea
-                                id="summary"
-                                rows={3}
-                                value={form.data.summary}
-                                data-testid="summary"
-                                onChange={(event) => form.setData('summary', event.target.value)}
-                                placeholder="可輸入本週亮點、風險提醒或需要協助的事項"
-                            />
-                            <InputError message={form.errors.summary} className="mt-2" />
-                        </div>
-                    </CardContent>
-                </Card>
-
-                <Card>
-                    <CardHeader className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-                        <CardTitle className="text-lg">本週完成事項</CardTitle>
-                        <Button type="button" size="sm" variant="outline" onClick={addCurrentItem}>
-                            <PlusCircle className="mr-2 size-4" />
-                            新增項目
-                        </Button>
                     </CardHeader>
-                    <CardContent>
+                    <CardContent className="pt-6">
                         {form.data.current_week.length === 0 ? (
-                            <p className="text-sm text-muted-foreground">
-                                目前沒有任何項目，點擊「新增項目」開始紀錄。
-                            </p>
+                            <div className="rounded-lg border-2 border-dashed border-border/40 bg-muted/20 p-8 text-center">
+                                <p className="text-sm font-medium text-muted-foreground">
+                                    目前沒有任何項目，點擊「新增項目」開始紀錄。
+                                </p>
+                            </div>
                         ) : (
                             <div className="overflow-x-auto">
                                 <DndContext
@@ -638,20 +793,21 @@ export default function WeeklyReportForm({ mode, report, defaults, prefill, comp
                                     collisionDetection={closestCenter}
                                     onDragEnd={handleCurrentWeekDragEnd}
                                 >
-                                    <table className="min-w-full divide-y divide-border/60 text-sm">
-                                        <thead className="bg-muted/40 text-muted-foreground">
+                                    <table className="min-w-full divide-y divide-border/40 text-sm">
+                                        <thead className="bg-muted/50">
                                             <tr>
-                                                <th className="px-3 py-2 w-10"></th>
-                                                <th className="px-3 py-2 text-left font-medium">標題</th>
-                                                <th className="px-3 py-2 text-left font-medium">內容</th>
-                                                <th className="px-3 py-2 text-left font-medium whitespace-nowrap">工時</th>
-                                                <th className="px-3 py-2 text-left font-medium whitespace-nowrap">計費</th>
-                                                <th className="px-3 py-2 text-left font-medium">Issue</th>
-                                                <th className="px-3 py-2 text-left font-medium">標籤</th>
-                                                <th className="px-3 py-2 text-center font-medium">操作</th>
+                                                <th className="px-4 py-3 w-10"></th>
+                                                <th className="px-4 py-3 text-left font-semibold text-foreground">標題</th>
+                                                <th className="px-4 py-3 text-left font-semibold text-foreground">內容</th>
+                                                <th className="px-4 py-3 text-left font-semibold text-foreground whitespace-nowrap">時間範圍</th>
+                                                <th className="px-4 py-3 text-left font-semibold text-foreground whitespace-nowrap">預計工時</th>
+                                                <th className="px-4 py-3 text-left font-semibold text-foreground whitespace-nowrap">實際工時</th>
+                                                <th className="px-4 py-3 text-left font-semibold text-foreground">Issue</th>
+                                                <th className="px-4 py-3 text-left font-semibold text-foreground">標籤</th>
+                                                <th className="px-4 py-3 text-center font-semibold text-foreground">操作</th>
                                             </tr>
                                         </thead>
-                                        <tbody className="divide-y divide-border/40 bg-card">
+                                        <tbody className="divide-y divide-border/30 bg-card">
                                             <SortableContext
                                                 items={form.data.current_week.map((item) => item.localKey)}
                                                 strategy={verticalListSortingStrategy}
@@ -664,10 +820,25 @@ export default function WeeklyReportForm({ mode, report, defaults, prefill, comp
                                                         updateItem={updateItem}
                                                         removeItem={removeItem}
                                                         getError={getError}
+                                                        weekDateRange={weekDateRange}
                                                     />
                                                 ))}
                                             </SortableContext>
                                         </tbody>
+                                        {form.data.current_week.length > 0 && (
+                                            <tfoot className="bg-gradient-to-r from-muted/40 to-muted/20 border-t-2 border-border/60">
+                                                <tr>
+                                                    <td colSpan={4} className="px-4 py-3 text-right font-semibold text-foreground">
+                                                        實際工時小計：
+                                                    </td>
+                                                    <td className="px-4 py-3"></td>
+                                                    <td className="px-4 py-3 text-center text-lg font-bold text-blue-600 dark:text-blue-400">
+                                                        {totalCurrentWeekHours.toFixed(1)} 小時
+                                                    </td>
+                                                    <td colSpan={3}></td>
+                                                </tr>
+                                            </tfoot>
+                                        )}
                                     </table>
                                 </DndContext>
                             </div>
@@ -675,19 +846,23 @@ export default function WeeklyReportForm({ mode, report, defaults, prefill, comp
                     </CardContent>
                 </Card>
 
-                <Card>
-                    <CardHeader className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-                        <CardTitle className="text-lg">下週預計事項</CardTitle>
-                        <Button type="button" size="sm" variant="outline" onClick={addNextItem}>
-                            <PlusCircle className="mr-2 size-4" />
-                            新增項目
-                        </Button>
+                <Card className="border-border/60 shadow-sm">
+                    <CardHeader className="border-b border-border/40 bg-muted/30 pb-4">
+                        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                            <CardTitle className="text-xl font-semibold">下週預計事項</CardTitle>
+                            <Button type="button" size="sm" variant="default" onClick={addNextItem} className="gap-2">
+                                <PlusCircle className="size-4" />
+                                新增項目
+                            </Button>
+                        </div>
                     </CardHeader>
-                    <CardContent>
+                    <CardContent className="pt-6">
                         {form.data.next_week.length === 0 ? (
-                            <p className="text-sm text-muted-foreground">
-                                目前沒有任何預計事項，點擊「新增項目」規劃下週工作。
-                            </p>
+                            <div className="rounded-lg border-2 border-dashed border-border/40 bg-muted/20 p-8 text-center">
+                                <p className="text-sm font-medium text-muted-foreground">
+                                    目前沒有任何預計事項，點擊「新增項目」規劃下週工作。
+                                </p>
+                            </div>
                         ) : (
                             <div className="overflow-x-auto">
                                 <DndContext
@@ -695,19 +870,20 @@ export default function WeeklyReportForm({ mode, report, defaults, prefill, comp
                                     collisionDetection={closestCenter}
                                     onDragEnd={handleNextWeekDragEnd}
                                 >
-                                    <table className="min-w-full divide-y divide-border/60 text-sm">
-                                        <thead className="bg-muted/40 text-muted-foreground">
+                                    <table className="min-w-full divide-y divide-border/40 text-sm">
+                                        <thead className="bg-muted/50">
                                             <tr>
-                                                <th className="px-3 py-2 w-10"></th>
-                                                <th className="px-3 py-2 text-left font-medium">標題</th>
-                                                <th className="px-3 py-2 text-left font-medium">補充說明</th>
-                                                <th className="px-3 py-2 text-left font-medium whitespace-nowrap">預估工時</th>
-                                                <th className="px-3 py-2 text-left font-medium">Issue</th>
-                                                <th className="px-3 py-2 text-left font-medium">標籤</th>
-                                                <th className="px-3 py-2 text-center font-medium">操作</th>
+                                                <th className="px-4 py-3 w-10"></th>
+                                                <th className="px-4 py-3 text-left font-semibold text-foreground">標題</th>
+                                                <th className="px-4 py-3 text-left font-semibold text-foreground">補充說明</th>
+                                                <th className="px-4 py-3 text-left font-semibold text-foreground whitespace-nowrap">時間範圍</th>
+                                                <th className="px-4 py-3 text-left font-semibold text-foreground whitespace-nowrap">預估工時</th>
+                                                <th className="px-4 py-3 text-left font-semibold text-foreground">Issue</th>
+                                                <th className="px-4 py-3 text-left font-semibold text-foreground">標籤</th>
+                                                <th className="px-4 py-3 text-center font-semibold text-foreground">操作</th>
                                             </tr>
                                         </thead>
-                                        <tbody className="divide-y divide-border/40 bg-card">
+                                        <tbody className="divide-y divide-border/30 bg-card">
                                             <SortableContext
                                                 items={form.data.next_week.map((item) => item.localKey)}
                                                 strategy={verticalListSortingStrategy}
@@ -720,6 +896,7 @@ export default function WeeklyReportForm({ mode, report, defaults, prefill, comp
                                                         updateItem={updateItem}
                                                         removeItem={removeItem}
                                                         getError={getError}
+                                                        nextWeekDateRange={nextWeekDateRange}
                                                     />
                                                 ))}
                                             </SortableContext>
@@ -732,27 +909,29 @@ export default function WeeklyReportForm({ mode, report, defaults, prefill, comp
                 </Card>
 
                 {/* 工時合計顯示 */}
-                <Card>
-                    <CardHeader>
-                        <CardTitle className="text-lg">工時統計</CardTitle>
+                <Card className="border-border/60 shadow-sm">
+                    <CardHeader className="border-b border-border/40 bg-muted/30 pb-4">
+                        <CardTitle className="text-xl font-semibold">工時統計</CardTitle>
                     </CardHeader>
-                    <CardContent>
+                    <CardContent className="pt-6">
                         <div className="grid gap-4 sm:grid-cols-2">
-                            <div className="rounded-lg border border-border/60 bg-muted/40 p-4">
-                                <div className="text-sm text-muted-foreground">本週完成總工時</div>
-                                <div className="mt-1 text-2xl font-semibold text-foreground">
-                                    {totalCurrentWeekHours.toFixed(1)} 小時
+                            <div className="rounded-lg border-2 border-blue-200 bg-gradient-to-br from-blue-50 to-blue-100/50 p-6 shadow-sm dark:border-blue-800 dark:from-blue-950/20 dark:to-blue-900/10">
+                                <div className="text-sm font-medium text-muted-foreground">本週完成總工時</div>
+                                <div className="mt-2 text-3xl font-bold text-blue-600 dark:text-blue-400">
+                                    {totalCurrentWeekHours.toFixed(1)}
                                 </div>
-                                <div className="mt-2 text-xs text-muted-foreground">
+                                <div className="mt-1 text-xs text-muted-foreground">小時</div>
+                                <div className="mt-3 text-sm text-muted-foreground">
                                     {form.data.current_week.length} 個項目
                                 </div>
                             </div>
-                            <div className="rounded-lg border border-border/60 bg-muted/40 p-4">
-                                <div className="text-sm text-muted-foreground">下週預計總工時</div>
-                                <div className="mt-1 text-2xl font-semibold text-foreground">
-                                    {totalNextWeekHours.toFixed(1)} 小時
+                            <div className="rounded-lg border-2 border-emerald-200 bg-gradient-to-br from-emerald-50 to-emerald-100/50 p-6 shadow-sm dark:border-emerald-800 dark:from-emerald-950/20 dark:to-emerald-900/10">
+                                <div className="text-sm font-medium text-muted-foreground">下週預計總工時</div>
+                                <div className="mt-2 text-3xl font-bold text-emerald-600 dark:text-emerald-400">
+                                    {totalNextWeekHours.toFixed(1)}
                                 </div>
-                                <div className="mt-2 text-xs text-muted-foreground">
+                                <div className="mt-1 text-xs text-muted-foreground">小時</div>
+                                <div className="mt-3 text-sm text-muted-foreground">
                                     {form.data.next_week.length} 個項目
                                 </div>
                             </div>
@@ -760,7 +939,69 @@ export default function WeeklyReportForm({ mode, report, defaults, prefill, comp
                     </CardContent>
                 </Card>
 
-                <div className="flex items-center justify-end gap-3">
+                <Card className="border-border/60 shadow-sm">
+                    <CardContent className="pt-6">
+                        <div>
+                            <Label htmlFor="summary" className="text-base font-medium">摘要</Label>
+                            <Textarea
+                                id="summary"
+                                rows={4}
+                                value={form.data.summary}
+                                data-testid="summary"
+                                onChange={(event) => form.setData('summary', event.target.value)}
+                                placeholder="可輸入本週亮點、風險提醒或需要協助的事項（選填）"
+                                className="mt-2"
+                            />
+                            <InputError message={form.errors.summary} className="mt-2" />
+                        </div>
+                    </CardContent>
+                </Card>
+
+                <div className="flex items-center justify-end gap-3 border-t border-border/60 pt-6">
+                    {report && (
+                        <Button
+                            type="button"
+                            variant="outline"
+                            disabled={!canNavigate}
+                            asChild
+                            className="gap-2"
+                        >
+                            <Link
+                                href={canNavigate ? `/app/${companySlug}/weekly-reports/${report.id}/preview` : '#'}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                            >
+                                預覽
+                            </Link>
+                        </Button>
+                    )}
+                    {report?.status === 'draft' && (
+                        <Button
+                            type="button"
+                            variant="default"
+                            disabled={form.processing || !canNavigate}
+                            className="gap-2"
+                            onClick={() => {
+                                if (!canNavigate || !report) {
+                                    return;
+                                }
+                                router.post(
+                                    `/app/${companySlug}/weekly-reports/${report.id}/submit`,
+                                    {},
+                                    {
+                                        preserveScroll: true,
+                                        onSuccess: () => {
+                                            // 重新載入頁面以更新狀態
+                                            router.reload({ only: ['report'] });
+                                        },
+                                    },
+                                );
+                            }}
+                            data-testid="submit-weekly-report"
+                        >
+                            發佈週報
+                        </Button>
+                    )}
                     <Button
                         type="submit"
                         disabled={form.processing || !canNavigate}
