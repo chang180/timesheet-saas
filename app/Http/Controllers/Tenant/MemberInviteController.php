@@ -60,7 +60,7 @@ class MemberInviteController extends Controller
             }
 
             if ($tenant->current_user_count >= $tenant->user_limit) {
-                abort(422, '此租戶的成員數已達上限。');
+                abort(422, '此用戶的成員數已達上限。');
             }
 
             $user = User::create([

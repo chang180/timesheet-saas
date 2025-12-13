@@ -27,6 +27,19 @@ export interface SharedData {
     quote: { message: string; author: string };
     auth: Auth;
     sidebarOpen: boolean;
+    tenant?: {
+        company?: {
+            id: number;
+            name: string;
+            slug: string;
+            [key: string]: unknown;
+        };
+        settings?: Record<string, unknown> | null;
+    } | null;
+    tenantConfig: {
+        slugMode: string | null;
+        primaryDomain: string | null;
+    };
     [key: string]: unknown;
 }
 

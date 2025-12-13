@@ -32,6 +32,14 @@ class CompanySettingFactory extends Factory
                         ['title' => '填寫週報', 'description' => '記錄本週工作與下週計畫'],
                     ],
                 ],
+                'weeklyReportDemo' => [
+                    'enabled' => true,
+                    'highlights' => [
+                        '拖曳排序同步更新主管檢視順序',
+                        'Redmine/Jira 連動，自動帶入任務',
+                        '假日工時超額即時提醒',
+                    ],
+                ],
                 'announcements' => ['enabled' => false, 'items' => []],
                 'supportContacts' => ['enabled' => false, 'contacts' => []],
                 'ctas' => [],

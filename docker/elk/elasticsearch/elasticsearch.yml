@@ -1,0 +1,14 @@
+cluster.name: "elk-cluster"
+node.name: "elk-node-1"
+
+network.host: 0.0.0.0
+
+discovery.type: single-node
+
+xpack.security.enabled: false
+xpack.security.enrollment.enabled: false
+
+# 索引設定
+action.auto_create_index: true
+
+# 記憶體設定（透過環境變數 ES_JAVA_OPTS 設定）

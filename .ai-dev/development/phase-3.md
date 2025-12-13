@@ -8,7 +8,7 @@
 - 已具備以下資源：
   - 租戶範例資料（公司、部門、小組、成員、週報）
   - SMTP / Mailhog、Slack/Teams Webhook 測試環境
-  - 政府開放資料 API Key（若需要）
+  - 政府開放資料 不需要 API Key
 
 ## 2. 整合測試策略
 

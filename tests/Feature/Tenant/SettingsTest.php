@@ -8,6 +8,50 @@ use App\Models\Team;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Laravel\Sanctum\Sanctum;
+use Inertia\Testing\AssertableInertia as Assert;
+test('tenant settings page renders welcome configuration', function () {
+    $company = Company::factory()->has(
+        CompanySetting::factory()->state([
+            'welcome_page' => [
+                'hero' => [
+                    'enabled' => true,
+                    'title' => '歡迎 {company}',
+                ],
+                'quickStartSteps' => [
+                    'enabled' => true,
+                    'steps' => [
+                        ['title' => '登入', 'description' => '使用公司信箱登入'],
+                    ],
+                ],
+            ],
+        ]),
+        'settings'
+    )->create([
+        'name' => 'Acme Corp',
+        'branding' => [
+            'primaryColor' => '#123456',
+            'logoUrl' => 'https://acme.test/logo.png',
+        ],
+        'user_limit' => 10,
+    ]);
+
+    $admin = User::factory()->create([
+        'company_id' => $company->id,
+        'role' => 'company_admin',
+        'email_verified_at' => now(),
+    ]);
+
+    $response = $this->actingAs($admin)->get(route('tenant.settings', $company));
+
+    $response->assertStatus(200)
+        ->assertInertia(fn (Assert $page) => $page
+        ->component('tenant/settings/index')
+        ->where('settings.companyName', 'Acme Corp')
+        ->where('settings.brandColor', '#123456')
+        ->where('settings.welcomePage.hero.title', '歡迎 {company}')
+        ->where('settings.ipWhitelist', [])
+    );
+});
 
 uses(RefreshDatabase::class);
 
@@ -24,7 +68,35 @@ beforeEach(function () {
     CompanySetting::create([
         'company_id' => $this->company->id,
         'welcome_page' => [
-            'headline' => 'Welcome',
+            'hero' => [
+                'enabled' => true,
+                'title' => 'Welcome to Timesheet SaaS',
+                'subtitle' => 'Manage weekly reports effortlessly.',
+            ],
+            'quickStartSteps' => [
+                'enabled' => true,
+                'steps' => [
+                    ['title' => '登入系統', 'description' => '使用公司信箱登入用戶後台。'],
+                ],
+            ],
+            'weeklyReportDemo' => [
+                'enabled' => true,
+                'highlights' => [
+                    '拖曳排序同步更新主管檢視順序',
+                    'Redmine/Jira 自動帶入任務',
+                ],
+            ],
+            'announcements' => [
+                'enabled' => false,
+                'items' => [],
+            ],
+            'supportContacts' => [
+                'enabled' => false,
+                'contacts' => [],
+            ],
+            'ctas' => [
+                ['text' => '立即登入', 'url' => 'https://tenant.test/login', 'variant' => 'primary'],
+            ],
         ],
         'login_ip_whitelist' => [],
     ]);
@@ -75,7 +147,7 @@ it('returns tenant settings payload', function () {
 
     $response->assertOk()
         ->assertJsonPath('company.slug', $this->company->slug)
-        ->assertJsonPath('settings.welcome_page.headline', 'Welcome')
+        ->assertJsonPath('settings.welcome_page.hero.title', 'Welcome to Timesheet SaaS')
         ->assertJsonPath('organization.divisions.0.name', 'Product');
 });
 
@@ -83,16 +155,28 @@ it('updates welcome page configuration', function () {
     Sanctum::actingAs($this->admin, guard: 'web');
 
     $payload = [
-        'headline' => '新的歡迎標題',
-        'subheadline' => '小提醒',
-        'cta' => [
-            'primary' => ['label' => '登入', 'href' => 'https://tenant.test/login'],
+        'hero' => [
+            'enabled' => true,
+            'title' => '新的歡迎標題',
+            'subtitle' => '小提醒',
         ],
-        'highlights' => ['重點一', '重點二'],
-        'steps' => [
-            ['title' => '第一步', 'description' => '填寫資料'],
+        'quickStartSteps' => [
+            'enabled' => true,
+            'steps' => [
+                ['title' => '第一步', 'description' => '填寫資料'],
+            ],
         ],
-        'media' => ['type' => 'default'],
+        'announcements' => [
+            'enabled' => false,
+            'items' => [],
+        ],
+        'supportContacts' => [
+            'enabled' => false,
+            'contacts' => [],
+        ],
+        'ctas' => [
+            ['text' => '登入', 'url' => 'https://tenant.test/login'],
+        ],
     ];
 
     $response = $this->putJson(
@@ -101,31 +185,35 @@ it('updates welcome page configuration', function () {
     );
 
     $response->assertOk()
-        ->assertJsonPath('welcome_page.headline', '新的歡迎標題');
+        ->assertJsonPath('welcome_page.hero.title', '新的歡迎標題');
 
     $this->assertDatabaseHas('company_settings', [
         'company_id' => $this->company->id,
-        'welcome_page->headline' => '新的歡迎標題',
+        'welcome_page->hero->title' => '新的歡迎標題',
     ]);
+
+    expect($this->company->fresh()->onboarded_at)->not->toBeNull();
 });
 
 it('validates IP whitelist entries', function () {
     Sanctum::actingAs($this->admin, guard: 'web');
 
-    $invalid = $this->putJson(
-        route('api.v1.tenant.settings.ip-whitelist.update', ['company' => $this->company->slug]),
-        ['entries' => ['not-an-ip']]
-    );
+$invalid = $this->putJson(
+    route('api.v1.tenant.settings.ip-whitelist.update', ['company' => $this->company->slug]),
+    ['ipAddresses' => ['not-an-ip']]
+);
 
     $invalid->assertStatus(422);
 
-    $valid = $this->putJson(
-        route('api.v1.tenant.settings.ip-whitelist.update', ['company' => $this->company->slug]),
-        ['entries' => ['127.0.0.1', '10.0.0.0/8']]
-    );
+$valid = $this->putJson(
+    route('api.v1.tenant.settings.ip-whitelist.update', ['company' => $this->company->slug]),
+    ['ipAddresses' => ['127.0.0.1', '10.0.0.0/8']]
+);
 
     $valid->assertOk()
         ->assertJsonPath('login_ip_whitelist.1', '10.0.0.0/8');
+
+    expect($this->company->fresh()->onboarded_at)->not->toBeNull();
 });
 
 it('invites a new member and increments user count', function () {

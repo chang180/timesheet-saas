@@ -8,6 +8,7 @@ test('registration screen can be rendered', function () {
 
 test('new users can register', function () {
     $response = $this->post(route('register.store'), [
+        'company_name' => 'Acme Corp',
         'name' => 'Test User',
         'email' => 'test@example.com',
         'password' => 'password',
@@ -15,5 +16,9 @@ test('new users can register', function () {
     ]);
 
     $this->assertAuthenticated();
-    $response->assertRedirect(route('dashboard', absolute: false));
+    $company = auth()->user()->company;
+
+    expect($company)->not->toBeNull();
+
+    $response->assertRedirect('/app');
 });

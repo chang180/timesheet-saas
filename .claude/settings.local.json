@@ -19,5 +19,10 @@
     ],
     "deny": [],
     "ask": []
-  }
+  },
+  "enabledMcpjsonServers": [
+    "laravel-boost",
+    "herd"
+  ],
+  "enableAllProjectMcpServers": true
 }

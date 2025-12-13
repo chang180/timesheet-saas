@@ -13,7 +13,17 @@
                 "C:/Users/chang180/.config/herd/bin/herd-mcp.phar"
             ],
             "env": {
-                "SITE_PATH": "D:\\coding\\timesheet-saas"
+                "SITE_PATH": "D:\\coding\timesheet-saas"
+            }
+        },
+        "elk": {
+            "command": "node",
+            "args": [
+                "D:\\coding\timesheet-saas\\docker\\elk\\mcp-server\\elk-mcp.js"
+            ],
+            "env": {
+                "ELASTICSEARCH_HOST": "http://localhost:9200",
+                "ELASTICSEARCH_INDEX_PATTERN": "laravel-logs-*"
             }
         }
     }

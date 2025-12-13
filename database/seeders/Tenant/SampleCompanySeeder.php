@@ -54,15 +54,48 @@ class SampleCompanySeeder extends Seeder
 
             $settingsData = [
                 'welcome_page' => json_encode([
-                    'headline' => '歡迎加入 Acme Holdings 週報通',
-                    'cta' => [
-                        'primary' => ['label' => '登入', 'href' => '/login'],
-                        'secondary' => ['label' => '申請帳號', 'href' => '/register'],
+                    'hero' => [
+                        'enabled' => true,
+                        'title' => '歡迎加入 Acme Holdings 週報通',
+                        'subtitle' => '整合工時、流程與提醒，讓團隊週報更簡單。',
+                        'backgroundImage' => null,
+                        'videoUrl' => null,
                     ],
-                    'highlights' => [
-                        '工時快速彙整',
-                        '拖曳調整優先順序',
-                        '主管即時掌握填寫狀態',
+                    'quickStartSteps' => [
+                        'enabled' => true,
+                        'steps' => [
+                            ['title' => '登入系統', 'description' => '使用您的用戶帳號登入並設定密碼。'],
+                            ['title' => '設定品牌與成員', 'description' => '自訂歡迎頁、匯入成員及權限。'],
+                            ['title' => '開始填寫週報', 'description' => '快速記錄本週成果並規劃下週。'],
+                        ],
+                    ],
+                    'announcements' => [
+                        'enabled' => true,
+                        'items' => [
+                            [
+                                'title' => '系統更新提醒',
+                                'content' => '本週新增 IP 白名單設定與週報預覽功能。',
+                                'publishedAt' => $now->toIso8601String(),
+                            ],
+                        ],
+                    ],
+                    'weeklyReportDemo' => [
+                        'enabled' => true,
+                        'highlights' => [
+                            '拖曳排序同步更新主管檢視順序',
+                            'Redmine/Jira 自動帶入任務與工時',
+                            '假日工時超額即時提醒',
+                        ],
+                    ],
+                    'supportContacts' => [
+                        'enabled' => true,
+                        'contacts' => [
+                            ['name' => '客服中心', 'email' => 'support@acme.test', 'phone' => '+886-2-1234-5678'],
+                        ],
+                    ],
+                    'ctas' => [
+                        ['text' => '登入用戶後台', 'url' => '/login', 'variant' => 'primary'],
+                        ['text' => '觀看操作指南', 'url' => 'https://docs.acme.test/guide', 'variant' => 'secondary'],
                     ],
                 ], JSON_THROW_ON_ERROR),
                 'login_ip_whitelist' => json_encode(['0.0.0.0/0'], JSON_THROW_ON_ERROR),
@@ -326,10 +359,10 @@ class SampleCompanySeeder extends Seeder
                     'email' => 'manager@acme.test',
                     'status' => WeeklyReport::STATUS_SUBMITTED,
                     'summary' => '完成 API Gateway 新版規格討論，與 QA 協調回歸測試時程。',
-                    'items' => [
+                    'current' => [
                         [
-                            'title' => '完成多租戶 API 設計串接',
-                            'content' => '與後端確認租戶 slug 規則，更新 Wayfinder route 定義。',
+                            'title' => '完成多用戶 API 設計串接',
+                            'content' => '與後端確認用戶 slug 規則，更新 Wayfinder route 定義。',
                             'hours' => 12.5,
                             'issue' => 'JIRA-1234',
                             'tags' => ['backend', 'architecture'],
@@ -342,12 +375,26 @@ class SampleCompanySeeder extends Seeder
                             'tags' => ['planning'],
                         ],
                     ],
+                    'next' => [
+                        [
+                            'title' => '完成 IAM 政策調整',
+                            'content' => '與資安確認角色權限矩陣，建立審核流程。',
+                            'planned_hours' => 10.0,
+                            'tags' => ['planning', 'security'],
+                        ],
+                        [
+                            'title' => 'Kickoff 自動匯出專案',
+                            'content' => '安排跨部門會議，規劃 MVP 需求與時程。',
+                            'planned_hours' => 6.0,
+                            'tags' => ['coordination'],
+                        ],
+                    ],
                 ],
                 [
                     'email' => 'member@acme.test',
                     'status' => WeeklyReport::STATUS_SUBMITTED,
                     'summary' => '完成歡迎頁編輯器雛型，並修復 Tailwind dark mode 問題。',
-                    'items' => [
+                    'current' => [
                         [
                             'title' => '開發歡迎頁即時預覽功能',
                             'content' => '導入 React Hook Form + zod 驗證，改善錯誤訊息呈現。',
@@ -356,11 +403,25 @@ class SampleCompanySeeder extends Seeder
                             'tags' => ['frontend', 'ui'],
                         ],
                         [
-                            'title' => '修復多租戶佈景切換',
-                            'content' => '調整 Tailwind v4 Token，支援租戶品牌色覆蓋。',
+                            'title' => '修復多用戶佈景切換',
+                            'content' => '調整 Tailwind v4 Token，支援用戶品牌色覆蓋。',
                             'hours' => 7.25,
                             'issue' => 'BUG-554',
                             'tags' => ['frontend', 'bugfix'],
+                        ],
+                    ],
+                    'next' => [
+                        [
+                            'title' => '打造週報表單拖曳排序',
+                            'content' => '調研 dnd-kit 與 react-beautiful-dnd，建立基本顯示。',
+                            'planned_hours' => 8.0,
+                            'tags' => ['frontend'],
+                        ],
+                        [
+                            'title' => '串接複製上一週 API',
+                            'content' => '補上 useForm 整合，確保 next_week 項目帶入。',
+                            'planned_hours' => 5.5,
+                            'tags' => ['frontend', 'integration'],
                         ],
                     ],
                 ],
@@ -416,18 +477,42 @@ class SampleCompanySeeder extends Seeder
 
                 DB::table('weekly_report_items')->where('weekly_report_id', $reportId)->delete();
 
-                foreach ($report['items'] as $index => $item) {
+                $currentItems = $report['current'] ?? [];
+                foreach ($currentItems as $index => $item) {
                     DB::table('weekly_report_items')->insert([
                         'weekly_report_id' => $reportId,
+                        'type' => 'current_week',
                         'sort_order' => $index,
                         'title' => $item['title'],
                         'content' => $item['content'],
                         'hours_spent' => $item['hours'],
+                        'planned_hours' => null,
                         'issue_reference' => $item['issue'],
                         'is_billable' => false,
                         'tags' => json_encode($item['tags'], JSON_THROW_ON_ERROR),
                         'started_at' => $reportingWeek->copy()->startOfWeek()->addDays($index)->setTime(10, 0),
                         'ended_at' => $reportingWeek->copy()->startOfWeek()->addDays($index)->setTime(19, 0),
+                        'metadata' => json_encode(['source' => 'seed'], JSON_THROW_ON_ERROR),
+                        'created_at' => $now,
+                        'updated_at' => $now,
+                    ]);
+                }
+
+                $nextPlans = $report['next'] ?? [];
+                foreach ($nextPlans as $index => $plan) {
+                    DB::table('weekly_report_items')->insert([
+                        'weekly_report_id' => $reportId,
+                        'type' => 'next_week',
+                        'sort_order' => $index,
+                        'title' => $plan['title'],
+                        'content' => $plan['content'],
+                        'hours_spent' => 0,
+                        'planned_hours' => $plan['planned_hours'],
+                        'issue_reference' => $plan['issue'] ?? null,
+                        'is_billable' => false,
+                        'tags' => json_encode($plan['tags'], JSON_THROW_ON_ERROR),
+                        'started_at' => null,
+                        'ended_at' => null,
                         'metadata' => json_encode(['source' => 'seed'], JSON_THROW_ON_ERROR),
                         'created_at' => $now,
                         'updated_at' => $now,

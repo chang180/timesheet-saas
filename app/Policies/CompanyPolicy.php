@@ -36,7 +36,8 @@ class CompanyPolicy
      */
     public function update(User $user, Company $company): bool
     {
-        return $user->company_id === $company->id && in_array($user->role, ['admin', 'owner']);
+        return $user->company_id === $company->id
+            && in_array($user->role, ['admin', 'owner', 'company_admin'], true);
     }
 
     /**

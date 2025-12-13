@@ -54,7 +54,7 @@ export interface WelcomePageConfig {
     };
     weeklyReportDemo?: {
         enabled: boolean;
-        useBrandColors: boolean;
+        highlights?: string[];
     };
     announcements?: {
         enabled: boolean;

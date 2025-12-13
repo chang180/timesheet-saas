@@ -3,6 +3,7 @@
 namespace Database\Factories;
 
 use Illuminate\Database\Eloquent\Factories\Factory;
+use Illuminate\Support\Str;
 
 /**
  * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\Company>
@@ -16,11 +17,9 @@ class CompanyFactory extends Factory
      */
     public function definition(): array
     {
-        $name = fake()->company();
-
         return [
-            'name' => $name,
-            'slug' => str($name)->slug(),
+            'name' => fake()->company(),
+            'slug' => Str::lower(Str::random(10)),
             'status' => 'active',
             'user_limit' => 50,
             'current_user_count' => 0,

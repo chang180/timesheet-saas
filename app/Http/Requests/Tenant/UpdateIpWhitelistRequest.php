@@ -2,34 +2,19 @@
 
 namespace App\Http\Requests\Tenant;
 
-use Illuminate\Foundation\Http\FormRequest;
+use App\Http\Requests\UpdateIPWhitelistRequest as BaseRequest;
+use App\Models\Company;
 
-class UpdateIpWhitelistRequest extends FormRequest
+class UpdateIpWhitelistRequest extends BaseRequest
 {
-    /**
-     * Determine if the user is authorized to make this request.
-     */
     public function authorize(): bool
     {
-        return $this->user()?->isCompanyAdmin() ?? false;
+        /** @var Company|null $company */
+        $company = $this->route('company');
+
+        return $company
+            ? ($this->user()?->can('update', $company) ?? false)
+            : ($this->user()?->can('update', $this->user()?->company) ?? false);
     }
 
-    /**
-     * @return array<string, mixed>
-     */
-    public function rules(): array
-    {
-        return [
-            'entries' => ['nullable', 'array', 'max:5'],
-            'entries.*' => ['string', new \App\Rules\IpAddressOrCidr],
-        ];
-    }
-
-    /**
-     * @return list<string>
-     */
-    public function whitelist(): array
-    {
-        return array_values($this->validated('entries', []));
-    }
 }

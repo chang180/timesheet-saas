@@ -17,6 +17,10 @@ class IpWhitelistController extends Controller
             'login_ip_whitelist' => $request->whitelist(),
         ]);
 
+        if ($company->onboarded_at === null) {
+            $company->forceFill(['onboarded_at' => now()])->save();
+        }
+
         return response()->json([
             'login_ip_whitelist' => $settings->login_ip_whitelist ?? [],
         ]);
