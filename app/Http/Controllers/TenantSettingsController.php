@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\Tenant\UpdateBrandingRequest;
 use App\Http\Requests\Tenant\UpdateWelcomePageRequest;
 use App\Http\Requests\UpdateIPWhitelistRequest;
 use App\Models\Company;
@@ -64,5 +65,23 @@ class TenantSettingsController extends Controller
         }
 
         return redirect()->back()->with('success', 'IP 白名單已更新');
+    }
+
+    public function updateBranding(UpdateBrandingRequest $request, Company $company): RedirectResponse
+    {
+        $branding = $request->validated('branding');
+
+        $company->forceFill([
+            'branding' => array_filter([
+                'color' => $branding['color'] ?? null,
+                'logo' => $branding['logo'] ?? null,
+            ], fn ($value) => $value !== null),
+        ])->save();
+
+        if ($company->onboarded_at === null) {
+            $company->forceFill(['onboarded_at' => now()])->save();
+        }
+
+        return redirect()->back()->with('success', '品牌設定已更新');
     }
 }

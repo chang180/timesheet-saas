@@ -12,7 +12,7 @@ import {
 import tenantRoutes from '@/routes/tenant';
 import { type NavItem, type SharedData } from '@/types';
 import { Link, usePage } from '@inertiajs/react';
-import { ClipboardList, Settings2 } from 'lucide-react';
+import { Building2, ClipboardList, Settings2, Users } from 'lucide-react';
 import AppLogo from './app-logo';
 
 export function AppSidebar() {
@@ -21,7 +21,11 @@ export function AppSidebar() {
     const canManageTenant = ['owner', 'admin', 'company_admin'].includes(
         userRole ?? '',
     );
-    const companySlug = (tenant?.company as { slug?: string } | undefined)?.slug;
+    
+    // 優先使用 tenant context 的 company，否則使用 auth.user.company
+    const companyFromTenant = tenant?.company as { slug?: string } | undefined;
+    const companyFromUser = auth?.user?.company as { slug?: string } | undefined;
+    const companySlug = companyFromTenant?.slug ?? companyFromUser?.slug;
 
     const mainNavItems: NavItem[] = [];
 
@@ -35,7 +39,17 @@ export function AppSidebar() {
 
     if (canManageTenant && companySlug) {
         mainNavItems.push({
-            title: '用戶設定',
+            title: '成員管理',
+            href: tenantRoutes.members.url({ company: companySlug }),
+            icon: Users,
+        });
+        mainNavItems.push({
+            title: '組織管理',
+            href: tenantRoutes.organization.url({ company: companySlug }),
+            icon: Building2,
+        });
+        mainNavItems.push({
+            title: '租戶設定',
             href: tenantRoutes.settings.url({ company: companySlug }),
             icon: Settings2,
         });

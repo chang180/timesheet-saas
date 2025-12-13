@@ -5,12 +5,15 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import AppLayout from '@/layouts/app-layout';
+import tenantRoutes from '@/routes/tenant';
 import settingsRoutes from '@/routes/tenant/settings';
 import { AnnouncementsModule } from '@/tenant/welcome-modules/announcements-module';
 import { HeroModule } from '@/tenant/welcome-modules/hero-module';
 import { QuickStartStepsModule } from '@/tenant/welcome-modules/quick-start-steps-module';
 import { SupportContactsModule } from '@/tenant/welcome-modules/support-contacts-module';
 import { WeeklyReportDemoModule } from '@/tenant/welcome-modules/weekly-report-demo-module';
+import { CompanyInfoCard } from '@/components/tenant/company-info-card';
+import { BrandingSettingsCard } from '@/components/tenant/branding-settings-card';
 import { cn } from '@/lib/utils';
 import { Head, useForm } from '@inertiajs/react';
 import { Fragment, useMemo } from 'react';
@@ -65,13 +68,35 @@ export default function TenantSettingsPage({ settings }: PageProps) {
         <AppLayout
             breadcrumbs={[
                 {
-                    title: '用戶設定',
-                    href: '#',
+                    title: '租戶設定',
+                    href: tenantRoutes.settings.url({ company: settings.companySlug }),
                 },
             ]}
         >
-            <Head title="用戶設定" />
-            <div className="space-y-12 px-4 py-8 lg:px-0">
+            <Head title="租戶設定" />
+            <div className="space-y-8 px-4 py-8 lg:px-0">
+                <div>
+                    <h1 className="text-3xl font-bold tracking-tight text-foreground">
+                        租戶設定
+                    </h1>
+                    <p className="text-sm text-muted-foreground mt-1">
+                        管理公司基本資訊、品牌設定、歡迎頁與安全設定
+                    </p>
+                </div>
+
+                <CompanyInfoCard
+                    companyName={settings.companyName}
+                    companySlug={settings.companySlug}
+                    maxUserLimit={settings.maxUserLimit}
+                    currentUserCount={settings.currentUserCount}
+                />
+
+                <BrandingSettingsCard
+                    companySlug={settings.companySlug}
+                    initialBrandColor={settings.brandColor}
+                    initialLogo={settings.logo}
+                />
+
                 <TenantWelcomeConfigurator
                     companyName={settings.companyName}
                     companySlug={settings.companySlug}
@@ -429,7 +454,7 @@ function TenantWelcomeConfigurator({
                     歡迎頁設定
                 </CardTitle>
                 <p className="text-sm text-muted-foreground">
-                    編輯用戶歡迎頁內容，右側即時預覽顯示成員看到的畫面。
+                    編輯用戶歡迎頁內容，右側即時預覽顯示成員看到的畫面。這些設定將應用於新成員首次登入時看到的歡迎頁面。
                 </p>
             </CardHeader>
             <CardContent>
@@ -1354,14 +1379,23 @@ function IPWhitelistForm({ initialAddresses, companySlug }: IPWhitelistFormProps
         <Card>
             <CardHeader>
                 <CardTitle className="text-2xl font-semibold">
-                    IP 白名單
+                    安全設定
                 </CardTitle>
                 <p className="text-sm text-muted-foreground">
-                    限制哪些 IP / CIDR 可登入用戶，最多 5 組。
+                    管理登入安全與 IP 限制
                 </p>
             </CardHeader>
             <CardContent>
-                <form className="space-y-6" onSubmit={handleSubmit}>
+                <div className="space-y-6">
+                    <div>
+                        <h3 className="text-lg font-semibold text-foreground mb-1">
+                            IP 白名單
+                        </h3>
+                        <p className="text-sm text-muted-foreground">
+                            限制哪些 IP / CIDR 可登入用戶，最多 5 組。留空則允許所有 IP 登入。
+                        </p>
+                    </div>
+                    <form className="space-y-6" onSubmit={handleSubmit}>
                     <div className="space-y-3">
                         {data.ipAddresses.map((ip, index) => (
                             <div key={`ip-${index}`} className="space-y-2">
@@ -1416,10 +1450,11 @@ function IPWhitelistForm({ initialAddresses, companySlug }: IPWhitelistFormProps
                         </div>
                     </div>
 
-                    <Button type="submit" disabled={processing}>
-                        儲存白名單
-                    </Button>
-                </form>
+                        <Button type="submit" disabled={processing}>
+                            儲存白名單
+                        </Button>
+                    </form>
+                </div>
             </CardContent>
         </Card>
     );

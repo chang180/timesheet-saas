@@ -9,6 +9,7 @@ use App\Models\Department;
 use App\Models\Division;
 use App\Models\Team;
 use App\Models\User;
+use App\Notifications\MemberInvitationNotification;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
@@ -63,6 +64,8 @@ class MemberInviteController extends Controller
                 abort(422, '此用戶的成員數已達上限。');
             }
 
+            $invitationToken = Str::random(60);
+
             $user = User::create([
                 'company_id' => $tenant->getKey(),
                 'division_id' => $division?->id,
@@ -73,11 +76,22 @@ class MemberInviteController extends Controller
                 'role' => $request->invitedRole(),
                 'password' => Hash::make(Str::random(40)),
                 'registered_via' => 'invite',
+                'invitation_token' => $invitationToken,
+                'invitation_sent_at' => now(),
             ]);
 
             $tenant->increment('current_user_count');
 
-            return $user->fresh(['division', 'department', 'team']);
+            $user = $user->fresh(['division', 'department', 'team']);
+
+            $inviter = $request->user();
+            $user->notify(new MemberInvitationNotification(
+                $tenant,
+                $invitationToken,
+                $inviter->name
+            ));
+
+            return $user;
         });
 
         return response()->json([

@@ -5,27 +5,40 @@ use App\Models\Company;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
-use Laravel\Fortify\Features;
 
 Route::get('/', [App\Http\Controllers\LandingController::class, 'global'])
     ->name('home');
 
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('dashboard', function (Request $request) {
-        $company = $request->user()?->company;
+        $user = $request->user();
+        $company = $user?->company;
 
         if (! $company) {
             return Inertia::render('dashboard');
+        }
+
+        $isManager = in_array($user->role, ['owner', 'admin', 'company_admin'], true);
+
+        if ($isManager && $company->onboarded_at === null) {
+            return redirect()->route('tenant.settings', $company);
         }
 
         return redirect()->route('tenant.weekly-reports', $company);
     })->name('dashboard');
 
     Route::get('app', function (Request $request) {
-        $company = $request->user()?->company;
+        $user = $request->user();
+        $company = $user?->company;
 
         if (! $company) {
             return redirect()->route('landing.global');
+        }
+
+        $isManager = in_array($user->role, ['owner', 'admin', 'company_admin'], true);
+
+        if ($isManager && $company->onboarded_at === null) {
+            return redirect()->route('tenant.settings', $company);
         }
 
         return redirect()->route('tenant.weekly-reports', $company);
@@ -34,7 +47,14 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::prefix('app/{company:slug}')
         ->middleware('tenant')
         ->group(function () {
-            Route::get('/', function (Company $company) {
+            Route::get('/', function (Request $request, Company $company) {
+                $user = $request->user();
+                $isManager = $user && in_array($user->role, ['owner', 'admin', 'company_admin'], true);
+
+                if ($isManager && $company->onboarded_at === null) {
+                    return redirect()->route('tenant.settings', $company);
+                }
+
                 return redirect()->route('tenant.weekly-reports', $company);
             })->name('tenant.home');
 
@@ -50,7 +70,12 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
             Route::get('settings', [App\Http\Controllers\TenantSettingsController::class, 'index'])->name('tenant.settings');
             Route::patch('settings/welcome-page', [App\Http\Controllers\TenantSettingsController::class, 'updateWelcomePage'])->name('tenant.settings.welcome-page');
+            Route::patch('settings/branding', [App\Http\Controllers\TenantSettingsController::class, 'updateBranding'])->name('tenant.settings.branding');
             Route::patch('settings/ip-whitelist', [App\Http\Controllers\TenantSettingsController::class, 'updateIPWhitelist'])->name('tenant.settings.ip-whitelist');
+
+            Route::get('members', [App\Http\Controllers\Tenant\MemberController::class, 'show'])->name('tenant.members');
+            Route::get('organization', [App\Http\Controllers\Tenant\OrganizationController::class, 'index'])->name('tenant.organization');
+            Route::get('invitations/accept/{token}', [App\Http\Controllers\Tenant\InvitationAcceptController::class, 'show'])->name('tenant.invitations.accept');
         });
 });
 

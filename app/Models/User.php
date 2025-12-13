@@ -41,6 +41,9 @@ class User extends Authenticatable
         'registered_via',
         'onboarded_at',
         'last_active_at',
+        'invitation_token',
+        'invitation_sent_at',
+        'invitation_accepted_at',
     ];
 
     /**
@@ -68,6 +71,8 @@ class User extends Authenticatable
             'two_factor_confirmed_at' => 'datetime',
             'onboarded_at' => 'datetime',
             'last_active_at' => 'datetime',
+            'invitation_sent_at' => 'datetime',
+            'invitation_accepted_at' => 'datetime',
         ];
     }
 

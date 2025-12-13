@@ -95,7 +95,7 @@ function TwoFactorSetupStep({
                     <div className="relative flex w-full items-center justify-center">
                         <div className="absolute inset-0 top-1/2 h-px w-full bg-border" />
                         <span className="relative bg-card px-2 py-1">
-                            or, enter the code manually
+                            或手動輸入代碼
                         </span>
                     </div>
 
@@ -200,7 +200,7 @@ function TwoFactorVerificationStep({
                                 onClick={onBack}
                                 disabled={processing}
                             >
-                                Back
+                                返回
                             </Button>
                             <Button
                                 type="submit"
@@ -209,7 +209,7 @@ function TwoFactorVerificationStep({
                                     processing || code.length < OTP_MAX_LENGTH
                                 }
                             >
-                                Confirm
+                                確認
                             </Button>
                         </div>
                     </div>
@@ -252,27 +252,27 @@ export default function TwoFactorSetupModal({
     }>(() => {
         if (twoFactorEnabled) {
             return {
-                title: 'Two-Factor Authentication Enabled',
+                title: '雙因素驗證已啟用',
                 description:
-                    'Two-factor authentication is now enabled. Scan the QR code or enter the setup key in your authenticator app.',
-                buttonText: 'Close',
+                    '雙因素驗證現已啟用。請在您的驗證器應用程式中掃描 QR 碼或輸入設定金鑰。',
+                buttonText: '關閉',
             };
         }
 
         if (showVerificationStep) {
             return {
-                title: 'Verify Authentication Code',
+                title: '驗證驗證碼',
                 description:
-                    'Enter the 6-digit code from your authenticator app',
-                buttonText: 'Continue',
+                    '請輸入您驗證器應用程式中的 6 位數驗證碼',
+                buttonText: '繼續',
             };
         }
 
         return {
-            title: 'Enable Two-Factor Authentication',
+            title: '啟用雙因素驗證',
             description:
-                'To finish enabling two-factor authentication, scan the QR code or enter the setup key in your authenticator app',
-            buttonText: 'Continue',
+                '要完成啟用雙因素驗證，請在您的驗證器應用程式中掃描 QR 碼或輸入設定金鑰',
+            buttonText: '繼續',
         };
     }, [twoFactorEnabled, showVerificationStep]);
 
