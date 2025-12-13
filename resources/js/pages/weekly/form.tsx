@@ -135,6 +135,7 @@ function SortableCurrentWeekRow({ item, index, updateItem, removeItem, getError 
                     value={item.title}
                     placeholder="任務名稱"
                     className="min-w-[180px]"
+                    data-testid={`current_week.${index}.title`}
                     onChange={(event) => updateItem('current_week', index, 'title', event.target.value)}
                 />
                 <InputError message={getError(`current_week.${index}.title`)} className="mt-1" />
@@ -145,6 +146,7 @@ function SortableCurrentWeekRow({ item, index, updateItem, removeItem, getError 
                     value={item.content ?? ''}
                     placeholder="詳細說明"
                     className="min-w-[200px]"
+                    data-testid={`current_week.${index}.content`}
                     onChange={(event) => updateItem('current_week', index, 'content', event.target.value)}
                 />
                 <InputError message={getError(`current_week.${index}.content`)} className="mt-1" />
@@ -156,6 +158,7 @@ function SortableCurrentWeekRow({ item, index, updateItem, removeItem, getError 
                     min="0"
                     value={item.hours_spent}
                     className="w-20"
+                    data-testid={`current_week.${index}.hours_spent`}
                     onChange={(event) => updateItem('current_week', index, 'hours_spent', event.target.value)}
                 />
                 <InputError message={getError(`current_week.${index}.hours_spent`)} className="mt-1" />
@@ -240,6 +243,7 @@ function SortableNextWeekRow({ item, index, updateItem, removeItem, getError }: 
                     value={item.title}
                     placeholder="預計事項"
                     className="min-w-[180px]"
+                    data-testid={`next_week.${index}.title`}
                     onChange={(event) => updateItem('next_week', index, 'title', event.target.value)}
                 />
                 <InputError message={getError(`next_week.${index}.title`)} className="mt-1" />
@@ -250,6 +254,7 @@ function SortableNextWeekRow({ item, index, updateItem, removeItem, getError }: 
                     value={item.content ?? ''}
                     placeholder="說明"
                     className="min-w-[200px]"
+                    data-testid={`next_week.${index}.content`}
                     onChange={(event) => updateItem('next_week', index, 'content', event.target.value)}
                 />
                 <InputError message={getError(`next_week.${index}.content`)} className="mt-1" />
@@ -261,6 +266,7 @@ function SortableNextWeekRow({ item, index, updateItem, removeItem, getError }: 
                     min="0"
                     value={item.planned_hours ?? ''}
                     className="w-20"
+                    data-testid={`next_week.${index}.planned_hours`}
                     onChange={(event) =>
                         updateItem(
                             'next_week',
@@ -485,6 +491,16 @@ export default function WeeklyReportForm({ mode, report, defaults, prefill, comp
 
     const getError = (path: string): string | undefined => form.errors[path] as string | undefined;
 
+    // 計算工時合計
+    const totalCurrentWeekHours = form.data.current_week.reduce(
+        (sum, item) => sum + (Number(item.hours_spent) || 0),
+        0,
+    );
+    const totalNextWeekHours = form.data.next_week.reduce(
+        (sum, item) => sum + (Number(item.planned_hours) || 0),
+        0,
+    );
+
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title={isCreate ? '建立週報' : '編輯週報'} />
@@ -574,6 +590,7 @@ export default function WeeklyReportForm({ mode, report, defaults, prefill, comp
                                 id="summary"
                                 rows={3}
                                 value={form.data.summary}
+                                data-testid="summary"
                                 onChange={(event) => form.setData('summary', event.target.value)}
                                 placeholder="可輸入本週亮點、風險提醒或需要協助的事項"
                             />
@@ -692,6 +709,35 @@ export default function WeeklyReportForm({ mode, report, defaults, prefill, comp
                                 </DndContext>
                             </div>
                         )}
+                    </CardContent>
+                </Card>
+
+                {/* 工時合計顯示 */}
+                <Card>
+                    <CardHeader>
+                        <CardTitle className="text-lg">工時統計</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                        <div className="grid gap-4 sm:grid-cols-2">
+                            <div className="rounded-lg border border-border/60 bg-muted/40 p-4">
+                                <div className="text-sm text-muted-foreground">本週完成總工時</div>
+                                <div className="mt-1 text-2xl font-semibold text-foreground">
+                                    {totalCurrentWeekHours.toFixed(1)} 小時
+                                </div>
+                                <div className="mt-2 text-xs text-muted-foreground">
+                                    {form.data.current_week.length} 個項目
+                                </div>
+                            </div>
+                            <div className="rounded-lg border border-border/60 bg-muted/40 p-4">
+                                <div className="text-sm text-muted-foreground">下週預計總工時</div>
+                                <div className="mt-1 text-2xl font-semibold text-foreground">
+                                    {totalNextWeekHours.toFixed(1)} 小時
+                                </div>
+                                <div className="mt-2 text-xs text-muted-foreground">
+                                    {form.data.next_week.length} 個項目
+                                </div>
+                            </div>
+                        </div>
                     </CardContent>
                 </Card>
 
