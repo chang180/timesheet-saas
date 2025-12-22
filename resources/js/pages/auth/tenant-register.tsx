@@ -16,18 +16,14 @@ import { Spinner } from '@/components/ui/spinner';
 import AuthSplitLayout from '@/layouts/auth/auth-split-layout';
 import { login } from '@/routes';
 import { store } from '@/routes/register';
-import { Form, Head, router } from '@inertiajs/react';
+import { Form, Head } from '@inertiajs/react';
 import {
     ArrowRight,
-    BadgeCheck,
     BellRing,
-    Building2,
     CalendarClock,
     GitBranch,
-    MailPlus,
     Shield,
     Sparkles,
-    UserPlus,
     Users,
     AlertCircle,
 } from 'lucide-react';

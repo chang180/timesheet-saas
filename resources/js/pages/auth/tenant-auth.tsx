@@ -19,18 +19,16 @@ import AuthSplitLayout from '@/layouts/auth/auth-split-layout';
 import { store as loginStore } from '@/routes/login';
 import { store as registerStore } from '@/routes/register';
 import { request } from '@/routes/password';
-import { Form, Head, router } from '@inertiajs/react';
+import { Form, Head } from '@inertiajs/react';
 import {
     AlertCircle,
     ArrowRight,
     BellRing,
     CalendarClock,
-    Check,
     GitBranch,
     LogIn,
     Shield,
     Sparkles,
-    UserPlus,
     Users,
 } from 'lucide-react';
 import { useState } from 'react';
@@ -62,7 +60,7 @@ export default function TenantAuth({
         <AuthSplitLayout
             title={`${company.name} 登入/註冊`}
             description="使用此專屬網址登入或註冊，僅限 {company.name} 的成員使用。"
-            aside={<AuthAside companyName={company.name} />}
+            aside={<AuthAside />}
         >
             <Head title={`${company.name} - 登入/註冊`} />
 
@@ -365,7 +363,7 @@ export default function TenantAuth({
     );
 }
 
-function AuthAside({ companyName }: { companyName: string }) {
+function AuthAside() {
     return (
         <div className="space-y-8">
             <div className="space-y-4">

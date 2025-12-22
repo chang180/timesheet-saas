@@ -34,12 +34,6 @@ interface WeeklyReportListProps {
     };
 }
 
-const STATUS_TEXT: Record<string, string> = {
-    draft: '草稿',
-    submitted: '已送出',
-    locked: '已鎖定',
-};
-
 const STATUS_CONFIG: Record<string, { text: string; icon: LucideIcon; className: string }> = {
     draft: {
         text: '草稿',

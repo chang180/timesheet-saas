@@ -1,7 +1,6 @@
 import InputError from '@/components/input-error';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
@@ -83,12 +82,6 @@ type FormData = {
     summary: string;
     current_week: WeeklyReportItemInput[];
     next_week: WeeklyReportItemInput[];
-};
-
-const STATUS_TEXT: Record<string, string> = {
-    draft: '草稿',
-    submitted: '已送出',
-    locked: '已鎖定',
 };
 
 const STATUS_CONFIG: Record<string, { text: string; icon: LucideIcon; className: string }> = {

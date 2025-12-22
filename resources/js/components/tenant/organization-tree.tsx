@@ -35,7 +35,6 @@ type Organization = {
 
 interface OrganizationTreeProps {
     organization: Organization;
-    onCreateDivision: () => void;
     onEditDivision: (division: Organization['divisions'][0]) => void;
     onDeleteDivision: (division: Organization['divisions'][0]) => void;
     onCreateDepartment: (divisionId?: number) => void;
@@ -50,7 +49,6 @@ interface OrganizationTreeProps {
 
 export function OrganizationTree({
     organization,
-    onCreateDivision,
     onEditDivision,
     onDeleteDivision,
     onCreateDepartment,

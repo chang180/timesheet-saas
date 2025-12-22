@@ -5,6 +5,8 @@
  * 提供日誌查詢功能給 Cursor MCP 環境使用
  */
 
+ 
+
 import { Server } from '@modelcontextprotocol/sdk/server/index.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
 import {
@@ -214,7 +216,7 @@ class ElkMcpServer {
             } else {
               reject(new Error(`Elasticsearch error: ${json.error?.reason || data}`));
             }
-          } catch (e) {
+          } catch {
             reject(new Error(`Failed to parse response: ${data}`));
           }
         });

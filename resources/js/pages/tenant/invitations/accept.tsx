@@ -5,7 +5,6 @@ import { Label } from '@/components/ui/label';
 import InputError from '@/components/input-error';
 import { Head, useForm } from '@inertiajs/react';
 import { CheckCircle2, Mail } from 'lucide-react';
-import tenantRoutes from '@/routes/tenant';
 import authApi from '@/routes/api/v1/tenant/auth';
 
 interface InvitationAcceptProps {

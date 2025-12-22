@@ -19,7 +19,6 @@ import {
 } from '@/components/ui/select';
 import { useState } from 'react';
 import membersApi from '@/routes/api/v1/tenant/members';
-import { router } from '@inertiajs/react';
 import { toast } from 'sonner';
 import { apiRequest, ensureCsrfCookie } from '@/lib/api-client';
 
