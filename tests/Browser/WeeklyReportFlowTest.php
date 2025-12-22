@@ -18,7 +18,7 @@ function createUserWithCompany(array $attributes = [], array $companyAttributes 
     return User::factory()->create(array_merge([
         'company_id' => $company->id,
         'email' => 'test@example.com',
-        'password' => bcrypt('password'),
+        'password' => bcrypt('TestPassword123!@#'),
     ], $attributes));
 }
 
@@ -30,7 +30,7 @@ it('can login and create weekly report', function () {
     $page->assertSee('登入週報通')
         ->assertNoJavascriptErrors()
         ->fill('email', 'test@example.com')
-        ->fill('password', 'password')
+        ->fill('password', 'TestPassword123!@#')
         ->click('登入')
         ->assertNoJavascriptErrors();
 
@@ -107,7 +107,7 @@ it('can view weekly report list after creating report', function () {
 
     $page = visit(route('login'))
         ->fill('email', 'test@example.com')
-        ->fill('password', 'password')
+        ->fill('password', 'TestPassword123!@#')
         ->click('登入')
         ->navigate(route('tenant.weekly-reports', $company));
 
@@ -137,7 +137,7 @@ it('can edit existing weekly report', function () {
 
     $page = visit(route('login'))
         ->fill('email', 'test@example.com')
-        ->fill('password', 'password')
+        ->fill('password', 'TestPassword123!@#')
         ->click('登入')
         ->navigate(route('tenant.weekly-reports.edit', [$company, $report]));
 
@@ -164,7 +164,7 @@ it('shows total hours calculation in form', function () {
 
     $page = visit(route('login'))
         ->fill('email', 'test@example.com')
-        ->fill('password', 'password')
+        ->fill('password', 'TestPassword123!@#')
         ->click('登入')
         ->wait(1)
         ->navigate(route('tenant.weekly-reports.create', $company));

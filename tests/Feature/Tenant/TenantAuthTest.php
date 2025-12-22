@@ -2,7 +2,6 @@
 
 use App\Models\Company;
 use App\Models\User;
-use Laravel\Fortify\Features;
 
 test('tenant auth page can be rendered', function () {
     $company = Company::factory()->create([
@@ -95,12 +94,12 @@ test('users can login via tenant auth page', function () {
     $user = User::factory()->withoutTwoFactor()->create([
         'company_id' => $company->id,
         'email' => 'test@example.com',
-        'password' => bcrypt('password'),
+        'password' => bcrypt('TestPassword123!@#'),
     ]);
 
     $response = $this->post(route('login.store'), [
         'email' => 'test@example.com',
-        'password' => 'password',
+        'password' => 'TestPassword123!@#',
         'company_slug' => $company->slug,
     ]);
 
@@ -143,8 +142,8 @@ test('users can register via tenant auth page', function () {
     $response = $this->post(route('register.store'), [
         'name' => 'New User',
         'email' => 'newuser@example.com',
-        'password' => 'password',
-        'password_confirmation' => 'password',
+        'password' => 'SecureTestPass123!@#',
+        'password_confirmation' => 'SecureTestPass123!@#',
         'company_slug' => $company->slug,
     ]);
 
@@ -171,8 +170,8 @@ test('users cannot register when company user limit reached', function () {
     $response = $this->post(route('register.store'), [
         'name' => 'New User',
         'email' => 'newuser@example.com',
-        'password' => 'password',
-        'password_confirmation' => 'password',
+        'password' => 'SecureTestPass123!@#',
+        'password_confirmation' => 'SecureTestPass123!@#',
         'company_slug' => $company->slug,
     ]);
 
@@ -190,8 +189,8 @@ test('users cannot register for inactive company', function () {
     $response = $this->post(route('register.store'), [
         'name' => 'New User',
         'email' => 'newuser@example.com',
-        'password' => 'password',
-        'password_confirmation' => 'password',
+        'password' => 'SecureTestPass123!@#',
+        'password_confirmation' => 'SecureTestPass123!@#',
         'company_slug' => $company->slug,
     ]);
 
