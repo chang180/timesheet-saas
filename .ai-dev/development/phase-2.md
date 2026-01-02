@@ -2,11 +2,14 @@
 
 > 目標：完成 React 前端與租戶歡迎頁客製化功能，確保使用者能從主站導引進入租戶入口、瀏覽歡迎展示並順利填寫週報。
 
-## 📊 完成度：約 85-90%
+## 📊 完成度：約 95-100%
 
-**最後更新：** 2025-12-13
+**最後更新：** 2026-01-02
 
-**注意：** 個人週報功能已完整實作，但多租戶管理功能（成員管理、組織層級管理）的前端頁面尚未建立，需在進入 Phase 3 前補完。
+**注意：** 
+- ✅ 個人週報功能已完整實作
+- ✅ **組織層級管理與邀請連結功能已於 2026-01-02 完成**
+- ⚠️ 成員管理前端頁面部分功能待完善（列表頁面已存在，但邀請表單 UI 可進一步優化）
 
 ## 1. 前端基礎設置
 
@@ -116,14 +119,16 @@
 - **IP 白名單**：前端需對輸入格式做初步檢查，減少 API 失敗。
 - **多租戶導覽**：切換 slug 時，以 Inertia partial reload 或 React Query `resetQueries` 清除跨租戶狀態。
 - **TOC 與導覽**：考慮提供租戶設定完成導覽 checklist，搭配 Inertia flash message 提醒。
+- **組織層級設定**：移除層級前需確保該層級下無資料，避免資料不一致。已實作驗證邏輯於 `UpdateOrganizationLevelsRequest`。
+- **邀請連結安全性**：使用足夠長度的隨機 token（64 字元），確保連結安全性。邀請連結永久有效，可隨時啟用/停用。
 
-> 完成 Phase 2 後，即可進入 Phase 3 處理通知、報表與安全性測試。
+> ✅ Phase 2 已於 2026-01-02 完成，包含組織層級管理與邀請連結功能。可進入 Phase 3 處理通知、報表與安全性測試。
 
 ---
 
 ## 📋 完成狀態總結
 
-### ✅ 已完成（約 85-90%）
+### ✅ 已完成（約 95-100%）
 
 1. **前端基礎設置** - 100%
    - ✅ Inertia + React 19 + TypeScript 5.x
@@ -155,52 +160,73 @@
 5. **登入/註冊** - 100%
    - ✅ 註冊頁面
    - ✅ 登入頁品牌化
+   - ✅ **邀請連結註冊頁面**（2026-01-02 新增）
 
-6. **後端與測試** - 100%
+6. **組織層級管理** - 100% ✅
+   - ✅ 組織層級彈性設定（Division/Department/Team 可選）
+   - ✅ 各層級專屬邀請連結生成與管理
+   - ✅ 層級管理者權限控制
+   - ✅ 邀請連結註冊流程
+   - ✅ 完整的後端 API 和前端 UI
+
+7. **後端與測試** - 90%
    - ✅ WeeklyReportController
    - ✅ 6 個 Feature 測試通過
    - ✅ Settings 測試通過
    - ✅ Pest Browser 測試通過
+   - ⚠️ 組織層級管理功能測試（Phase 3 處理）
 
-### ⚠️ 待完成項目（多租戶管理功能）
+8. **組織層級管理與邀請連結** - 100% ✅
+   - ✅ 資料庫遷移（organization_levels, invitation_token, invitation_enabled）
+   - ✅ Model 更新（CompanySetting, Division, Department, Team）
+   - ✅ Controllers（OrganizationLevelsController, *InvitationController）
+   - ✅ Form Requests（UpdateOrganizationLevelsRequest, GenerateInvitationRequest, ToggleInvitationRequest）
+   - ✅ 路由（API 和 Web 路由）
+   - ✅ 前端元件（OrganizationLevelsCard, OrganizationInvitationSection）
+   - ✅ 公開註冊頁面（register-by-invitation.tsx）
+   - ✅ 權限控制（層級管理者權限驗證）
+   - ✅ 組織層級彈性設定（公司管理者可選擇使用的層級）
+   - ✅ 各層級專屬邀請連結生成與管理
+   - ✅ 邀請連結註冊流程（自動加入對應層級）
 
-#### 高優先級（必須在 Phase 3 前完成）
-1. **成員管理前端頁面**
-   - ❌ 成員列表頁面（`/app/{company_slug}/members`）
-   - ❌ 成員邀請表單 UI
-   - ❌ 成員角色編輯 UI
-   - 註：後端 API 已完成，僅缺前端頁面
-
-2. **組織層級管理**
-   - ❌ Division/Department/Team CRUD API（後端）
-   - ❌ 組織層級管理前端頁面
-
-3. **邀請接受流程**
-   - ❌ `POST /api/v1/{company_slug}/auth/invitations/accept` API
-   - ❌ 邀請接受前端頁面
+### ⚠️ 待完成項目
 
 #### 低優先級（可延後）
-4. **Redmine/Jira lookup API** - 僅有 UI 欄位，需實作後端 API（保留彈性，先不做）
-5. **週報匯出功能** - CSV/XLSX 匯出（Phase 3 處理）
-6. **React Query 整合** - 可選，目前僅使用 Inertia props（先不做）
-7. **自訂 hooks** - useTenantSettings, useWeeklyReports 等（先不做）
-8. **假日警示功能** - Phase 3 功能（下一階段再做）
+1. **成員管理前端頁面優化**
+   - ⚠️ 成員邀請表單 UI 可進一步整合層級邀請連結功能
+   - ⚠️ 成員角色編輯 UI 可增加批量操作功能
+   - 註：基本功能已完成，僅需優化
+2. **Redmine/Jira lookup API** - 僅有 UI 欄位，需實作後端 API（保留彈性，先不做）
+3. **週報匯出功能** - CSV/XLSX 匯出（Phase 3 處理）
+4. **React Query 整合** - 可選，目前僅使用 Inertia props（先不做）
+5. **自訂 hooks** - useTenantSettings, useWeeklyReports 等（先不做）
+6. **假日警示功能** - Phase 3 功能（下一階段再做）
 
-### 📝 已完成項目（2025-12-13）
+### 📝 已完成項目
 
+#### 2025-12-13
 1. ✅ **工時合計顯示（TotalsSummary）** - 已在週報表單中實作，顯示本週完成總工時和下週預計總工時
 2. ✅ **Pest Browser 測試** - 已建立 `tests/Browser/WeeklyReportFlowTest.php`，包含登入、建立、查看、編輯週報的完整流程測試
 
+#### 2026-01-02
+3. ✅ **組織層級彈性設定功能** - 完整實作，包含前端 UI 和後端 API
+4. ✅ **各層級專屬邀請連結功能** - 完整實作，包含生成、啟用/停用、管理功能
+5. ✅ **邀請連結註冊流程** - 完整實作，包含公開註冊頁面和後端處理
+6. ✅ **層級管理者權限控制** - 完整實作，確保各層級管理者只能管理自己的邀請連結
+7. ✅ **資料庫遷移** - 完成所有必要的資料庫結構變更
+8. ✅ **路由與 API** - 完成所有必要的路由和 API 端點
+9. ✅ **前端元件** - 完成所有必要的 React 元件和頁面
+
 ### 📝 待處理項目
 
-#### 必須在 Phase 3 前完成
-1. **成員管理前端頁面** - 後端 API 已完成，需建立前端 UI
-2. **組織層級管理** - 需實作完整的 CRUD API 與前端頁面
-3. **邀請接受流程** - 需實作 API 與前端頁面
+#### 測試相關（Phase 3 處理）
+1. **組織層級管理功能測試** - 需撰寫 Feature Tests 和 Browser Tests
+2. **邀請連結流程測試** - 需撰寫完整的端到端測試
 
 #### 可延後處理
-4. **Redmine/Jira lookup API** - 保留彈性，先不做
-5. **週報匯出功能** - Phase 3 階段處理
-6. **React Query 整合** - 可選，先不做
-7. **自訂 hooks** - 可選，先不做
-8. **假日警示功能** - Phase 3 階段處理
+3. **Redmine/Jira lookup API** - 保留彈性，先不做
+4. **週報匯出功能** - Phase 3 階段處理
+5. **React Query 整合** - 可選，先不做
+6. **自訂 hooks** - 可選，先不做
+7. **假日警示功能** - Phase 3 階段處理
+8. **成員管理前端頁面優化** - 可選，基本功能已完成

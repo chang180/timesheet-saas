@@ -25,11 +25,19 @@ class OrganizationController extends Controller
             abort(403, __('Only company administrators can manage organization.'));
         }
 
+        $settings = $company->settings()->firstOrCreate([]);
+        $enabledLevels = $settings->getEnabledLevels();
+
         $company->loadMissing([
-            'divisions' => fn ($query) => $query->orderBy('sort_order')->select('id', 'company_id', 'name', 'slug', 'description', 'sort_order', 'is_active'),
-            'departments' => fn ($query) => $query->orderBy('sort_order')->select('id', 'company_id', 'division_id', 'name', 'slug', 'description', 'sort_order', 'is_active'),
-            'teams' => fn ($query) => $query->orderBy('sort_order')->select('id', 'company_id', 'division_id', 'department_id', 'name', 'slug', 'description', 'sort_order', 'is_active'),
+            'divisions' => fn ($query) => $query->orderBy('sort_order')->select('id', 'company_id', 'name', 'slug', 'description', 'sort_order', 'is_active', 'invitation_token', 'invitation_enabled'),
+            'departments' => fn ($query) => $query->orderBy('sort_order')->select('id', 'company_id', 'division_id', 'name', 'slug', 'description', 'sort_order', 'is_active', 'invitation_token', 'invitation_enabled'),
+            'teams' => fn ($query) => $query->orderBy('sort_order')->select('id', 'company_id', 'division_id', 'department_id', 'name', 'slug', 'description', 'sort_order', 'is_active', 'invitation_token', 'invitation_enabled'),
         ]);
+
+        // Filter organizations based on enabled levels
+        $divisions = $enabledLevels && in_array('division', $enabledLevels, true) ? $company->divisions : collect();
+        $departments = $enabledLevels && in_array('department', $enabledLevels, true) ? $company->departments : collect();
+        $teams = $enabledLevels && in_array('team', $enabledLevels, true) ? $company->teams : collect();
 
         return Inertia::render('tenant/organization/index', [
             'company' => [
@@ -37,16 +45,19 @@ class OrganizationController extends Controller
                 'name' => $company->name,
                 'slug' => $company->slug,
             ],
+            'organization_levels' => $enabledLevels,
             'organization' => [
-                'divisions' => $company->divisions->map(fn ($division) => [
+                'divisions' => $divisions->map(fn ($division) => [
                     'id' => $division->id,
                     'name' => $division->name,
                     'slug' => $division->slug,
                     'description' => $division->description,
                     'sort_order' => $division->sort_order,
                     'is_active' => (bool) $division->is_active,
+                    'invitation_token' => $division->invitation_token,
+                    'invitation_enabled' => (bool) $division->invitation_enabled,
                 ]),
-                'departments' => $company->departments->map(fn ($department) => [
+                'departments' => $departments->map(fn ($department) => [
                     'id' => $department->id,
                     'division_id' => $department->division_id,
                     'name' => $department->name,
@@ -54,8 +65,10 @@ class OrganizationController extends Controller
                     'description' => $department->description,
                     'sort_order' => $department->sort_order,
                     'is_active' => (bool) $department->is_active,
+                    'invitation_token' => $department->invitation_token,
+                    'invitation_enabled' => (bool) $department->invitation_enabled,
                 ]),
-                'teams' => $company->teams->map(fn ($team) => [
+                'teams' => $teams->map(fn ($team) => [
                     'id' => $team->id,
                     'division_id' => $team->division_id,
                     'department_id' => $team->department_id,
@@ -64,6 +77,8 @@ class OrganizationController extends Controller
                     'description' => $team->description,
                     'sort_order' => $team->sort_order,
                     'is_active' => (bool) $team->is_active,
+                    'invitation_token' => $team->invitation_token,
+                    'invitation_enabled' => (bool) $team->invitation_enabled,
                 ]),
             ],
         ]);

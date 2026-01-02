@@ -42,6 +42,7 @@ class SettingsController extends Controller
                 'login_ip_whitelist' => $settings->login_ip_whitelist ?? [],
                 'notification_preferences' => $settings->notification_preferences ?? [],
                 'default_weekly_report_modules' => $settings->default_weekly_report_modules ?? [],
+                'organization_levels' => $settings->getEnabledLevels(),
             ],
             'organization' => [
                 'divisions' => $company->divisions->map(fn ($division) => [

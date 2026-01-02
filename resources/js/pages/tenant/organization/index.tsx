@@ -23,6 +23,8 @@ type Organization = {
         description: string | null;
         sort_order: number;
         is_active: boolean;
+        invitation_token: string | null;
+        invitation_enabled: boolean;
     }>;
     departments: Array<{
         id: number;
@@ -32,6 +34,8 @@ type Organization = {
         description: string | null;
         sort_order: number;
         is_active: boolean;
+        invitation_token: string | null;
+        invitation_enabled: boolean;
     }>;
     teams: Array<{
         id: number;
@@ -42,6 +46,8 @@ type Organization = {
         description: string | null;
         sort_order: number;
         is_active: boolean;
+        invitation_token: string | null;
+        invitation_enabled: boolean;
     }>;
 };
 

@@ -47,6 +47,12 @@ class MemberInviteController extends Controller
 
         $this->assertHierarchyMatchesRole($request->invitedRole(), $division, $department, $team);
 
+        // Verify that level managers can only invite to their level or below
+        $user = $request->user();
+        if (! $user->isCompanyAdmin()) {
+            $this->assertLevelManagerCanInvite($user, $division, $department, $team);
+        }
+
         $user = DB::transaction(function () use ($request, $company, $division, $department, $team, $email): User {
             $tenant = Company::query()
                 ->whereKey($company->getKey())
@@ -119,6 +125,48 @@ class MemberInviteController extends Controller
 
         if ($role === 'team_lead' && ! $team) {
             abort(422, '小組主管必須指定所屬小組。');
+        }
+    }
+
+    private function assertLevelManagerCanInvite(User $user, ?Division $division, ?Department $department, ?Team $team): void
+    {
+        // Division lead can only invite to their division or below
+        if ($user->hasRole('division_lead')) {
+            if ($division && $user->division_id !== $division->id) {
+                abort(403, '您只能邀請到您所管理的事業群或其下層級。');
+            }
+            if ($department && $department->division_id !== $user->division_id) {
+                abort(403, '您只能邀請到您所管理的事業群或其下層級。');
+            }
+            if ($team && $team->division_id !== $user->division_id) {
+                abort(403, '您只能邀請到您所管理的事業群或其下層級。');
+            }
+        }
+
+        // Department manager can only invite to their department or below
+        if ($user->hasRole('department_manager')) {
+            if ($department && $user->department_id !== $department->id) {
+                abort(403, '您只能邀請到您所管理的部門或其下層級。');
+            }
+            if ($team && $team->department_id !== $user->department_id) {
+                abort(403, '您只能邀請到您所管理的部門或其下層級。');
+            }
+            if ($division && $division->id !== $user->division_id) {
+                abort(403, '您只能邀請到您所管理的部門或其下層級。');
+            }
+        }
+
+        // Team lead can only invite to their team
+        if ($user->hasRole('team_lead')) {
+            if ($team && $user->team_id !== $team->id) {
+                abort(403, '您只能邀請到您所管理的小組。');
+            }
+            if ($department && $department->id !== $user->department_id) {
+                abort(403, '您只能邀請到您所管理的小組。');
+            }
+            if ($division && $division->id !== $user->division_id) {
+                abort(403, '您只能邀請到您所管理的小組。');
+            }
         }
     }
 }

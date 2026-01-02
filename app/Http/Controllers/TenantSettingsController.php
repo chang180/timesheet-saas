@@ -23,7 +23,13 @@ class TenantSettingsController extends Controller
         $brandLogo = $branding['logo']
             ?? $branding['logoUrl']
             ?? null;
-        $settings = $company->settings;
+        $settings = $company->settings()->firstOrCreate([]);
+
+        $company->loadMissing([
+            'divisions' => fn ($query) => $query->select('id'),
+            'departments' => fn ($query) => $query->select('id'),
+            'teams' => fn ($query) => $query->select('id'),
+        ]);
 
         return Inertia::render('tenant/settings/index', [
             'settings' => [
@@ -31,8 +37,14 @@ class TenantSettingsController extends Controller
                 'companySlug' => $company->slug,
                 'brandColor' => $brandColor,
                 'logo' => $brandLogo,
-                'welcomePage' => $settings?->welcome_page ?? [],
-                'ipWhitelist' => $settings?->login_ip_whitelist ?? [],
+                'welcomePage' => $settings->welcome_page ?? [],
+                'ipWhitelist' => $settings->login_ip_whitelist ?? [],
+                'organizationLevels' => $settings->getEnabledLevels(),
+                'organization' => [
+                    'divisions' => $company->divisions->map(fn ($d) => ['id' => $d->id]),
+                    'departments' => $company->departments->map(fn ($d) => ['id' => $d->id]),
+                    'teams' => $company->teams->map(fn ($t) => ['id' => $t->id]),
+                ],
                 'maxUserLimit' => $company->user_limit,
                 'currentUserCount' => $company->users()->count(),
             ],

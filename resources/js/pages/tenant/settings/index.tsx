@@ -14,6 +14,7 @@ import { SupportContactsModule } from '@/tenant/welcome-modules/support-contacts
 import { WeeklyReportDemoModule } from '@/tenant/welcome-modules/weekly-report-demo-module';
 import { CompanyInfoCard } from '@/components/tenant/company-info-card';
 import { BrandingSettingsCard } from '@/components/tenant/branding-settings-card';
+import { OrganizationLevelsCard } from '@/components/tenant/organization-levels-card';
 import { cn } from '@/lib/utils';
 import { Head, useForm } from '@inertiajs/react';
 import { Fragment, useMemo } from 'react';
@@ -52,6 +53,14 @@ type TenantSettingsPayload = {
     logo?: string;
     welcomePage: Partial<WelcomeFormData>;
     ipWhitelist: string[];
+    organizationLevels?: string[];
+    organization?: {
+        divisions: Array<{ id: number }>;
+        departments: Array<{ id: number }>;
+        teams: Array<{ id: number }>;
+    };
+    maxUserLimit?: number;
+    currentUserCount?: number;
 };
 
 interface PageProps {
@@ -96,6 +105,14 @@ export default function TenantSettingsPage({ settings }: PageProps) {
                     initialBrandColor={settings.brandColor}
                     initialLogo={settings.logo}
                 />
+
+                {settings.organizationLevels && settings.organization && (
+                    <OrganizationLevelsCard
+                        companySlug={settings.companySlug}
+                        initialLevels={settings.organizationLevels}
+                        organization={settings.organization}
+                    />
+                )}
 
                 <TenantWelcomeConfigurator
                     companyName={settings.companyName}

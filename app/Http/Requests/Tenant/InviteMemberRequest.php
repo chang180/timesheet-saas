@@ -11,7 +11,23 @@ class InviteMemberRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        return $this->user()?->isCompanyAdmin() ?? false;
+        $user = $this->user();
+
+        if (! $user) {
+            return false;
+        }
+
+        // Company admin can always invite
+        if ($user->isCompanyAdmin()) {
+            return true;
+        }
+
+        // Level managers can invite to their level or below
+        $divisionId = $this->input('division_id');
+        $departmentId = $this->input('department_id');
+        $teamId = $this->input('team_id');
+
+        return $user->canManageHierarchy($divisionId, $departmentId, $teamId);
     }
 
     /**

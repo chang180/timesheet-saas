@@ -16,6 +16,9 @@ Route::prefix('app/{company:slug}')
         Route::get('auth', [App\Http\Controllers\Tenant\TenantAuthController::class, 'show'])->name('tenant.auth');
         // 保留舊的 register 路由以向後兼容
         Route::get('register', [App\Http\Controllers\Tenant\TenantRegisterController::class, 'show'])->name('tenant.register');
+        // 組織層級邀請連結註冊（公開）
+        Route::get('register/{token}/{type}', [App\Http\Controllers\Tenant\InvitationAcceptController::class, 'registerByInvitation'])->name('tenant.register-by-invitation');
+        Route::post('register-by-invitation', [App\Http\Controllers\Tenant\InvitationAcceptController::class, 'storeRegisterByInvitation'])->name('tenant.register-by-invitation.store');
     });
 
 Route::middleware(['auth', 'verified'])->group(function () {
