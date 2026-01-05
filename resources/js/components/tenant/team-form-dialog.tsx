@@ -61,8 +61,8 @@ export function TeamFormDialog({
     onSuccess,
 }: TeamFormDialogProps) {
     const form = useForm({
-        division_id: '',
-        department_id: '',
+        division_id: 'none',
+        department_id: 'none',
         name: '',
         slug: '',
         description: '',
@@ -74,8 +74,8 @@ export function TeamFormDialog({
         if (open) {
             if (team) {
                 form.setData({
-                    division_id: team.division_id?.toString() ?? '',
-                    department_id: team.department_id?.toString() ?? '',
+                    division_id: team.division_id?.toString() ?? 'none',
+                    department_id: team.department_id?.toString() ?? 'none',
                     name: team.name,
                     slug: team.slug,
                     description: team.description ?? '',
@@ -85,8 +85,8 @@ export function TeamFormDialog({
             } else {
                 form.reset();
                 form.setData({
-                    division_id: selectedDivisionId?.toString() ?? '',
-                    department_id: selectedDepartmentId?.toString() ?? '',
+                    division_id: selectedDivisionId?.toString() ?? 'none',
+                    department_id: selectedDepartmentId?.toString() ?? 'none',
                     name: '',
                     slug: '',
                     description: '',
@@ -99,7 +99,7 @@ export function TeamFormDialog({
     }, [open, team, selectedDepartmentId, selectedDivisionId]);
 
     const availableDepartments = organization.departments.filter(
-        (d) => d.is_active && (!form.data.division_id || d.division_id === Number(form.data.division_id)),
+        (d) => d.is_active && (form.data.division_id === 'none' || !form.data.division_id || d.division_id === Number(form.data.division_id)),
     );
 
     const handleSubmit = (e: React.FormEvent) => {
@@ -112,8 +112,8 @@ export function TeamFormDialog({
             description: form.data.description || undefined,
             sort_order: form.data.sort_order,
             is_active: form.data.is_active,
-            division_id: form.data.division_id ? Number(form.data.division_id) : undefined,
-            department_id: form.data.department_id ? Number(form.data.department_id) : undefined,
+            division_id: form.data.division_id && form.data.division_id !== 'none' ? Number(form.data.division_id) : undefined,
+            department_id: form.data.department_id && form.data.department_id !== 'none' ? Number(form.data.department_id) : undefined,
         };
 
         if (team) {
@@ -122,7 +122,7 @@ export function TeamFormDialog({
                 onSuccess: () => {
                     toast.success('小組已更新');
                     onOpenChange(false);
-                    onSuccess();
+                    // Inertia 會自動重新載入頁面，不需要手動調用 onSuccess
                 },
             });
         } else {
@@ -131,7 +131,7 @@ export function TeamFormDialog({
                 onSuccess: () => {
                     toast.success('小組已建立');
                     onOpenChange(false);
-                    onSuccess();
+                    // Inertia 會自動重新載入頁面，不需要手動調用 onSuccess
                 },
             });
         }
@@ -155,7 +155,7 @@ export function TeamFormDialog({
                                 onValueChange={(value) => {
                                     form.setData({
                                         division_id: value,
-                                        department_id: '',
+                                        department_id: 'none',
                                     });
                                 }}
                                 disabled={form.processing}
@@ -164,7 +164,7 @@ export function TeamFormDialog({
                                     <SelectValue placeholder="選擇事業群" />
                                 </SelectTrigger>
                                 <SelectContent>
-                                    <SelectItem value="">無</SelectItem>
+                                    <SelectItem value="none">無</SelectItem>
                                     {organization.divisions
                                         .filter((d) => d.is_active)
                                         .map((division) => (
@@ -184,13 +184,13 @@ export function TeamFormDialog({
                             <Select
                                 value={form.data.department_id}
                                 onValueChange={(value) => form.setData('department_id', value)}
-                                disabled={form.processing || !form.data.division_id}
+                                disabled={form.processing || !form.data.division_id || form.data.division_id === 'none'}
                             >
                                 <SelectTrigger id="team-department">
                                     <SelectValue placeholder="選擇部門" />
                                 </SelectTrigger>
                                 <SelectContent>
-                                    <SelectItem value="">無</SelectItem>
+                                    <SelectItem value="none">無</SelectItem>
                                     {availableDepartments.map((department) => (
                                         <SelectItem key={department.id} value={department.id.toString()}>
                                             {department.name}

@@ -58,7 +58,7 @@ export function DepartmentFormDialog({
     onSuccess,
 }: DepartmentFormDialogProps) {
     const form = useForm({
-        division_id: '',
+        division_id: 'none',
         name: '',
         slug: '',
         description: '',
@@ -70,7 +70,7 @@ export function DepartmentFormDialog({
         if (open) {
             if (department) {
                 form.setData({
-                    division_id: department.division_id?.toString() ?? '',
+                    division_id: department.division_id?.toString() ?? 'none',
                     name: department.name,
                     slug: department.slug,
                     description: department.description ?? '',
@@ -80,7 +80,7 @@ export function DepartmentFormDialog({
             } else {
                 form.reset();
                 form.setData({
-                    division_id: selectedDivisionId?.toString() ?? '',
+                    division_id: selectedDivisionId?.toString() ?? 'none',
                     name: '',
                     slug: '',
                     description: '',
@@ -102,7 +102,7 @@ export function DepartmentFormDialog({
             description: form.data.description || undefined,
             sort_order: form.data.sort_order,
             is_active: form.data.is_active,
-            division_id: form.data.division_id ? Number(form.data.division_id) : undefined,
+            division_id: form.data.division_id && form.data.division_id !== 'none' ? Number(form.data.division_id) : undefined,
         };
 
         if (department) {
@@ -111,7 +111,7 @@ export function DepartmentFormDialog({
                 onSuccess: () => {
                     toast.success('部門已更新');
                     onOpenChange(false);
-                    onSuccess();
+                    // Inertia 會自動重新載入頁面，不需要手動調用 onSuccess
                 },
             });
         } else {
@@ -120,7 +120,7 @@ export function DepartmentFormDialog({
                 onSuccess: () => {
                     toast.success('部門已建立');
                     onOpenChange(false);
-                    onSuccess();
+                    // Inertia 會自動重新載入頁面，不需要手動調用 onSuccess
                 },
             });
         }
@@ -148,7 +148,7 @@ export function DepartmentFormDialog({
                                     <SelectValue placeholder="選擇事業群" />
                                 </SelectTrigger>
                                 <SelectContent>
-                                    <SelectItem value="">無</SelectItem>
+                                    <SelectItem value="none">無</SelectItem>
                                     {organization.divisions
                                         .filter((d) => d.is_active)
                                         .map((division) => (

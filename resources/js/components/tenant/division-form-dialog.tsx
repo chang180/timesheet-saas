@@ -80,7 +80,7 @@ export function DivisionFormDialog({
                 onSuccess: () => {
                     toast.success('事業群已更新');
                     onOpenChange(false);
-                    onSuccess();
+                    // Inertia 會自動重新載入頁面，不需要手動調用 onSuccess
                 },
             });
         } else {
@@ -89,7 +89,7 @@ export function DivisionFormDialog({
                 onSuccess: () => {
                     toast.success('事業群已建立');
                     onOpenChange(false);
-                    onSuccess();
+                    // Inertia 會自動重新載入頁面，不需要手動調用 onSuccess
                 },
             });
         }

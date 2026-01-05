@@ -35,9 +35,11 @@ class OrganizationController extends Controller
         ]);
 
         // Filter organizations based on enabled levels
-        $divisions = $enabledLevels && in_array('division', $enabledLevels, true) ? $company->divisions : collect();
-        $departments = $enabledLevels && in_array('department', $enabledLevels, true) ? $company->departments : collect();
-        $teams = $enabledLevels && in_array('team', $enabledLevels, true) ? $company->teams : collect();
+        // If organization_levels is null (not yet configured), show all levels
+        $showAllLevels = $settings->organization_levels === null;
+        $divisions = ($showAllLevels || ($enabledLevels && in_array('division', $enabledLevels, true))) ? $company->divisions : collect();
+        $departments = ($showAllLevels || ($enabledLevels && in_array('department', $enabledLevels, true))) ? $company->departments : collect();
+        $teams = ($showAllLevels || ($enabledLevels && in_array('team', $enabledLevels, true))) ? $company->teams : collect();
 
         return Inertia::render('tenant/organization/index', [
             'company' => [

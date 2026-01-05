@@ -8,7 +8,7 @@ import teamsApi from '@/routes/api/v1/tenant/teams';
 import { type BreadcrumbItem, type SharedData } from '@/types';
 import { Head, usePage } from '@inertiajs/react';
 import { Building2, Plus } from 'lucide-react';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { OrganizationTree } from '@/components/tenant/organization-tree';
 import { DivisionFormDialog } from '@/components/tenant/division-form-dialog';
 import { DepartmentFormDialog } from '@/components/tenant/department-form-dialog';
@@ -66,6 +66,11 @@ export default function OrganizationManagementPage(props: PageProps) {
 
     const [organization, setOrganization] = useState<Organization>(props.organization);
     const [divisionDialogOpen, setDivisionDialogOpen] = useState(false);
+
+    // 當 props 更新時，同步更新 organization 狀態
+    useEffect(() => {
+        setOrganization(props.organization);
+    }, [props.organization]);
     const [departmentDialogOpen, setDepartmentDialogOpen] = useState(false);
     const [teamDialogOpen, setTeamDialogOpen] = useState(false);
     const [editingDivision, setEditingDivision] = useState<typeof organization.divisions[0] | null>(null);
