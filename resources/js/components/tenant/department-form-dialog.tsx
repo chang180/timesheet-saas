@@ -45,7 +45,6 @@ interface DepartmentFormDialogProps {
     } | null;
     selectedDivisionId: number | null;
     organization: Organization;
-    onSuccess: () => void;
 }
 
 export function DepartmentFormDialog({
@@ -55,7 +54,6 @@ export function DepartmentFormDialog({
     department,
     selectedDivisionId,
     organization,
-    onSuccess,
 }: DepartmentFormDialogProps) {
     const form = useForm({
         division_id: 'none',
@@ -90,6 +88,7 @@ export function DepartmentFormDialog({
             }
             form.clearErrors();
         }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [open, department, selectedDivisionId]);
 
     const handleSubmit = (e: React.FormEvent) => {

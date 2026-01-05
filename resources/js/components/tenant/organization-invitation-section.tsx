@@ -51,7 +51,7 @@ export function OrganizationInvitationSection({
             setCopied(true);
             toast.success('邀請連結已複製到剪貼簿');
             setTimeout(() => setCopied(false), 2000);
-        } catch (err) {
+        } catch {
             toast.error('複製失敗');
         }
     };

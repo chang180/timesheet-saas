@@ -47,7 +47,6 @@ interface TeamFormDialogProps {
     selectedDepartmentId: number | null;
     selectedDivisionId: number | null;
     organization: Organization;
-    onSuccess: () => void;
 }
 
 export function TeamFormDialog({
@@ -58,7 +57,6 @@ export function TeamFormDialog({
     selectedDepartmentId,
     selectedDivisionId,
     organization,
-    onSuccess,
 }: TeamFormDialogProps) {
     const form = useForm({
         division_id: 'none',
@@ -96,6 +94,7 @@ export function TeamFormDialog({
             }
             form.clearErrors();
         }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [open, team, selectedDepartmentId, selectedDivisionId]);
 
     const availableDepartments = organization.departments.filter(

@@ -29,7 +29,6 @@ interface DivisionFormDialogProps {
         sort_order: number;
         is_active: boolean;
     } | null;
-    onSuccess: () => void;
 }
 
 export function DivisionFormDialog({
@@ -37,7 +36,6 @@ export function DivisionFormDialog({
     onOpenChange,
     companySlug,
     division,
-    onSuccess,
 }: DivisionFormDialogProps) {
     const form = useForm({
         name: '',
@@ -69,6 +67,7 @@ export function DivisionFormDialog({
             }
             form.clearErrors();
         }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [open, division]);
 
     const handleSubmit = (e: React.FormEvent) => {

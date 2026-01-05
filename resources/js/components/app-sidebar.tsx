@@ -29,7 +29,7 @@ export function AppSidebar() {
     
     // 從 URL 解析 company slug（備用方案）
     // URL 格式: /app/{companySlug}/...
-    const urlMatch = page.url.match(/^\/app\/([^\/]+)/);
+    const urlMatch = page.url.match(/^\/app\/([^/]+)/);
     const companySlugFromUrl = urlMatch ? urlMatch[1] : null;
     
     const companySlug = companyFromTenant?.slug ?? companyFromUser?.slug ?? companySlugFromUrl;

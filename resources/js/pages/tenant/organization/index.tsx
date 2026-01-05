@@ -8,7 +8,7 @@ import teamsApi from '@/routes/api/v1/tenant/teams';
 import { type BreadcrumbItem, type SharedData } from '@/types';
 import { Head, usePage } from '@inertiajs/react';
 import { Building2, Plus } from 'lucide-react';
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { OrganizationTree } from '@/components/tenant/organization-tree';
 import { DivisionFormDialog } from '@/components/tenant/division-form-dialog';
 import { DepartmentFormDialog } from '@/components/tenant/department-form-dialog';
@@ -64,13 +64,9 @@ export default function OrganizationManagementPage(props: PageProps) {
     const { tenant } = usePage<SharedData>().props;
     const companySlug = (tenant?.company as { slug?: string } | undefined)?.slug ?? props.company.slug;
 
-    const [organization, setOrganization] = useState<Organization>(props.organization);
+    // 直接使用 props.organization，Inertia 會在頁面更新時自動重新渲染
+    const organization = props.organization;
     const [divisionDialogOpen, setDivisionDialogOpen] = useState(false);
-
-    // 當 props 更新時，同步更新 organization 狀態
-    useEffect(() => {
-        setOrganization(props.organization);
-    }, [props.organization]);
     const [departmentDialogOpen, setDepartmentDialogOpen] = useState(false);
     const [teamDialogOpen, setTeamDialogOpen] = useState(false);
     const [editingDivision, setEditingDivision] = useState<typeof organization.divisions[0] | null>(null);
@@ -360,7 +356,6 @@ export default function OrganizationManagementPage(props: PageProps) {
                     onOpenChange={setDivisionDialogOpen}
                     companySlug={companySlug}
                     division={editingDivision}
-                    onSuccess={fetchOrganization}
                 />
 
                 <DepartmentFormDialog
@@ -370,7 +365,6 @@ export default function OrganizationManagementPage(props: PageProps) {
                     department={editingDepartment}
                     selectedDivisionId={selectedDivisionId}
                     organization={organization}
-                    onSuccess={fetchOrganization}
                 />
 
                 <TeamFormDialog
@@ -381,7 +375,6 @@ export default function OrganizationManagementPage(props: PageProps) {
                     selectedDepartmentId={selectedDepartmentId}
                     selectedDivisionId={selectedDivisionId}
                     organization={organization}
-                    onSuccess={fetchOrganization}
                 />
             </div>
         </AppLayout>
