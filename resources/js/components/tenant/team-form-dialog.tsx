@@ -19,8 +19,9 @@ import {
     SelectTrigger,
     SelectValue,
 } from '@/components/ui/select';
-import { useState, useEffect } from 'react';
-import teamsApi from '@/routes/api/v1/tenant/teams';
+import { useEffect } from 'react';
+import { useForm } from '@inertiajs/react';
+import tenantRoutes from '@/routes/tenant';
 import { toast } from 'sonner';
 
 type Organization = {
@@ -59,7 +60,7 @@ export function TeamFormDialog({
     organization,
     onSuccess,
 }: TeamFormDialogProps) {
-    const [formData, setFormData] = useState({
+    const form = useForm({
         division_id: '',
         department_id: '',
         name: '',
@@ -68,13 +69,11 @@ export function TeamFormDialog({
         sort_order: 0,
         is_active: true,
     });
-    const [errors, setErrors] = useState<Record<string, string>>({});
-    const [loading, setLoading] = useState(false);
 
     useEffect(() => {
         if (open) {
             if (team) {
-                setFormData({
+                form.setData({
                     division_id: team.division_id?.toString() ?? '',
                     department_id: team.department_id?.toString() ?? '',
                     name: team.name,
@@ -84,7 +83,8 @@ export function TeamFormDialog({
                     is_active: team.is_active,
                 });
             } else {
-                setFormData({
+                form.reset();
+                form.setData({
                     division_id: selectedDivisionId?.toString() ?? '',
                     department_id: selectedDepartmentId?.toString() ?? '',
                     name: '',
@@ -94,71 +94,46 @@ export function TeamFormDialog({
                     is_active: true,
                 });
             }
-            setErrors({});
+            form.clearErrors();
         }
     }, [open, team, selectedDepartmentId, selectedDivisionId]);
 
     const availableDepartments = organization.departments.filter(
-        (d) => d.is_active && (!formData.division_id || d.division_id === Number(formData.division_id)),
+        (d) => d.is_active && (!form.data.division_id || d.division_id === Number(form.data.division_id)),
     );
 
-    const handleSubmit = async (e: React.FormEvent) => {
+    const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        setLoading(true);
-        setErrors({});
 
-        try {
-            const payload: Record<string, unknown> = {
-                name: formData.name,
-                slug: formData.slug || undefined,
-                description: formData.description || undefined,
-                sort_order: formData.sort_order,
-                is_active: formData.is_active,
-            };
+        // Transform form data before submission
+        const submitData = {
+            name: form.data.name,
+            slug: form.data.slug || undefined,
+            description: form.data.description || undefined,
+            sort_order: form.data.sort_order,
+            is_active: form.data.is_active,
+            division_id: form.data.division_id ? Number(form.data.division_id) : undefined,
+            department_id: form.data.department_id ? Number(form.data.department_id) : undefined,
+        };
 
-            if (formData.division_id) {
-                payload.division_id = Number(formData.division_id);
-            }
-            if (formData.department_id) {
-                payload.department_id = Number(formData.department_id);
-            }
-
-            const url = team
-                ? teamsApi.update.url({ company: companySlug, team: team.id })
-                : teamsApi.store.url({ company: companySlug });
-            const method = team ? 'PATCH' : 'POST';
-
-            const response = await fetch(url, {
-                method,
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Accept': 'application/json',
-                    'X-Requested-With': 'XMLHttpRequest',
+        if (team) {
+            form.transform(() => submitData).patch(tenantRoutes.teams.update.url({ company: companySlug, team: team.id }), {
+                preserveScroll: true,
+                onSuccess: () => {
+                    toast.success('小組已更新');
+                    onOpenChange(false);
+                    onSuccess();
                 },
-                credentials: 'include',
-                body: JSON.stringify(payload),
             });
-
-            const data = await response.json();
-
-            if (!response.ok) {
-                if (response.status === 422) {
-                    setErrors(data.errors || { message: data.message || '驗證失敗' });
-                } else {
-                    setErrors({ message: data.message || '操作失敗' });
-                }
-                setLoading(false);
-                return;
-            }
-
-            toast.success(team ? '小組已更新' : '小組已建立');
-            onOpenChange(false);
-            onSuccess();
-        } catch (error) {
-            console.error('Error saving team:', error);
-            setErrors({ message: '操作失敗，請稍後再試' });
-        } finally {
-            setLoading(false);
+        } else {
+            form.transform(() => submitData).post(tenantRoutes.teams.store.url({ company: companySlug }), {
+                preserveScroll: true,
+                onSuccess: () => {
+                    toast.success('小組已建立');
+                    onOpenChange(false);
+                    onSuccess();
+                },
+            });
         }
     };
 
@@ -176,15 +151,14 @@ export function TeamFormDialog({
                         <div className="space-y-2">
                             <Label htmlFor="team-division">事業群</Label>
                             <Select
-                                value={formData.division_id}
+                                value={form.data.division_id}
                                 onValueChange={(value) => {
-                                    setFormData({
-                                        ...formData,
+                                    form.setData({
                                         division_id: value,
                                         department_id: '',
                                     });
                                 }}
-                                disabled={loading}
+                                disabled={form.processing}
                             >
                                 <SelectTrigger id="team-division">
                                     <SelectValue placeholder="選擇事業群" />
@@ -200,7 +174,7 @@ export function TeamFormDialog({
                                         ))}
                                 </SelectContent>
                             </Select>
-                            <InputError message={errors.division_id} />
+                            <InputError message={form.errors.division_id} />
                         </div>
                     )}
 
@@ -208,9 +182,9 @@ export function TeamFormDialog({
                         <div className="space-y-2">
                             <Label htmlFor="team-department">部門</Label>
                             <Select
-                                value={formData.department_id}
-                                onValueChange={(value) => setFormData({ ...formData, department_id: value })}
-                                disabled={loading || !formData.division_id}
+                                value={form.data.department_id}
+                                onValueChange={(value) => form.setData('department_id', value)}
+                                disabled={form.processing || !form.data.division_id}
                             >
                                 <SelectTrigger id="team-department">
                                     <SelectValue placeholder="選擇部門" />
@@ -224,7 +198,7 @@ export function TeamFormDialog({
                                     ))}
                                 </SelectContent>
                             </Select>
-                            <InputError message={errors.department_id} />
+                            <InputError message={form.errors.department_id} />
                         </div>
                     )}
 
@@ -234,36 +208,36 @@ export function TeamFormDialog({
                         </Label>
                         <Input
                             id="team-name"
-                            value={formData.name}
-                            onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                            value={form.data.name}
+                            onChange={(e) => form.setData('name', e.target.value)}
                             required
-                            disabled={loading}
+                            disabled={form.processing}
                         />
-                        <InputError message={errors.name} />
+                        <InputError message={form.errors.name} />
                     </div>
 
                     <div className="space-y-2">
                         <Label htmlFor="team-slug">Slug</Label>
                         <Input
                             id="team-slug"
-                            value={formData.slug}
-                            onChange={(e) => setFormData({ ...formData, slug: e.target.value })}
-                            disabled={loading || !!team}
+                            value={form.data.slug}
+                            onChange={(e) => form.setData('slug', e.target.value)}
+                            disabled={form.processing || !!team}
                             placeholder="自動產生"
                         />
-                        <InputError message={errors.slug} />
+                        <InputError message={form.errors.slug} />
                     </div>
 
                     <div className="space-y-2">
                         <Label htmlFor="team-description">描述</Label>
                         <Textarea
                             id="team-description"
-                            value={formData.description}
-                            onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                            disabled={loading}
+                            value={form.data.description}
+                            onChange={(e) => form.setData('description', e.target.value)}
+                            disabled={form.processing}
                             rows={3}
                         />
-                        <InputError message={errors.description} />
+                        <InputError message={form.errors.description} />
                     </div>
 
                     <div className="space-y-2">
@@ -272,44 +246,38 @@ export function TeamFormDialog({
                             id="team-sort-order"
                             type="number"
                             min="0"
-                            value={formData.sort_order}
-                            onChange={(e) => setFormData({ ...formData, sort_order: Number(e.target.value) })}
-                            disabled={loading}
+                            value={form.data.sort_order}
+                            onChange={(e) => form.setData('sort_order', Number(e.target.value))}
+                            disabled={form.processing}
                         />
-                        <InputError message={errors.sort_order} />
+                        <InputError message={form.errors.sort_order} />
                     </div>
 
                     <div className="flex items-center space-x-2">
                         <Checkbox
                             id="team-is-active"
-                            checked={formData.is_active}
+                            checked={form.data.is_active}
                             onCheckedChange={(checked) =>
-                                setFormData({ ...formData, is_active: checked === true })
+                                form.setData('is_active', checked === true)
                             }
-                            disabled={loading}
+                            disabled={form.processing}
                         />
                         <Label htmlFor="team-is-active" className="cursor-pointer">
                             啟用
                         </Label>
                     </div>
 
-                    {errors.message && (
-                        <div className="rounded-lg border border-destructive bg-destructive/10 p-3 text-sm text-destructive">
-                            {errors.message}
-                        </div>
-                    )}
-
                     <DialogFooter>
                         <Button
                             type="button"
                             variant="outline"
                             onClick={() => onOpenChange(false)}
-                            disabled={loading}
+                            disabled={form.processing}
                         >
                             取消
                         </Button>
-                        <Button type="submit" disabled={loading}>
-                            {loading ? '儲存中...' : '儲存'}
+                        <Button type="submit" disabled={form.processing}>
+                            {form.processing ? '儲存中...' : '儲存'}
                         </Button>
                     </DialogFooter>
                 </form>

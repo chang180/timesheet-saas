@@ -12,8 +12,9 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import InputError from '@/components/input-error';
 import { Checkbox } from '@/components/ui/checkbox';
-import { useState, useEffect } from 'react';
-import divisionsApi from '@/routes/api/v1/tenant/divisions';
+import { useEffect } from 'react';
+import { useForm } from '@inertiajs/react';
+import tenantRoutes from '@/routes/tenant';
 import { toast } from 'sonner';
 
 interface DivisionFormDialogProps {
@@ -38,20 +39,18 @@ export function DivisionFormDialog({
     division,
     onSuccess,
 }: DivisionFormDialogProps) {
-    const [formData, setFormData] = useState({
+    const form = useForm({
         name: '',
         slug: '',
         description: '',
         sort_order: 0,
         is_active: true,
     });
-    const [errors, setErrors] = useState<Record<string, string>>({});
-    const [loading, setLoading] = useState(false);
 
     useEffect(() => {
         if (open) {
             if (division) {
-                setFormData({
+                form.setData({
                     name: division.name,
                     slug: division.slug,
                     description: division.description ?? '',
@@ -59,7 +58,8 @@ export function DivisionFormDialog({
                     is_active: division.is_active,
                 });
             } else {
-                setFormData({
+                form.reset();
+                form.setData({
                     name: '',
                     slug: '',
                     description: '',
@@ -67,52 +67,31 @@ export function DivisionFormDialog({
                     is_active: true,
                 });
             }
-            setErrors({});
+            form.clearErrors();
         }
     }, [open, division]);
 
-    const handleSubmit = async (e: React.FormEvent) => {
+    const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        setLoading(true);
-        setErrors({});
 
-        try {
-            const url = division
-                ? divisionsApi.update.url({ company: companySlug, division: division.id })
-                : divisionsApi.store.url({ company: companySlug });
-            const method = division ? 'PATCH' : 'POST';
-
-            const response = await fetch(url, {
-                method,
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Accept': 'application/json',
-                    'X-Requested-With': 'XMLHttpRequest',
+        if (division) {
+            form.patch(tenantRoutes.divisions.update.url({ company: companySlug, division: division.id }), {
+                preserveScroll: true,
+                onSuccess: () => {
+                    toast.success('事業群已更新');
+                    onOpenChange(false);
+                    onSuccess();
                 },
-                credentials: 'include',
-                body: JSON.stringify(formData),
             });
-
-            const data = await response.json();
-
-            if (!response.ok) {
-                if (response.status === 422) {
-                    setErrors(data.errors || { message: data.message || '驗證失敗' });
-                } else {
-                    setErrors({ message: data.message || '操作失敗' });
-                }
-                setLoading(false);
-                return;
-            }
-
-            toast.success(division ? '事業群已更新' : '事業群已建立');
-            onOpenChange(false);
-            onSuccess();
-        } catch (error) {
-            console.error('Error saving division:', error);
-            setErrors({ message: '操作失敗，請稍後再試' });
-        } finally {
-            setLoading(false);
+        } else {
+            form.post(tenantRoutes.divisions.store.url({ company: companySlug }), {
+                preserveScroll: true,
+                onSuccess: () => {
+                    toast.success('事業群已建立');
+                    onOpenChange(false);
+                    onSuccess();
+                },
+            });
         }
     };
 
@@ -132,36 +111,36 @@ export function DivisionFormDialog({
                         </Label>
                         <Input
                             id="division-name"
-                            value={formData.name}
-                            onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                            value={form.data.name}
+                            onChange={(e) => form.setData('name', e.target.value)}
                             required
-                            disabled={loading}
+                            disabled={form.processing}
                         />
-                        <InputError message={errors.name} />
+                        <InputError message={form.errors.name} />
                     </div>
 
                     <div className="space-y-2">
                         <Label htmlFor="division-slug">Slug</Label>
                         <Input
                             id="division-slug"
-                            value={formData.slug}
-                            onChange={(e) => setFormData({ ...formData, slug: e.target.value })}
-                            disabled={loading || !!division}
+                            value={form.data.slug}
+                            onChange={(e) => form.setData('slug', e.target.value)}
+                            disabled={form.processing || !!division}
                             placeholder="自動產生"
                         />
-                        <InputError message={errors.slug} />
+                        <InputError message={form.errors.slug} />
                     </div>
 
                     <div className="space-y-2">
                         <Label htmlFor="division-description">描述</Label>
                         <Textarea
                             id="division-description"
-                            value={formData.description}
-                            onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                            disabled={loading}
+                            value={form.data.description}
+                            onChange={(e) => form.setData('description', e.target.value)}
+                            disabled={form.processing}
                             rows={3}
                         />
-                        <InputError message={errors.description} />
+                        <InputError message={form.errors.description} />
                     </div>
 
                     <div className="space-y-2">
@@ -170,44 +149,38 @@ export function DivisionFormDialog({
                             id="division-sort-order"
                             type="number"
                             min="0"
-                            value={formData.sort_order}
-                            onChange={(e) => setFormData({ ...formData, sort_order: Number(e.target.value) })}
-                            disabled={loading}
+                            value={form.data.sort_order}
+                            onChange={(e) => form.setData('sort_order', Number(e.target.value))}
+                            disabled={form.processing}
                         />
-                        <InputError message={errors.sort_order} />
+                        <InputError message={form.errors.sort_order} />
                     </div>
 
                     <div className="flex items-center space-x-2">
                         <Checkbox
                             id="division-is-active"
-                            checked={formData.is_active}
+                            checked={form.data.is_active}
                             onCheckedChange={(checked) =>
-                                setFormData({ ...formData, is_active: checked === true })
+                                form.setData('is_active', checked === true)
                             }
-                            disabled={loading}
+                            disabled={form.processing}
                         />
                         <Label htmlFor="division-is-active" className="cursor-pointer">
                             啟用
                         </Label>
                     </div>
 
-                    {errors.message && (
-                        <div className="rounded-lg border border-destructive bg-destructive/10 p-3 text-sm text-destructive">
-                            {errors.message}
-                        </div>
-                    )}
-
                     <DialogFooter>
                         <Button
                             type="button"
                             variant="outline"
                             onClick={() => onOpenChange(false)}
-                            disabled={loading}
+                            disabled={form.processing}
                         >
                             取消
                         </Button>
-                        <Button type="submit" disabled={loading}>
-                            {loading ? '儲存中...' : '儲存'}
+                        <Button type="submit" disabled={form.processing}>
+                            {form.processing ? '儲存中...' : '儲存'}
                         </Button>
                     </DialogFooter>
                 </form>

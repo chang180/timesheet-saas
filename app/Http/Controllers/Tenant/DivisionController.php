@@ -8,12 +8,14 @@ use App\Http\Requests\Tenant\UpdateDivisionRequest;
 use App\Models\Company;
 use App\Models\Division;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Str;
 
 class DivisionController extends Controller
 {
     /**
      * Display a listing of divisions.
+     * Note: This is kept for API compatibility but should use OrganizationController::index instead.
      */
     public function index(Company $company): JsonResponse
     {
@@ -38,7 +40,7 @@ class DivisionController extends Controller
     /**
      * Store a newly created division.
      */
-    public function store(StoreDivisionRequest $request, Company $company): JsonResponse
+    public function store(StoreDivisionRequest $request, Company $company): RedirectResponse
     {
         $data = $request->validated();
 
@@ -46,7 +48,7 @@ class DivisionController extends Controller
             $data['slug'] = Str::slug($data['name']);
         }
 
-        $division = Division::create([
+        Division::create([
             'company_id' => $company->getKey(),
             'name' => $data['name'],
             'slug' => $data['slug'],
@@ -55,22 +57,14 @@ class DivisionController extends Controller
             'is_active' => $data['is_active'] ?? true,
         ]);
 
-        return response()->json([
-            'division' => [
-                'id' => $division->id,
-                'name' => $division->name,
-                'slug' => $division->slug,
-                'description' => $division->description,
-                'sort_order' => $division->sort_order,
-                'is_active' => (bool) $division->is_active,
-            ],
-        ], 201);
+        return redirect()->route('tenant.organization', $company)
+            ->with('success', '事業群已建立');
     }
 
     /**
      * Update the specified division.
      */
-    public function update(UpdateDivisionRequest $request, Company $company, Division $division): JsonResponse
+    public function update(UpdateDivisionRequest $request, Company $company, Division $division): RedirectResponse
     {
         if ($division->company_id !== $company->getKey()) {
             abort(404);
@@ -84,22 +78,14 @@ class DivisionController extends Controller
 
         $division->update($data);
 
-        return response()->json([
-            'division' => [
-                'id' => $division->id,
-                'name' => $division->name,
-                'slug' => $division->slug,
-                'description' => $division->description,
-                'sort_order' => $division->sort_order,
-                'is_active' => (bool) $division->is_active,
-            ],
-        ]);
+        return redirect()->route('tenant.organization', $company)
+            ->with('success', '事業群已更新');
     }
 
     /**
      * Remove the specified division.
      */
-    public function destroy(Company $company, Division $division): JsonResponse
+    public function destroy(Company $company, Division $division): RedirectResponse
     {
         if ($division->company_id !== $company->getKey()) {
             abort(404);
@@ -108,19 +94,23 @@ class DivisionController extends Controller
         $this->authorize('delete', $division);
 
         if ($division->users()->exists()) {
-            abort(422, __('Cannot delete division with associated members. Please migrate members first.'));
+            return redirect()->route('tenant.organization', $company)
+                ->with('error', '無法刪除事業群，因為已有成員資料。請先遷移成員。');
         }
 
         if ($division->departments()->exists()) {
-            abort(422, __('Cannot delete division with associated departments. Please delete or migrate departments first.'));
+            return redirect()->route('tenant.organization', $company)
+                ->with('error', '無法刪除事業群，因為已有部門資料。請先刪除或遷移部門。');
         }
 
         if ($division->teams()->exists()) {
-            abort(422, __('Cannot delete division with associated teams. Please delete or migrate teams first.'));
+            return redirect()->route('tenant.organization', $company)
+                ->with('error', '無法刪除事業群，因為已有小組資料。請先刪除或遷移小組。');
         }
 
         $division->delete();
 
-        return response()->json([], 204);
+        return redirect()->route('tenant.organization', $company)
+            ->with('success', '事業群已刪除');
     }
 }

@@ -10,6 +10,7 @@ use App\Models\Department;
 use App\Models\Division;
 use App\Models\Team;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Str;
 
 class TeamController extends Controller
@@ -52,7 +53,7 @@ class TeamController extends Controller
     /**
      * Store a newly created team.
      */
-    public function store(StoreTeamRequest $request, Company $company): JsonResponse
+    public function store(StoreTeamRequest $request, Company $company): RedirectResponse
     {
         $data = $request->validated();
 
@@ -64,7 +65,8 @@ class TeamController extends Controller
         $department = $data['department_id'] ? Department::find($data['department_id']) : null;
 
         if ($department && $division && $department->division_id !== $division->id) {
-            abort(422, __('The selected department does not belong to the provided division.'));
+            return redirect()->route('tenant.organization', $company)
+                ->withErrors(['department_id' => '所選的部門不屬於提供的事業群。']);
         }
 
         if ($department && ! $division) {
@@ -72,7 +74,7 @@ class TeamController extends Controller
             $data['division_id'] = $division?->id;
         }
 
-        $team = Team::create([
+        Team::create([
             'company_id' => $company->getKey(),
             'division_id' => $data['division_id'] ?? null,
             'department_id' => $data['department_id'] ?? null,
@@ -83,24 +85,14 @@ class TeamController extends Controller
             'is_active' => $data['is_active'] ?? true,
         ]);
 
-        return response()->json([
-            'team' => [
-                'id' => $team->id,
-                'division_id' => $team->division_id,
-                'department_id' => $team->department_id,
-                'name' => $team->name,
-                'slug' => $team->slug,
-                'description' => $team->description,
-                'sort_order' => $team->sort_order,
-                'is_active' => (bool) $team->is_active,
-            ],
-        ], 201);
+        return redirect()->route('tenant.organization', $company)
+            ->with('success', '小組已建立');
     }
 
     /**
      * Update the specified team.
      */
-    public function update(UpdateTeamRequest $request, Company $company, Team $team): JsonResponse
+    public function update(UpdateTeamRequest $request, Company $company, Team $team): RedirectResponse
     {
         if ($team->company_id !== $company->getKey()) {
             abort(404);
@@ -116,7 +108,8 @@ class TeamController extends Controller
         $department = isset($data['department_id']) && $data['department_id'] ? Department::find($data['department_id']) : null;
 
         if ($department && $division && $department->division_id !== $division->id) {
-            abort(422, __('The selected department does not belong to the provided division.'));
+            return redirect()->route('tenant.organization', $company)
+                ->withErrors(['department_id' => '所選的部門不屬於提供的事業群。']);
         }
 
         if ($department && ! $division) {
@@ -126,24 +119,14 @@ class TeamController extends Controller
 
         $team->update($data);
 
-        return response()->json([
-            'team' => [
-                'id' => $team->id,
-                'division_id' => $team->division_id,
-                'department_id' => $team->department_id,
-                'name' => $team->name,
-                'slug' => $team->slug,
-                'description' => $team->description,
-                'sort_order' => $team->sort_order,
-                'is_active' => (bool) $team->is_active,
-            ],
-        ]);
+        return redirect()->route('tenant.organization', $company)
+            ->with('success', '小組已更新');
     }
 
     /**
      * Remove the specified team.
      */
-    public function destroy(Company $company, Team $team): JsonResponse
+    public function destroy(Company $company, Team $team): RedirectResponse
     {
         if ($team->company_id !== $company->getKey()) {
             abort(404);
@@ -152,11 +135,13 @@ class TeamController extends Controller
         $this->authorize('delete', $team);
 
         if ($team->users()->exists()) {
-            abort(422, __('Cannot delete team with associated members. Please migrate members first.'));
+            return redirect()->route('tenant.organization', $company)
+                ->with('error', '無法刪除小組，因為已有成員資料。請先遷移成員。');
         }
 
         $team->delete();
 
-        return response()->json([], 204);
+        return redirect()->route('tenant.organization', $company)
+            ->with('success', '小組已刪除');
     }
 }

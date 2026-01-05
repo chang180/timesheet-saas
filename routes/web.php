@@ -99,6 +99,19 @@ Route::middleware(['auth', 'verified'])->group(function () {
             Route::get('members', [App\Http\Controllers\Tenant\MemberController::class, 'show'])->name('tenant.members');
             Route::get('organization', [App\Http\Controllers\Tenant\OrganizationController::class, 'index'])->name('tenant.organization');
             Route::get('invitations/accept/{token}', [App\Http\Controllers\Tenant\InvitationAcceptController::class, 'show'])->name('tenant.invitations.accept');
+
+            // 組織層級管理（Inertia 路由）
+            Route::post('divisions', [App\Http\Controllers\Tenant\DivisionController::class, 'store'])->name('tenant.divisions.store');
+            Route::patch('divisions/{division}', [App\Http\Controllers\Tenant\DivisionController::class, 'update'])->name('tenant.divisions.update');
+            Route::delete('divisions/{division}', [App\Http\Controllers\Tenant\DivisionController::class, 'destroy'])->name('tenant.divisions.destroy');
+
+            Route::post('departments', [App\Http\Controllers\Tenant\DepartmentController::class, 'store'])->name('tenant.departments.store');
+            Route::patch('departments/{department}', [App\Http\Controllers\Tenant\DepartmentController::class, 'update'])->name('tenant.departments.update');
+            Route::delete('departments/{department}', [App\Http\Controllers\Tenant\DepartmentController::class, 'destroy'])->name('tenant.departments.destroy');
+
+            Route::post('teams', [App\Http\Controllers\Tenant\TeamController::class, 'store'])->name('tenant.teams.store');
+            Route::patch('teams/{team}', [App\Http\Controllers\Tenant\TeamController::class, 'update'])->name('tenant.teams.update');
+            Route::delete('teams/{team}', [App\Http\Controllers\Tenant\TeamController::class, 'destroy'])->name('tenant.teams.destroy');
         });
 });
 
