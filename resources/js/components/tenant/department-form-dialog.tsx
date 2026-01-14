@@ -104,8 +104,10 @@ export function DepartmentFormDialog({
             division_id: form.data.division_id && form.data.division_id !== 'none' ? Number(form.data.division_id) : undefined,
         };
 
+        form.transform(() => submitData);
+
         if (department) {
-            form.transform(() => submitData).patch(tenantRoutes.departments.update.url({ company: companySlug, department: department.id }), {
+            form.patch(tenantRoutes.departments.update.url({ company: companySlug, department: department.id }), {
                 preserveScroll: true,
                 onSuccess: () => {
                     toast.success('部門已更新');
@@ -114,7 +116,7 @@ export function DepartmentFormDialog({
                 },
             });
         } else {
-            form.transform(() => submitData).post(tenantRoutes.departments.store.url({ company: companySlug }), {
+            form.post(tenantRoutes.departments.store.url({ company: companySlug }), {
                 preserveScroll: true,
                 onSuccess: () => {
                     toast.success('部門已建立');

@@ -115,8 +115,10 @@ export function TeamFormDialog({
             department_id: form.data.department_id && form.data.department_id !== 'none' ? Number(form.data.department_id) : undefined,
         };
 
+        form.transform(() => submitData);
+
         if (team) {
-            form.transform(() => submitData).patch(tenantRoutes.teams.update.url({ company: companySlug, team: team.id }), {
+            form.patch(tenantRoutes.teams.update.url({ company: companySlug, team: team.id }), {
                 preserveScroll: true,
                 onSuccess: () => {
                     toast.success('小組已更新');
@@ -125,7 +127,7 @@ export function TeamFormDialog({
                 },
             });
         } else {
-            form.transform(() => submitData).post(tenantRoutes.teams.store.url({ company: companySlug }), {
+            form.post(tenantRoutes.teams.store.url({ company: companySlug }), {
                 preserveScroll: true,
                 onSuccess: () => {
                     toast.success('小組已建立');
