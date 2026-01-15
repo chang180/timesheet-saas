@@ -102,26 +102,26 @@ export default function WeeklyReportPreview({
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="預覽週報" />
 
-            <div className="space-y-6 px-4 sm:px-6 lg:px-8">
+            <div className="space-y-8 px-4 sm:px-6 lg:px-8">
                 {/* 標題與操作 */}
                 <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
                         {canNavigate ? (
-                            <Button asChild variant="ghost" size="sm">
+                            <Button asChild variant="ghost" size="sm" className="gap-2">
                                 <Link href={weeklyReports.url({ company: companySlug })}>
-                                    <ArrowLeft className="mr-2 size-4" />
+                                    <ArrowLeft className="size-4" />
                                     返回工作簿
                                 </Link>
                             </Button>
                         ) : (
-                            <Button variant="ghost" size="sm" disabled>
-                                <ArrowLeft className="mr-2 size-4" />
+                            <Button variant="ghost" size="sm" disabled className="gap-2">
+                                <ArrowLeft className="size-4" />
                                 返回工作簿
                             </Button>
                         )}
                     </div>
                     {canNavigate && (
-                        <Button asChild variant="outline" size="sm">
+                        <Button asChild variant="outline" size="sm" className="gap-2">
                             <Link href={weeklyReports.edit.url({ company: companySlug, weeklyReport: report.id })}>
                                 編輯週報
                             </Link>
@@ -130,28 +130,28 @@ export default function WeeklyReportPreview({
                 </div>
 
                 {/* 週報標題區塊 */}
-                <div className="rounded-lg border border-border/60 bg-gradient-to-br from-muted/40 to-muted/20 p-6 shadow-sm">
-                    <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-                        <div>
-                            <h1 className="text-2xl font-bold text-foreground">
+                <div className="rounded-2xl border-2 border-border/60 bg-gradient-to-br from-primary/5 via-muted/40 to-muted/20 p-8 shadow-lg">
+                    <div className="flex flex-col gap-6 sm:flex-row sm:items-center sm:justify-between">
+                        <div className="space-y-3">
+                            <h1 className="text-3xl font-bold text-foreground sm:text-4xl lg:text-5xl">
                                 {report.workYear} 年第 {report.workWeek} 週工作週報
                             </h1>
                             {weekDateRange && (
-                                <p className="mt-2 text-sm text-muted-foreground">
-                                    <Calendar className="mr-1 inline size-4" />
+                                <p className="text-lg text-muted-foreground sm:text-xl">
+                                    <Calendar className="mr-2 inline size-5" />
                                     {weekDateRange.startDate} ~ {weekDateRange.endDate}
                                 </p>
                             )}
                         </div>
-                        <div className="flex flex-col gap-2 sm:items-end">
-                            <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                                <User className="size-4" />
-                                <span>{report.user.name}</span>
+                        <div className="flex flex-col gap-3 sm:items-end">
+                            <div className="flex items-center gap-2 text-base text-muted-foreground sm:text-lg">
+                                <User className="size-5" />
+                                <span className="font-medium">{report.user.name}</span>
                             </div>
-                            <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                                <span>{report.user.email}</span>
+                            <div className="text-sm text-muted-foreground sm:text-base">
+                                {report.user.email}
                             </div>
-                            <span className="inline-flex items-center rounded-full bg-muted px-3 py-1 text-xs font-medium uppercase text-muted-foreground">
+                            <span className="inline-flex items-center rounded-full border-2 border-border/60 bg-muted/80 px-4 py-2 text-sm font-bold uppercase text-foreground shadow-sm">
                                 {STATUS_TEXT[report.status] ?? report.status}
                             </span>
                         </div>
@@ -160,69 +160,71 @@ export default function WeeklyReportPreview({
 
                 {/* 摘要 */}
                 {report.summary && (
-                    <Card>
-                        <CardHeader>
-                            <CardTitle className="flex items-center gap-2 text-lg">
-                                <FileText className="size-5" />
+                    <Card className="border-2 border-border/60 shadow-lg">
+                        <CardHeader className="border-b-2 border-border/60 bg-gradient-to-r from-muted/50 to-muted/30 pb-5">
+                            <CardTitle className="flex items-center gap-3 text-xl font-bold text-foreground sm:text-2xl">
+                                <FileText className="size-6" />
                                 週報摘要
                             </CardTitle>
                         </CardHeader>
-                        <CardContent>
-                            <p className="whitespace-pre-wrap text-foreground">{report.summary}</p>
+                        <CardContent className="pt-6">
+                            <p className="whitespace-pre-wrap text-lg leading-relaxed text-foreground sm:text-xl">{report.summary}</p>
                         </CardContent>
                     </Card>
                 )}
 
                 {/* 本週完成事項 */}
-                <Card>
-                    <CardHeader>
-                        <CardTitle className="flex items-center justify-between text-lg">
-                            <span className="flex items-center gap-2">
-                                <Clock className="size-5" />
+                <Card className="border-2 border-border/60 shadow-lg">
+                    <CardHeader className="border-b-2 border-border/60 bg-gradient-to-r from-muted/50 to-muted/30 pb-5">
+                        <CardTitle className="flex items-center justify-between text-xl font-bold text-foreground sm:text-2xl">
+                            <span className="flex items-center gap-3">
+                                <Clock className="size-6" />
                                 本週完成事項
                             </span>
-                            <span className="text-sm font-normal text-muted-foreground">
-                                總工時：{totalCurrentWeekHours.toFixed(1)} 小時
+                            <span className="text-base font-bold text-foreground sm:text-lg">
+                                總工時：<span className="text-blue-600 dark:text-blue-400">{totalCurrentWeekHours.toFixed(1)}</span> 小時
                             </span>
                         </CardTitle>
                     </CardHeader>
-                    <CardContent>
+                    <CardContent className="pt-6">
                         {report.currentWeek.length === 0 ? (
-                            <p className="py-8 text-center text-sm text-muted-foreground">
+                            <p className="py-12 text-center text-base text-muted-foreground sm:text-lg">
                                 本週尚無完成事項
                             </p>
                         ) : (
-                            <div className="space-y-4">
+                            <div className="space-y-6">
                                 {report.currentWeek.map((item, index) => (
                                     <div
                                         key={item.id ?? index}
-                                        className="rounded-lg border border-border/60 bg-card p-4 shadow-sm"
+                                        className="rounded-xl border-2 border-border/60 bg-card p-6 shadow-md transition-shadow hover:shadow-lg"
                                     >
                                         <div className="flex items-start justify-between gap-4">
-                                            <div className="flex-1">
-                                                <h3 className="font-semibold text-foreground">{item.title}</h3>
+                                            <div className="flex-1 space-y-3">
+                                                <h3 className="text-lg font-bold text-foreground sm:text-xl">{item.title}</h3>
                                                 {item.content && (
-                                                    <p className="mt-2 whitespace-pre-wrap text-sm text-muted-foreground">
+                                                    <p className="whitespace-pre-wrap text-base leading-relaxed text-muted-foreground">
                                                         {item.content}
                                                     </p>
                                                 )}
-                                                <div className="mt-3 flex flex-wrap items-center gap-4 text-xs text-muted-foreground">
+                                                <div className="mt-4 flex flex-wrap items-center gap-4 text-sm text-muted-foreground">
                                                     {item.started_at && item.ended_at && (
-                                                        <span className="flex items-center gap-1">
-                                                            <Calendar className="size-3" />
-                                                            {formatDate(item.started_at)} ~ {formatDate(item.ended_at)}
+                                                        <span className="flex items-center gap-2 rounded-lg border border-border/60 bg-muted/30 px-3 py-1.5">
+                                                            <Calendar className="size-4" />
+                                                            <span className="font-medium">{formatDate(item.started_at)} ~ {formatDate(item.ended_at)}</span>
                                                         </span>
                                                     )}
                                                     {item.planned_hours !== null && item.planned_hours !== undefined && (
-                                                        <span>預計工時：{item.planned_hours} 小時</span>
+                                                        <span className="rounded-lg border border-border/60 bg-muted/30 px-3 py-1.5">
+                                                            預計工時：<span className="font-semibold">{item.planned_hours}</span> 小時
+                                                        </span>
                                                     )}
                                                     {item.hours_spent !== null && item.hours_spent !== undefined && (
-                                                        <span className="font-medium text-foreground">
+                                                        <span className="rounded-lg border-2 border-blue-300 bg-blue-50 px-3 py-1.5 font-bold text-blue-700 dark:border-blue-600 dark:bg-blue-950/30 dark:text-blue-400">
                                                             實際工時：{item.hours_spent} 小時
                                                         </span>
                                                     )}
                                                     {item.issue_reference && (
-                                                        <span className="rounded bg-muted px-2 py-0.5">
+                                                        <span className="rounded-lg border border-border/60 bg-primary/10 px-3 py-1.5 font-semibold text-primary">
                                                             {item.issue_reference}
                                                         </span>
                                                     )}
@@ -237,57 +239,57 @@ export default function WeeklyReportPreview({
                 </Card>
 
                 {/* 下週預計事項 */}
-                <Card>
-                    <CardHeader>
-                        <CardTitle className="flex items-center justify-between text-lg">
-                            <span className="flex items-center gap-2">
-                                <Calendar className="size-5" />
+                <Card className="border-2 border-border/60 shadow-lg">
+                    <CardHeader className="border-b-2 border-border/60 bg-gradient-to-r from-muted/50 to-muted/30 pb-5">
+                        <CardTitle className="flex items-center justify-between text-xl font-bold text-foreground sm:text-2xl">
+                            <span className="flex items-center gap-3">
+                                <Calendar className="size-6" />
                                 下週預計事項
                                 {nextWeekDateRange && (
-                                    <span className="ml-2 text-sm font-normal text-muted-foreground">
+                                    <span className="ml-2 text-sm font-normal text-muted-foreground sm:text-base">
                                         ({nextWeekDateRange.startDate} ~ {nextWeekDateRange.endDate})
                                     </span>
                                 )}
                             </span>
-                            <span className="text-sm font-normal text-muted-foreground">
-                                總工時：{totalNextWeekHours.toFixed(1)} 小時
+                            <span className="text-base font-bold text-foreground sm:text-lg">
+                                總工時：<span className="text-emerald-600 dark:text-emerald-400">{totalNextWeekHours.toFixed(1)}</span> 小時
                             </span>
                         </CardTitle>
                     </CardHeader>
-                    <CardContent>
+                    <CardContent className="pt-6">
                         {report.nextWeek.length === 0 ? (
-                            <p className="py-8 text-center text-sm text-muted-foreground">
+                            <p className="py-12 text-center text-base text-muted-foreground sm:text-lg">
                                 下週尚無預計事項
                             </p>
                         ) : (
-                            <div className="space-y-4">
+                            <div className="space-y-6">
                                 {report.nextWeek.map((item, index) => (
                                     <div
                                         key={item.id ?? index}
-                                        className="rounded-lg border border-border/60 bg-card p-4 shadow-sm"
+                                        className="rounded-xl border-2 border-border/60 bg-card p-6 shadow-md transition-shadow hover:shadow-lg"
                                     >
                                         <div className="flex items-start justify-between gap-4">
-                                            <div className="flex-1">
-                                                <h3 className="font-semibold text-foreground">{item.title}</h3>
+                                            <div className="flex-1 space-y-3">
+                                                <h3 className="text-lg font-bold text-foreground sm:text-xl">{item.title}</h3>
                                                 {item.content && (
-                                                    <p className="mt-2 whitespace-pre-wrap text-sm text-muted-foreground">
+                                                    <p className="whitespace-pre-wrap text-base leading-relaxed text-muted-foreground">
                                                         {item.content}
                                                     </p>
                                                 )}
-                                                <div className="mt-3 flex flex-wrap items-center gap-4 text-xs text-muted-foreground">
+                                                <div className="mt-4 flex flex-wrap items-center gap-4 text-sm text-muted-foreground">
                                                     {item.started_at && item.ended_at && (
-                                                        <span className="flex items-center gap-1">
-                                                            <Calendar className="size-3" />
-                                                            {formatDate(item.started_at)} ~ {formatDate(item.ended_at)}
+                                                        <span className="flex items-center gap-2 rounded-lg border border-border/60 bg-muted/30 px-3 py-1.5">
+                                                            <Calendar className="size-4" />
+                                                            <span className="font-medium">{formatDate(item.started_at)} ~ {formatDate(item.ended_at)}</span>
                                                         </span>
                                                     )}
                                                     {item.planned_hours !== null && item.planned_hours !== undefined && (
-                                                        <span className="font-medium text-foreground">
+                                                        <span className="rounded-lg border-2 border-emerald-300 bg-emerald-50 px-3 py-1.5 font-bold text-emerald-700 dark:border-emerald-600 dark:bg-emerald-950/30 dark:text-emerald-400">
                                                             預計工時：{item.planned_hours} 小時
                                                         </span>
                                                     )}
                                                     {item.issue_reference && (
-                                                        <span className="rounded bg-muted px-2 py-0.5">
+                                                        <span className="rounded-lg border border-border/60 bg-primary/10 px-3 py-1.5 font-semibold text-primary">
                                                             {item.issue_reference}
                                                         </span>
                                                     )}
@@ -302,29 +304,35 @@ export default function WeeklyReportPreview({
                 </Card>
 
                 {/* 工時統計 */}
-                <Card>
-                    <CardHeader>
-                        <CardTitle className="text-lg">工時統計</CardTitle>
+                <Card className="border-2 border-border/60 shadow-xl">
+                    <CardHeader className="border-b-2 border-border/60 bg-gradient-to-r from-muted/50 to-muted/30 pb-5">
+                        <CardTitle className="text-xl font-bold text-foreground sm:text-2xl">工時統計</CardTitle>
                     </CardHeader>
-                    <CardContent>
-                        <div className="grid gap-4 sm:grid-cols-2">
-                            <div className="rounded-lg border border-border/60 bg-gradient-to-br from-blue-50 to-blue-100/50 p-6 dark:from-blue-950/20 dark:to-blue-900/10">
-                                <div className="text-sm font-medium text-muted-foreground">本週完成總工時</div>
-                                <div className="mt-2 text-3xl font-bold text-blue-600 dark:text-blue-400">
+                    <CardContent className="pt-8">
+                        <div className="grid gap-6 sm:grid-cols-2">
+                            <div className="relative rounded-xl border-2 border-blue-300 bg-gradient-to-br from-blue-50 via-blue-100/50 to-blue-50 p-8 shadow-lg dark:border-blue-700 dark:from-blue-950/30 dark:via-blue-900/20 dark:to-blue-950/30">
+                                <div className="absolute right-6 top-6">
+                                    <Clock className="size-8 text-blue-400/40 dark:text-blue-500/30" />
+                                </div>
+                                <div className="text-base font-semibold text-muted-foreground sm:text-lg">本週完成總工時</div>
+                                <div className="mt-4 text-5xl font-bold text-blue-600 dark:text-blue-400 sm:text-6xl">
                                     {totalCurrentWeekHours.toFixed(1)}
                                 </div>
-                                <div className="mt-1 text-xs text-muted-foreground">小時</div>
-                                <div className="mt-2 text-xs text-muted-foreground">
+                                <div className="mt-2 text-base font-medium text-muted-foreground">小時</div>
+                                <div className="mt-4 text-sm font-medium text-muted-foreground sm:text-base">
                                     {report.currentWeek.length} 個項目
                                 </div>
                             </div>
-                            <div className="rounded-lg border border-border/60 bg-gradient-to-br from-emerald-50 to-emerald-100/50 p-6 dark:from-emerald-950/20 dark:to-emerald-900/10">
-                                <div className="text-sm font-medium text-muted-foreground">下週預計總工時</div>
-                                <div className="mt-2 text-3xl font-bold text-emerald-600 dark:text-emerald-400">
+                            <div className="relative rounded-xl border-2 border-emerald-300 bg-gradient-to-br from-emerald-50 via-emerald-100/50 to-emerald-50 p-8 shadow-lg dark:border-emerald-700 dark:from-emerald-950/30 dark:via-emerald-900/20 dark:to-emerald-950/30">
+                                <div className="absolute right-6 top-6">
+                                    <Clock className="size-8 text-emerald-400/40 dark:text-emerald-500/30" />
+                                </div>
+                                <div className="text-base font-semibold text-muted-foreground sm:text-lg">下週預計總工時</div>
+                                <div className="mt-4 text-5xl font-bold text-emerald-600 dark:text-emerald-400 sm:text-6xl">
                                     {totalNextWeekHours.toFixed(1)}
                                 </div>
-                                <div className="mt-1 text-xs text-muted-foreground">小時</div>
-                                <div className="mt-2 text-xs text-muted-foreground">
+                                <div className="mt-2 text-base font-medium text-muted-foreground">小時</div>
+                                <div className="mt-4 text-sm font-medium text-muted-foreground sm:text-base">
                                     {report.nextWeek.length} 個項目
                                 </div>
                             </div>

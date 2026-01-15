@@ -88,45 +88,54 @@ export default function WeeklyReportList(props: WeeklyReportListProps) {
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="週報工作簿" />
 
-            <div className="flex flex-col gap-6 px-4 sm:px-6 lg:px-8">
-                <header className="space-y-2">
-                    <h1 className="text-3xl font-bold tracking-tight text-foreground">
+            <div className="flex flex-col gap-8 px-4 sm:px-6 lg:px-8">
+                <header className="space-y-3">
+                    <h1 className="text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
                         {props.company?.name
                             ? `${props.company.name} 的週報工作簿`
                             : tenant?.company?.name
                               ? `${tenant.company.name} 的週報工作簿`
                             : '週報工作簿'}
                     </h1>
-                    <p className="text-sm leading-relaxed text-muted-foreground">
+                    <p className="text-sm leading-relaxed text-muted-foreground sm:text-base">
                         記錄本週每一項任務、支援與會議重點，週會或主管提報時可以立即找到摘要。
                     </p>
                 </header>
 
                 {(flash?.success || flash?.info || flash?.warning) && (
-                    <div className="rounded-lg border border-border/60 bg-muted/40 p-4 shadow-sm">
+                    <div className="rounded-xl border-2 border-border/60 bg-muted/50 p-4 shadow-md backdrop-blur-sm">
                         {flash.success && (
-                            <p className="text-sm font-medium text-emerald-700 dark:text-emerald-400">
-                                {flash.success}
-                            </p>
+                            <div className="flex items-center gap-2">
+                                <CheckCircle2 className="size-5 text-emerald-600 dark:text-emerald-400" />
+                                <p className="text-sm font-semibold text-emerald-700 dark:text-emerald-400">
+                                    {flash.success}
+                                </p>
+                            </div>
                         )}
                         {flash.info && (
-                            <p className="text-sm font-medium text-sky-700 dark:text-sky-400">
-                                {flash.info}
-                            </p>
+                            <div className="flex items-center gap-2">
+                                <ClipboardList className="size-5 text-sky-600 dark:text-sky-400" />
+                                <p className="text-sm font-semibold text-sky-700 dark:text-sky-400">
+                                    {flash.info}
+                                </p>
+                            </div>
                         )}
                         {flash.warning && (
-                            <p className="text-sm font-medium text-amber-700 dark:text-amber-400">
-                                {flash.warning}
-                            </p>
+                            <div className="flex items-center gap-2">
+                                <Clock className="size-5 text-amber-600 dark:text-amber-400" />
+                                <p className="text-sm font-semibold text-amber-700 dark:text-amber-400">
+                                    {flash.warning}
+                                </p>
+                            </div>
                         )}
                     </div>
                 )}
 
                 <section className="grid gap-6 sm:grid-cols-2">
-                    <Card className="group flex flex-col border-border/60 bg-card shadow-sm transition-all hover:shadow-md hover:border-primary/20">
+                    <Card className="group flex flex-col border-2 border-border/60 bg-card shadow-sm transition-all duration-300 hover:shadow-lg hover:border-primary/40 hover:-translate-y-1">
                         <CardContent className="flex flex-1 flex-col gap-5 p-6">
-                            <div className="flex size-14 items-center justify-center rounded-xl bg-gradient-to-br from-indigo-100 to-indigo-50 text-indigo-600 shadow-sm transition-transform group-hover:scale-105 dark:from-indigo-500/20 dark:to-indigo-500/10 dark:text-indigo-400">
-                                <PenSquare className="size-7" />
+                            <div className="flex size-16 items-center justify-center rounded-2xl bg-gradient-to-br from-indigo-100 via-indigo-50 to-indigo-100/50 text-indigo-600 shadow-md transition-all duration-300 group-hover:scale-110 group-hover:shadow-lg dark:from-indigo-500/20 dark:via-indigo-500/10 dark:to-indigo-500/5 dark:text-indigo-400">
+                                <PenSquare className="size-8" />
                             </div>
                             <div className="space-y-2">
                                 <h2 className="text-xl font-semibold text-foreground">填寫本週週報</h2>
@@ -155,10 +164,10 @@ export default function WeeklyReportList(props: WeeklyReportListProps) {
                         </CardContent>
                     </Card>
 
-                    <Card className="group flex flex-col border-border/60 bg-card shadow-sm transition-all hover:shadow-md hover:border-primary/20">
+                    <Card className="group flex flex-col border-2 border-border/60 bg-card shadow-sm transition-all duration-300 hover:shadow-lg hover:border-primary/40 hover:-translate-y-1">
                         <CardContent className="flex flex-1 flex-col gap-5 p-6">
-                            <div className="flex size-14 items-center justify-center rounded-xl bg-gradient-to-br from-emerald-100 to-emerald-50 text-emerald-600 shadow-sm transition-transform group-hover:scale-105 dark:from-emerald-500/20 dark:to-emerald-500/10 dark:text-emerald-400">
-                                <ClipboardList className="size-7" />
+                            <div className="flex size-16 items-center justify-center rounded-2xl bg-gradient-to-br from-emerald-100 via-emerald-50 to-emerald-100/50 text-emerald-600 shadow-md transition-all duration-300 group-hover:scale-110 group-hover:shadow-lg dark:from-emerald-500/20 dark:via-emerald-500/10 dark:to-emerald-500/5 dark:text-emerald-400">
+                                <ClipboardList className="size-8" />
                             </div>
                             <div className="space-y-2">
                                 <h2 className="text-xl font-semibold text-foreground">查看週報歷史</h2>
@@ -196,39 +205,39 @@ export default function WeeklyReportList(props: WeeklyReportListProps) {
                     </Card>
                 </section>
 
-                <section id="report-list" className="space-y-5">
-                    <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                <section id="report-list" className="space-y-6">
+                    <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                         <div>
-                            <h2 className="text-xl font-semibold text-foreground">
+                            <h2 className="text-xl font-bold text-foreground sm:text-2xl">
                                 最近週報 · 第 {defaults.year} 年第 {defaults.week} 週
                             </h2>
                             {props.weekDateRange && (
-                                <p className="mt-1 text-sm text-muted-foreground">
+                                <p className="mt-2 text-sm text-muted-foreground sm:text-base">
                                     {props.weekDateRange.startDate} ~ {props.weekDateRange.endDate}
                                 </p>
                             )}
                         </div>
                         <div className="flex items-center gap-2">
-                            <span className="rounded-full bg-muted px-3 py-1 text-xs font-medium text-muted-foreground">
+                            <span className="rounded-full border-2 border-border/60 bg-muted/50 px-4 py-1.5 text-xs font-semibold text-foreground shadow-sm">
                                 共 {reports.length} 筆
                             </span>
                         </div>
                     </div>
 
                     {reports.length === 0 ? (
-                        <Card className="border-2 border-dashed border-border/40 bg-muted/20">
-                            <CardContent className="flex flex-col items-center justify-center p-12 text-center">
-                                <div className="mb-6 flex size-16 items-center justify-center rounded-full bg-muted">
-                                    <ClipboardList className="size-8 text-muted-foreground" />
+                        <Card className="border-2 border-dashed border-border/50 bg-gradient-to-br from-muted/30 to-muted/10">
+                            <CardContent className="flex flex-col items-center justify-center p-16 text-center">
+                                <div className="mb-6 flex size-20 items-center justify-center rounded-2xl bg-gradient-to-br from-muted to-muted/50 shadow-sm">
+                                    <ClipboardList className="size-10 text-muted-foreground" />
                                 </div>
-                                <h3 className="mb-3 text-lg font-semibold text-foreground">尚未建立任何週報</h3>
+                                <h3 className="mb-3 text-xl font-semibold text-foreground">尚未建立任何週報</h3>
                                 <p className="mb-8 max-w-sm text-sm leading-relaxed text-muted-foreground">
                                     點選「填寫本週週報」開始紀錄你的第一份週報，讓工作更有條理。
                                 </p>
                                 {canCreate && (
-                                    <Button asChild>
+                                    <Button asChild size="lg" className="gap-2">
                                         <Link href={createHref}>
-                                            <SquarePen className="mr-2 size-4" />
+                                            <SquarePen className="size-5" />
                                             建立第一份週報
                                         </Link>
                                     </Button>
@@ -236,32 +245,32 @@ export default function WeeklyReportList(props: WeeklyReportListProps) {
                             </CardContent>
                         </Card>
                     ) : (
-                        <Card className="overflow-hidden border-border/60 shadow-sm">
+                        <Card className="overflow-hidden border-2 border-border/60 shadow-md">
                             <div className="overflow-x-auto">
-                                <table className="min-w-full divide-y divide-border/40">
-                                    <thead className="bg-muted/40">
+                                <table className="min-w-full divide-y divide-border/50">
+                                    <thead className="bg-gradient-to-r from-muted/60 to-muted/40">
                                         <tr>
-                                            <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground first:pl-6 last:pr-6">
+                                            <th className="px-6 py-4 text-left text-xs font-bold uppercase tracking-wider text-foreground first:pl-6 last:pr-6">
                                                 週次
                                             </th>
-                                            <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                                            <th className="px-6 py-4 text-left text-xs font-bold uppercase tracking-wider text-foreground">
                                                 狀態
                                             </th>
-                                            <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                                            <th className="px-6 py-4 text-left text-xs font-bold uppercase tracking-wider text-foreground">
                                                 總工時
                                             </th>
-                                            <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                                            <th className="px-6 py-4 text-left text-xs font-bold uppercase tracking-wider text-foreground">
                                                 摘要
                                             </th>
-                                            <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                                            <th className="px-6 py-4 text-left text-xs font-bold uppercase tracking-wider text-foreground">
                                                 更新時間
                                             </th>
-                                            <th className="px-6 py-4 text-right text-xs font-semibold uppercase tracking-wider text-muted-foreground last:pr-6">
+                                            <th className="px-6 py-4 text-right text-xs font-bold uppercase tracking-wider text-foreground last:pr-6">
                                                 操作
                                             </th>
                                         </tr>
                                     </thead>
-                                    <tbody className="divide-y divide-border/40 bg-card">
+                                    <tbody className="divide-y divide-border/50 bg-card">
                                         {reports.map((report) => {
                                             // 計算 ISO 週的日期範圍
                                             // ISO 週從週一開始，週日結束
@@ -291,11 +300,11 @@ export default function WeeklyReportList(props: WeeklyReportListProps) {
                                             return (
                                                 <tr
                                                     key={report.id}
-                                                    className="transition-colors hover:bg-muted/30"
+                                                    className="transition-all duration-200 hover:bg-muted/40 hover:shadow-sm"
                                                 >
-                                                    <td className="whitespace-nowrap px-6 py-4 first:pl-6">
-                                                        <div className="flex flex-col gap-0.5">
-                                                            <span className="font-medium text-foreground">
+                                                    <td className="whitespace-nowrap px-6 py-5 first:pl-6">
+                                                        <div className="flex flex-col gap-1">
+                                                            <span className="font-semibold text-foreground">
                                                                 {report.workYear} 年第 {report.workWeek} 週
                                                             </span>
                                                             <span className="text-xs text-muted-foreground">
@@ -303,27 +312,27 @@ export default function WeeklyReportList(props: WeeklyReportListProps) {
                                                             </span>
                                                         </div>
                                                     </td>
-                                                    <td className="whitespace-nowrap px-6 py-4">
+                                                    <td className="whitespace-nowrap px-6 py-5">
                                                         <span
-                                                            className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-medium ${statusConfig.className}`}
+                                                            className={`inline-flex items-center gap-1.5 rounded-full border-2 px-3.5 py-1.5 text-xs font-semibold shadow-sm ${statusConfig.className}`}
                                                         >
-                                                            <StatusIcon className="size-3" />
+                                                            <StatusIcon className="size-3.5" />
                                                             {statusConfig.text}
                                                         </span>
                                                     </td>
-                                                    <td className="whitespace-nowrap px-6 py-4">
-                                                        <span className="font-medium text-foreground">
-                                                            {report.totalHours.toFixed(1)} 小時
+                                                    <td className="whitespace-nowrap px-6 py-5">
+                                                        <span className="font-semibold text-foreground">
+                                                            {report.totalHours.toFixed(1)} <span className="text-sm font-normal text-muted-foreground">小時</span>
                                                         </span>
                                                     </td>
-                                                    <td className="px-6 py-4">
+                                                    <td className="px-6 py-5">
                                                         <p className="max-w-xs truncate text-sm leading-relaxed text-muted-foreground">
                                                             {report.summary ?? (
                                                                 <span className="italic text-muted-foreground/60">—</span>
                                                             )}
                                                         </p>
                                                     </td>
-                                                    <td className="whitespace-nowrap px-6 py-4 text-sm leading-relaxed text-muted-foreground">
+                                                    <td className="whitespace-nowrap px-6 py-5 text-sm leading-relaxed text-muted-foreground">
                                                         {report.updatedAt
                                                             ? new Date(report.updatedAt).toLocaleString('zh-TW', {
                                                                   year: 'numeric',
@@ -334,13 +343,13 @@ export default function WeeklyReportList(props: WeeklyReportListProps) {
                                                               })
                                                             : '—'}
                                                     </td>
-                                                    <td className="whitespace-nowrap px-6 py-4 text-right last:pr-6">
+                                                    <td className="whitespace-nowrap px-6 py-5 text-right last:pr-6">
                                                         <div className="flex items-center justify-end gap-2">
                                                             <Button
                                                                 asChild
                                                                 variant="ghost"
                                                                 size="sm"
-                                                                className="gap-1.5"
+                                                                className="gap-1.5 hover:bg-primary/10"
                                                                 data-testid={`view-report-${report.id}`}
                                                             >
                                                                 <Link
@@ -357,7 +366,7 @@ export default function WeeklyReportList(props: WeeklyReportListProps) {
                                                                 asChild
                                                                 variant="ghost"
                                                                 size="sm"
-                                                                className="gap-1.5"
+                                                                className="gap-1.5 hover:bg-primary/10"
                                                                 data-testid={`edit-report-${report.id}`}
                                                             >
                                                                 <Link

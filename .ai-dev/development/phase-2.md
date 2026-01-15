@@ -17,11 +17,11 @@
   - TypeScript 5.x、Vite 5.x
   - React 19.x、`@inertiajs/react` v2
   - Laravel Wayfinder（TypeScript route helpers）
-  - UI 套件：Tailwind CSS v4 + Headless UI（沿用既有元件庫）
+  - UI 套件：Tailwind CSS v4 + Headless UI（沿用既有元件庫）      
 - **初始化任務**
   1. 確認 `resources/js/` 目錄結構：
      - `resources/js/app.tsx`：Inertia + React 入口。
-     - `resources/js/pages/`：Inertia Page（`landing/global-landing.tsx`、`landing/tenant-welcome.tsx`、`tenant/...` 等）。
+     - `resources/js/pages/`：Inertia Page（`landing/global-landing.tsx`、`landing/tenant-welcome.tsx`、`tenant/...` 等）。 
      - `resources/js/components/`：共用元件、表單與 UI 套件。
      - `resources/js/tenant/welcome-modules/`：租戶歡迎頁模組（Hero、Quick Steps、Announcements 等）。
      - `resources/js/routes/`：Wayfinder 產生的 action 與路由 helper。
