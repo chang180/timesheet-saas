@@ -28,10 +28,10 @@ export async function apiRequest(
 ): Promise<Response> {
     const { skipCsrf = false, headers = {}, ...restOptions } = options;
 
-    const requestHeaders: HeadersInit = {
+    const requestHeaders: Record<string, string> = {
         'Accept': 'application/json',
         'X-Requested-With': 'XMLHttpRequest',
-        ...headers,
+        ...(headers as Record<string, string>),
     };
 
     if (!skipCsrf) {

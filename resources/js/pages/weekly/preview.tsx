@@ -1,7 +1,8 @@
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import AppLayout from '@/layouts/app-layout';
-import { weeklyReports } from '@/routes/tenant';
+import tenantRoutes from '@/routes/tenant';
+import * as weeklyRoutes from '@/routes/tenant/weekly-reports';
 import { type BreadcrumbItem, type SharedData } from '@/types';
 import { Head, Link, usePage } from '@inertiajs/react';
 import { ArrowLeft, Calendar, Clock, FileText, User } from 'lucide-react';
@@ -67,7 +68,7 @@ export default function WeeklyReportPreview({
     const breadcrumbs: BreadcrumbItem[] = [
         {
             title: '週報工作簿',
-            href: canNavigate ? weeklyReports.url({ company: companySlug }) : '#',
+            href: canNavigate ? tenantRoutes.weeklyReports.url({ company: companySlug }) : '#',
         },
         {
             title: '預覽週報',
@@ -108,7 +109,7 @@ export default function WeeklyReportPreview({
                     <div className="flex items-center gap-3">
                         {canNavigate ? (
                             <Button asChild variant="ghost" size="sm" className="gap-2">
-                                <Link href={weeklyReports.url({ company: companySlug })}>
+                                <Link href={tenantRoutes.weeklyReports.url({ company: companySlug })}>
                                     <ArrowLeft className="size-4" />
                                     返回工作簿
                                 </Link>
@@ -122,7 +123,7 @@ export default function WeeklyReportPreview({
                     </div>
                     {canNavigate && (
                         <Button asChild variant="outline" size="sm" className="gap-2">
-                            <Link href={weeklyReports.edit.url({ company: companySlug, weeklyReport: report.id })}>
+                            <Link href={weeklyRoutes.edit.url({ company: companySlug, weeklyReport: report.id })}>
                                 編輯週報
                             </Link>
                         </Button>
@@ -130,7 +131,7 @@ export default function WeeklyReportPreview({
                 </div>
 
                 {/* 週報標題區塊 */}
-                <div className="rounded-2xl border-2 border-border/60 bg-gradient-to-br from-primary/5 via-muted/40 to-muted/20 p-8 shadow-lg">
+                <div className="rounded-2xl border-2 border-border/60 bg-linear-to-br from-primary/5 via-muted/40 to-muted/20 p-8 shadow-lg">
                     <div className="flex flex-col gap-6 sm:flex-row sm:items-center sm:justify-between">
                         <div className="space-y-3">
                             <h1 className="text-3xl font-bold text-foreground sm:text-4xl lg:text-5xl">
@@ -161,7 +162,7 @@ export default function WeeklyReportPreview({
                 {/* 摘要 */}
                 {report.summary && (
                     <Card className="border-2 border-border/60 shadow-lg">
-                        <CardHeader className="border-b-2 border-border/60 bg-gradient-to-r from-muted/50 to-muted/30 pb-5">
+                        <CardHeader className="border-b-2 border-border/60 bg-linear-to-r from-muted/50 to-muted/30 pb-5">
                             <CardTitle className="flex items-center gap-3 text-xl font-bold text-foreground sm:text-2xl">
                                 <FileText className="size-6" />
                                 週報摘要
@@ -175,7 +176,7 @@ export default function WeeklyReportPreview({
 
                 {/* 本週完成事項 */}
                 <Card className="border-2 border-border/60 shadow-lg">
-                    <CardHeader className="border-b-2 border-border/60 bg-gradient-to-r from-muted/50 to-muted/30 pb-5">
+                    <CardHeader className="border-b-2 border-border/60 bg-linear-to-r from-muted/50 to-muted/30 pb-5">
                         <CardTitle className="flex items-center justify-between text-xl font-bold text-foreground sm:text-2xl">
                             <span className="flex items-center gap-3">
                                 <Clock className="size-6" />
@@ -240,7 +241,7 @@ export default function WeeklyReportPreview({
 
                 {/* 下週預計事項 */}
                 <Card className="border-2 border-border/60 shadow-lg">
-                    <CardHeader className="border-b-2 border-border/60 bg-gradient-to-r from-muted/50 to-muted/30 pb-5">
+                    <CardHeader className="border-b-2 border-border/60 bg-linear-to-r from-muted/50 to-muted/30 pb-5">
                         <CardTitle className="flex items-center justify-between text-xl font-bold text-foreground sm:text-2xl">
                             <span className="flex items-center gap-3">
                                 <Calendar className="size-6" />
@@ -305,12 +306,12 @@ export default function WeeklyReportPreview({
 
                 {/* 工時統計 */}
                 <Card className="border-2 border-border/60 shadow-xl">
-                    <CardHeader className="border-b-2 border-border/60 bg-gradient-to-r from-muted/50 to-muted/30 pb-5">
+                    <CardHeader className="border-b-2 border-border/60 bg-linear-to-r from-muted/50 to-muted/30 pb-5">
                         <CardTitle className="text-xl font-bold text-foreground sm:text-2xl">工時統計</CardTitle>
                     </CardHeader>
                     <CardContent className="pt-8">
                         <div className="grid gap-6 sm:grid-cols-2">
-                            <div className="relative rounded-xl border-2 border-blue-300 bg-gradient-to-br from-blue-50 via-blue-100/50 to-blue-50 p-8 shadow-lg dark:border-blue-700 dark:from-blue-950/30 dark:via-blue-900/20 dark:to-blue-950/30">
+                            <div className="relative rounded-xl border-2 border-blue-300 bg-linear-to-br from-blue-50 via-blue-100/50 to-blue-50 p-8 shadow-lg dark:border-blue-700 dark:from-blue-950/30 dark:via-blue-900/20 dark:to-blue-950/30">
                                 <div className="absolute right-6 top-6">
                                     <Clock className="size-8 text-blue-400/40 dark:text-blue-500/30" />
                                 </div>
@@ -323,7 +324,7 @@ export default function WeeklyReportPreview({
                                     {report.currentWeek.length} 個項目
                                 </div>
                             </div>
-                            <div className="relative rounded-xl border-2 border-emerald-300 bg-gradient-to-br from-emerald-50 via-emerald-100/50 to-emerald-50 p-8 shadow-lg dark:border-emerald-700 dark:from-emerald-950/30 dark:via-emerald-900/20 dark:to-emerald-950/30">
+                            <div className="relative rounded-xl border-2 border-emerald-300 bg-linear-to-br from-emerald-50 via-emerald-100/50 to-emerald-50 p-8 shadow-lg dark:border-emerald-700 dark:from-emerald-950/30 dark:via-emerald-900/20 dark:to-emerald-950/30">
                                 <div className="absolute right-6 top-6">
                                     <Clock className="size-8 text-emerald-400/40 dark:text-emerald-500/30" />
                                 </div>

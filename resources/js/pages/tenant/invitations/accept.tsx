@@ -34,11 +34,6 @@ export default function InvitationAcceptPage({
         e.preventDefault();
 
         form.post(authApi.invitations.accept.url({ company: company.slug }), {
-            data: {
-                token: form.data.token,
-                password: form.data.password,
-                password_confirmation: form.data.password_confirmation,
-            },
             preserveScroll: true,
             onSuccess: () => {
                 // 成功後會自動導向 dashboard

@@ -26,6 +26,7 @@ interface PageProps {
         url?: string | null;
         description?: string | null;
     };
+    [key: string]: unknown;
 }
 
 export default function GlobalLandingPage() {
@@ -33,11 +34,11 @@ export default function GlobalLandingPage() {
     const showDemoTenant = Boolean(demoTenant?.enabled && demoTenant?.url);
 
     return (
-        <div className="min-h-screen bg-gradient-to-b from-gray-50 via-white to-gray-100 dark:from-gray-950 dark:via-gray-900 dark:to-gray-800">
+        <div className="min-h-screen bg-linear-to-b from-gray-50 via-white to-gray-100 dark:from-gray-950 dark:via-gray-900 dark:to-gray-800">
             <Head title="週報通 Timesheet SaaS" />
             {/* Hero Section */}
             <section className="relative overflow-hidden pb-20 pt-24">
-                <div className="absolute inset-0 -z-10 bg-[radial-gradient(circle_at_top,_#c7d2fe_0%,_transparent_55%),radial-gradient(circle_at_bottom,_#fce7f3_0%,_transparent_60%)] opacity-80 dark:opacity-20" />
+                <div className="absolute inset-0 -z-10 bg-[radial-gradient(circle_at_top,#c7d2fe_0%,transparent_55%),radial-gradient(circle_at_bottom,#fce7f3_0%,transparent_60%)] opacity-80 dark:opacity-20" />
                 <div className="absolute right-4 top-4 flex items-center gap-3 lg:right-8 lg:top-6">
                     <AppearanceToggleDropdown />
                 </div>

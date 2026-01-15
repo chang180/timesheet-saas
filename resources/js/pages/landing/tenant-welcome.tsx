@@ -137,10 +137,10 @@ export default function TenantWelcomePage({
                   ],
               };
 
-    const pageStyle = useMemo<CSSProperties>(
+    const pageStyle = useMemo<React.CSSProperties>(
         () => ({
             '--tenant-brand-color': brandColor || '#2563eb',
-        }),
+        } as React.CSSProperties),
         [brandColor]
     );
 

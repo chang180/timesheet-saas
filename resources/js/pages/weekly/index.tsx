@@ -38,7 +38,7 @@ export default function WeeklyReports({ isManager, tenant }: WeeklyProps) {
                 </header>
 
                 {needsOnboarding && (
-                    <div className="rounded-2xl border-2 border-amber-300 bg-gradient-to-r from-amber-50/90 to-amber-100/60 p-6 shadow-md dark:border-amber-600 dark:from-amber-950/30 dark:to-amber-900/20">
+                    <div className="rounded-2xl border-2 border-amber-300 bg-linear-to-r from-amber-50/90 to-amber-100/60 p-6 shadow-md dark:border-amber-600 dark:from-amber-950/30 dark:to-amber-900/20">
                         <p className="text-base font-bold text-amber-900 dark:text-amber-200 sm:text-lg">
                             第一次使用週報通？
                         </p>
@@ -50,7 +50,7 @@ export default function WeeklyReports({ isManager, tenant }: WeeklyProps) {
 
                 <section className="grid gap-6 sm:grid-cols-2">
                     <div className="group flex flex-col rounded-2xl border-2 border-border/60 bg-card p-6 shadow-sm transition-all duration-300 hover:shadow-lg hover:border-primary/40 hover:-translate-y-1">
-                        <div className="flex size-16 items-center justify-center rounded-2xl bg-gradient-to-br from-indigo-100 via-indigo-50 to-indigo-100/50 text-indigo-600 shadow-md transition-all duration-300 group-hover:scale-110 group-hover:shadow-lg dark:from-indigo-500/20 dark:via-indigo-500/10 dark:to-indigo-500/5 dark:text-indigo-400">
+                        <div className="flex size-16 items-center justify-center rounded-2xl bg-linear-to-br from-indigo-100 via-indigo-50 to-indigo-100/50 text-indigo-600 shadow-md transition-all duration-300 group-hover:scale-110 group-hover:shadow-lg dark:from-indigo-500/20 dark:via-indigo-500/10 dark:to-indigo-500/5 dark:text-indigo-400">
                             <PenSquare className="size-8" />
                         </div>
                         <h2 className="mt-5 text-xl font-bold text-foreground sm:text-2xl">填寫本週週報</h2>
@@ -67,7 +67,7 @@ export default function WeeklyReports({ isManager, tenant }: WeeklyProps) {
                     </div>
 
                     <div className="group flex flex-col rounded-2xl border-2 border-border/60 bg-card p-6 shadow-sm transition-all duration-300 hover:shadow-lg hover:border-primary/40 hover:-translate-y-1">
-                        <div className="flex size-16 items-center justify-center rounded-2xl bg-gradient-to-br from-emerald-100 via-emerald-50 to-emerald-100/50 text-emerald-600 shadow-md transition-all duration-300 group-hover:scale-110 group-hover:shadow-lg dark:from-emerald-500/20 dark:via-emerald-500/10 dark:to-emerald-500/5 dark:text-emerald-400">
+                        <div className="flex size-16 items-center justify-center rounded-2xl bg-linear-to-br from-emerald-100 via-emerald-50 to-emerald-100/50 text-emerald-600 shadow-md transition-all duration-300 group-hover:scale-110 group-hover:shadow-lg dark:from-emerald-500/20 dark:via-emerald-500/10 dark:to-emerald-500/5 dark:text-emerald-400">
                             <ClipboardList className="size-8" />
                         </div>
                         <h2 className="mt-5 text-xl font-bold text-foreground sm:text-2xl">查看週報歷史</h2>

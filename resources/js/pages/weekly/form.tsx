@@ -5,7 +5,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import AppLayout from '@/layouts/app-layout';
-import { weeklyReports } from '@/routes/tenant';
+import tenantRoutes from '@/routes/tenant';
+import * as weeklyRoutes from '@/routes/tenant/weekly-reports';
 import { type BreadcrumbItem, type SharedData } from '@/types';
 import { Head, Link, router, useForm, usePage } from '@inertiajs/react';
 import { ArrowLeft, GripVertical, PlusCircle, Trash2, CheckCircle2, Clock, Lock, type LucideIcon } from 'lucide-react';
@@ -578,7 +579,7 @@ export default function WeeklyReportForm({
         {
             title: '週報工作簿',
             href: canNavigate
-                ? weeklyReports.url({ company: companySlug })
+                ? tenantRoutes.weeklyReports.url({ company: companySlug })
                 : '#',
         },
         {
@@ -697,16 +698,19 @@ export default function WeeklyReportForm({
         }
 
         if (isCreate) {
-            form.post(weeklyReports.store.url({ company: companySlug }), options);
+            form.post(weeklyRoutes.store.url({ company: companySlug }), options);
         } else if (report) {
             form.put(
-                weeklyReports.update.url({ company: companySlug, weeklyReport: report.id }),
+                weeklyRoutes.update.url({ company: companySlug, weeklyReport: report.id }),
                 options,
             );
         }
     };
 
-    const getError = (path: string): string | undefined => form.errors[path] as string | undefined;
+    const getError = (path: string): string | undefined => {
+        const errors = form.errors as Record<string, string>;
+        return errors[path];
+    };
 
     // 計算工時合計
     // hours_spent 和 planned_hours 在表單狀態中已經是數字類型
@@ -727,7 +731,7 @@ export default function WeeklyReportForm({
                 <div className="flex items-center gap-4 border-b border-border/60 pb-6">
                     {canNavigate ? (
                         <Button asChild variant="ghost" size="sm" className="gap-2">
-                            <Link href={weeklyReports.url({ company: companySlug })}>
+                            <Link href={tenantRoutes.weeklyReports.url({ company: companySlug })}>
                                 <ArrowLeft className="size-4" />
                                 返回列表
                             </Link>
@@ -796,7 +800,7 @@ export default function WeeklyReportForm({
                 )}
 
                 {isCreate && prefill.currentWeek.length > 0 && (
-                    <div className="rounded-lg border-2 border-indigo-200 bg-gradient-to-r from-indigo-50 to-indigo-100/50 p-4 shadow-sm dark:border-indigo-500/30 dark:from-indigo-500/10 dark:to-indigo-500/5">
+                    <div className="rounded-lg border-2 border-indigo-200 bg-linear-to-r from-indigo-50 to-indigo-100/50 p-4 shadow-sm dark:border-indigo-500/30 dark:from-indigo-500/10 dark:to-indigo-500/5">
                         <p className="text-sm font-semibold text-indigo-900 dark:text-indigo-100">
                             已帶入上一週的「下週預計」項目，記得調整內容與工時。
                         </p>
@@ -804,7 +808,7 @@ export default function WeeklyReportForm({
                 )}
 
                 <Card className="border-2 border-border/60 shadow-md">
-                    <CardHeader className="border-b-2 border-border/60 bg-gradient-to-r from-muted/50 to-muted/30 pb-5">
+                    <CardHeader className="border-b-2 border-border/60 bg-linear-to-r from-muted/50 to-muted/30 pb-5">
                         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                             <CardTitle className="text-xl font-bold text-foreground sm:text-2xl">本週完成事項</CardTitle>
                             <Button type="button" size="sm" variant="default" onClick={addCurrentItem} className="gap-2 shadow-sm">
@@ -815,7 +819,7 @@ export default function WeeklyReportForm({
                     </CardHeader>
                     <CardContent className="pt-6">
                         {form.data.current_week.length === 0 ? (
-                            <div className="rounded-xl border-2 border-dashed border-border/50 bg-gradient-to-br from-muted/30 to-muted/10 p-12 text-center">
+                            <div className="rounded-xl border-2 border-dashed border-border/50 bg-linear-to-br from-muted/30 to-muted/10 p-12 text-center">
                                 <p className="text-sm font-medium text-muted-foreground sm:text-base">
                                     目前沒有任何項目，點擊「新增項目」開始紀錄。
                                 </p>
@@ -828,7 +832,7 @@ export default function WeeklyReportForm({
                                     onDragEnd={handleCurrentWeekDragEnd}
                                 >
                                     <table className="min-w-full divide-y divide-border/50 text-sm">
-                                        <thead className="bg-gradient-to-r from-muted/60 to-muted/40">
+                                        <thead className="bg-linear-to-r from-muted/60 to-muted/40">
                                             <tr>
                                                 <th className="px-4 py-4 w-10"></th>
                                                 <th className="px-4 py-4 text-left text-xs font-bold uppercase tracking-wider text-foreground">標題</th>
@@ -860,7 +864,7 @@ export default function WeeklyReportForm({
                                             </SortableContext>
                                         </tbody>
                                         {form.data.current_week.length > 0 && (
-                                            <tfoot className="bg-gradient-to-r from-blue-50/50 to-blue-100/30 border-t-2 border-blue-200/60 dark:from-blue-950/20 dark:to-blue-900/10 dark:border-blue-800/60">
+                                            <tfoot className="bg-linear-to-r from-blue-50/50 to-blue-100/30 border-t-2 border-blue-200/60 dark:from-blue-950/20 dark:to-blue-900/10 dark:border-blue-800/60">
                                                 <tr>
                                                     <td colSpan={4} className="px-4 py-4 text-right text-base font-bold text-foreground">
                                                         實際工時小計：
@@ -881,7 +885,7 @@ export default function WeeklyReportForm({
                 </Card>
 
                 <Card className="border-2 border-border/60 shadow-md">
-                    <CardHeader className="border-b-2 border-border/60 bg-gradient-to-r from-muted/50 to-muted/30 pb-5">
+                    <CardHeader className="border-b-2 border-border/60 bg-linear-to-r from-muted/50 to-muted/30 pb-5">
                         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                             <CardTitle className="text-xl font-bold text-foreground sm:text-2xl">下週預計事項</CardTitle>
                             <Button type="button" size="sm" variant="default" onClick={addNextItem} className="gap-2 shadow-sm">
@@ -892,7 +896,7 @@ export default function WeeklyReportForm({
                     </CardHeader>
                     <CardContent className="pt-6">
                         {form.data.next_week.length === 0 ? (
-                            <div className="rounded-xl border-2 border-dashed border-border/50 bg-gradient-to-br from-muted/30 to-muted/10 p-12 text-center">
+                            <div className="rounded-xl border-2 border-dashed border-border/50 bg-linear-to-br from-muted/30 to-muted/10 p-12 text-center">
                                 <p className="text-sm font-medium text-muted-foreground sm:text-base">
                                     目前沒有任何預計事項，點擊「新增項目」規劃下週工作。
                                 </p>
@@ -905,7 +909,7 @@ export default function WeeklyReportForm({
                                     onDragEnd={handleNextWeekDragEnd}
                                 >
                                     <table className="min-w-full divide-y divide-border/50 text-sm">
-                                        <thead className="bg-gradient-to-r from-muted/60 to-muted/40">
+                                        <thead className="bg-linear-to-r from-muted/60 to-muted/40">
                                             <tr>
                                                 <th className="px-4 py-4 w-10"></th>
                                                 <th className="px-4 py-4 text-left text-xs font-bold uppercase tracking-wider text-foreground">標題</th>
@@ -944,12 +948,12 @@ export default function WeeklyReportForm({
 
                 {/* 工時合計顯示 */}
                 <Card className="border-2 border-border/60 shadow-lg">
-                    <CardHeader className="border-b-2 border-border/60 bg-gradient-to-r from-muted/50 to-muted/30 pb-5">
+                    <CardHeader className="border-b-2 border-border/60 bg-linear-to-r from-muted/50 to-muted/30 pb-5">
                         <CardTitle className="text-xl font-bold text-foreground sm:text-2xl">工時統計</CardTitle>
                     </CardHeader>
                     <CardContent className="pt-8">
                         <div className="grid gap-6 sm:grid-cols-2">
-                            <div className="relative rounded-xl border-2 border-blue-300 bg-gradient-to-br from-blue-50 via-blue-100/50 to-blue-50 p-8 shadow-lg dark:border-blue-700 dark:from-blue-950/30 dark:via-blue-900/20 dark:to-blue-950/30">
+                            <div className="relative rounded-xl border-2 border-blue-300 bg-linear-to-br from-blue-50 via-blue-100/50 to-blue-50 p-8 shadow-lg dark:border-blue-700 dark:from-blue-950/30 dark:via-blue-900/20 dark:to-blue-950/30">
                                 <div className="absolute right-4 top-4">
                                     <Clock className="size-6 text-blue-400/40 dark:text-blue-500/30" />
                                 </div>
@@ -962,7 +966,7 @@ export default function WeeklyReportForm({
                                     {form.data.current_week.length} 個項目
                                 </div>
                             </div>
-                            <div className="relative rounded-xl border-2 border-emerald-300 bg-gradient-to-br from-emerald-50 via-emerald-100/50 to-emerald-50 p-8 shadow-lg dark:border-emerald-700 dark:from-emerald-950/30 dark:via-emerald-900/20 dark:to-emerald-950/30">
+                            <div className="relative rounded-xl border-2 border-emerald-300 bg-linear-to-br from-emerald-50 via-emerald-100/50 to-emerald-50 p-8 shadow-lg dark:border-emerald-700 dark:from-emerald-950/30 dark:via-emerald-900/20 dark:to-emerald-950/30">
                                 <div className="absolute right-4 top-4">
                                     <Clock className="size-6 text-emerald-400/40 dark:text-emerald-500/30" />
                                 </div>
@@ -980,7 +984,7 @@ export default function WeeklyReportForm({
                 </Card>
 
                 <Card className="border-2 border-border/60 shadow-md">
-                    <CardHeader className="border-b-2 border-border/60 bg-gradient-to-r from-muted/50 to-muted/30 pb-5">
+                    <CardHeader className="border-b-2 border-border/60 bg-linear-to-r from-muted/50 to-muted/30 pb-5">
                         <CardTitle className="text-xl font-bold text-foreground sm:text-2xl">摘要</CardTitle>
                     </CardHeader>
                     <CardContent className="pt-6">
@@ -1002,14 +1006,14 @@ export default function WeeklyReportForm({
 
                 <div className="space-y-4 border-t-2 border-border/60 pt-8">
                     {report && report.status === 'draft' && (
-                        <div className="rounded-xl border-2 border-amber-300 bg-gradient-to-r from-amber-50/80 to-amber-100/50 p-5 shadow-sm dark:border-amber-700 dark:from-amber-950/30 dark:to-amber-900/20">
+                        <div className="rounded-xl border-2 border-amber-300 bg-linear-to-r from-amber-50/80 to-amber-100/50 p-5 shadow-sm dark:border-amber-700 dark:from-amber-950/30 dark:to-amber-900/20">
                             <p className="text-sm font-semibold text-amber-900 dark:text-amber-200 sm:text-base">
                                 💡 提示：此週報目前為「草稿」狀態。點擊「發佈週報」後，狀態將變更為「已送出」，並記錄發佈時間。
                             </p>
                         </div>
                     )}
                     {report && report.status === 'submitted' && (
-                        <div className="rounded-xl border-2 border-emerald-300 bg-gradient-to-r from-emerald-50/80 to-emerald-100/50 p-5 shadow-sm dark:border-emerald-700 dark:from-emerald-950/30 dark:to-emerald-900/20">
+                        <div className="rounded-xl border-2 border-emerald-300 bg-linear-to-r from-emerald-50/80 to-emerald-100/50 p-5 shadow-sm dark:border-emerald-700 dark:from-emerald-950/30 dark:to-emerald-900/20">
                             <p className="text-sm font-semibold text-emerald-900 dark:text-emerald-200 sm:text-base">
                                 ✓ 此週報已發佈。您可以繼續編輯內容，但狀態將保持為「已送出」。
                             </p>

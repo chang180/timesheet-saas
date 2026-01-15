@@ -134,7 +134,7 @@ export default function WeeklyReportList(props: WeeklyReportListProps) {
                 <section className="grid gap-6 sm:grid-cols-2">
                     <Card className="group flex flex-col border-2 border-border/60 bg-card shadow-sm transition-all duration-300 hover:shadow-lg hover:border-primary/40 hover:-translate-y-1">
                         <CardContent className="flex flex-1 flex-col gap-5 p-6">
-                            <div className="flex size-16 items-center justify-center rounded-2xl bg-gradient-to-br from-indigo-100 via-indigo-50 to-indigo-100/50 text-indigo-600 shadow-md transition-all duration-300 group-hover:scale-110 group-hover:shadow-lg dark:from-indigo-500/20 dark:via-indigo-500/10 dark:to-indigo-500/5 dark:text-indigo-400">
+                            <div className="flex size-16 items-center justify-center rounded-2xl bg-linear-to-br from-indigo-100 via-indigo-50 to-indigo-100/50 text-indigo-600 shadow-md transition-all duration-300 group-hover:scale-110 group-hover:shadow-lg dark:from-indigo-500/20 dark:via-indigo-500/10 dark:to-indigo-500/5 dark:text-indigo-400">
                                 <PenSquare className="size-8" />
                             </div>
                             <div className="space-y-2">
@@ -166,7 +166,7 @@ export default function WeeklyReportList(props: WeeklyReportListProps) {
 
                     <Card className="group flex flex-col border-2 border-border/60 bg-card shadow-sm transition-all duration-300 hover:shadow-lg hover:border-primary/40 hover:-translate-y-1">
                         <CardContent className="flex flex-1 flex-col gap-5 p-6">
-                            <div className="flex size-16 items-center justify-center rounded-2xl bg-gradient-to-br from-emerald-100 via-emerald-50 to-emerald-100/50 text-emerald-600 shadow-md transition-all duration-300 group-hover:scale-110 group-hover:shadow-lg dark:from-emerald-500/20 dark:via-emerald-500/10 dark:to-emerald-500/5 dark:text-emerald-400">
+                            <div className="flex size-16 items-center justify-center rounded-2xl bg-linear-to-br from-emerald-100 via-emerald-50 to-emerald-100/50 text-emerald-600 shadow-md transition-all duration-300 group-hover:scale-110 group-hover:shadow-lg dark:from-emerald-500/20 dark:via-emerald-500/10 dark:to-emerald-500/5 dark:text-emerald-400">
                                 <ClipboardList className="size-8" />
                             </div>
                             <div className="space-y-2">
@@ -225,9 +225,9 @@ export default function WeeklyReportList(props: WeeklyReportListProps) {
                     </div>
 
                     {reports.length === 0 ? (
-                        <Card className="border-2 border-dashed border-border/50 bg-gradient-to-br from-muted/30 to-muted/10">
+                        <Card className="border-2 border-dashed border-border/50 bg-linear-to-br from-muted/30 to-muted/10">
                             <CardContent className="flex flex-col items-center justify-center p-16 text-center">
-                                <div className="mb-6 flex size-20 items-center justify-center rounded-2xl bg-gradient-to-br from-muted to-muted/50 shadow-sm">
+                                <div className="mb-6 flex size-20 items-center justify-center rounded-2xl bg-linear-to-br from-muted to-muted/50 shadow-sm">
                                     <ClipboardList className="size-10 text-muted-foreground" />
                                 </div>
                                 <h3 className="mb-3 text-xl font-semibold text-foreground">尚未建立任何週報</h3>
@@ -248,7 +248,7 @@ export default function WeeklyReportList(props: WeeklyReportListProps) {
                         <Card className="overflow-hidden border-2 border-border/60 shadow-md">
                             <div className="overflow-x-auto">
                                 <table className="min-w-full divide-y divide-border/50">
-                                    <thead className="bg-gradient-to-r from-muted/60 to-muted/40">
+                                    <thead className="bg-linear-to-r from-muted/60 to-muted/40">
                                         <tr>
                                             <th className="px-6 py-4 text-left text-xs font-bold uppercase tracking-wider text-foreground first:pl-6 last:pr-6">
                                                 週次
