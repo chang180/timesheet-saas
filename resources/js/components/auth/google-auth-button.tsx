@@ -93,7 +93,7 @@ export default function GoogleAuthButton({
             </Button>
             {showWarning && (
                 <div className="flex items-start gap-2 rounded-lg border border-amber-200 bg-amber-50 p-3 text-xs text-amber-800 dark:border-amber-800 dark:bg-amber-500/10 dark:text-amber-400">
-                    <AlertCircle className="mt-0.5 h-4 w-4 flex-shrink-0" />
+                    <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
                     <span>
                         請使用您自己的 Google 帳號，以免無法取回帳號
                     </span>
