@@ -43,7 +43,7 @@ export default function AuthSplitLayout({
     return (
         <div className="relative grid h-dvh flex-col items-center justify-center px-8 sm:px-0 lg:max-w-none lg:grid-cols-2 lg:px-0">
             <div className="relative hidden h-full flex-col bg-muted p-10 text-white lg:flex dark:border-r">
-                <div className="absolute inset-0 bg-gradient-to-br from-indigo-900 via-slate-900 to-emerald-900 opacity-95" />
+                <div className="absolute inset-0 bg-linear-to-br from-indigo-900 via-slate-900 to-emerald-900 opacity-95" />
                 <div className="relative z-20 flex h-full flex-col">
                     <div className="flex items-center justify-between">
                         <Link
@@ -75,7 +75,7 @@ export default function AuthSplitLayout({
                             href={home()}
                             className="relative z-20 flex items-center gap-3 rounded-xl border border-border/70 bg-background/70 px-3 py-2 shadow-sm backdrop-blur-sm"
                         >
-                            <div className="flex size-10 items-center justify-center rounded-md bg-gradient-to-br from-indigo-500 via-sky-500 to-emerald-500 shadow-sm">
+                            <div className="flex size-10 items-center justify-center rounded-md bg-linear-to-br from-indigo-500 via-sky-500 to-emerald-500 shadow-sm">
                                 <AppLogoIcon className="h-6 fill-current text-white" />
                             </div>
                             <span className="text-sm font-semibold text-foreground">
