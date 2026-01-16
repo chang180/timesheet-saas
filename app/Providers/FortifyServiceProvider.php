@@ -124,6 +124,8 @@ class FortifyServiceProvider extends ServiceProvider
                 )
                 ->first();
 
+            // 檢查用戶是否存在且密碼正確
+            // 注意：即使用戶已連結 Google 帳號（有 google_id），只要他們有設定密碼，仍然可以使用 email/password 登入
             if (! $user || ! Hash::check($password, $user->password)) {
                 return null;
             }
@@ -142,11 +144,16 @@ class FortifyServiceProvider extends ServiceProvider
      */
     private function configureViews(): void
     {
-        Fortify::loginView(fn (Request $request) => Inertia::render('auth/login', [
-            'canResetPassword' => Features::enabled(Features::resetPasswords()),
-            'canRegister' => Features::enabled(Features::registration()),
-            'status' => $request->session()->get('status'),
-        ]));
+        Fortify::loginView(function (Request $request) {
+            // 將登入意圖存入 session，供 Google OAuth 使用
+            $request->session()->put('google_auth_intent', 'login');
+
+            return Inertia::render('auth/login', [
+                'canResetPassword' => Features::enabled(Features::resetPasswords()),
+                'canRegister' => Features::enabled(Features::registration()),
+                'status' => $request->session()->get('status'),
+            ]);
+        });
 
         Fortify::resetPasswordView(fn (Request $request) => Inertia::render('auth/reset-password', [
             'email' => $request->email,
@@ -161,7 +168,12 @@ class FortifyServiceProvider extends ServiceProvider
             'status' => $request->session()->get('status'),
         ]));
 
-        Fortify::registerView(fn () => Inertia::render('auth/register'));
+        Fortify::registerView(function (Request $request) {
+            // 將一般註冊資訊存入 session，供 Google OAuth 使用
+            $request->session()->put('google_auth_intent', 'register');
+
+            return Inertia::render('auth/register');
+        });
 
         Fortify::twoFactorChallengeView(fn () => Inertia::render('auth/two-factor-challenge'));
 

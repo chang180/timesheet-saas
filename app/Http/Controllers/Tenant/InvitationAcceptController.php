@@ -37,6 +37,11 @@ class InvitationAcceptController extends Controller
             abort(410, __('This invitation has expired.'));
         }
 
+        // 將邀請資訊存入 session，供 Google OAuth 使用
+        $request->session()->put('google_auth_intent', 'invitation');
+        $request->session()->put('google_auth_company_slug', $company->slug);
+        $request->session()->put('google_auth_invitation_token', $token);
+
         return Inertia::render('tenant/invitations/accept', [
             'company' => [
                 'name' => $company->name,
@@ -107,6 +112,14 @@ class InvitationAcceptController extends Controller
         if (! $organization) {
             abort(404, __('Invalid or disabled invitation link.'));
         }
+
+        // 將組織邀請資訊存入 session，供 Google OAuth 使用
+        $request->session()->put('google_auth_intent', 'organization_invitation');
+        $request->session()->put('google_auth_organization_invitation', [
+            'company_slug' => $company->slug,
+            'token' => $token,
+            'type' => $type,
+        ]);
 
         $organizationData = [
             'id' => $organization->id,

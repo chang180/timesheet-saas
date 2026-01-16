@@ -42,6 +42,10 @@ class TenantRegisterController extends Controller
         // 檢查是否已達人數上限
         $canRegister = $company->current_user_count < $company->user_limit;
 
+        // 將租戶註冊資訊存入 session，供 Google OAuth 使用
+        $request->session()->put('google_auth_intent', 'tenant_register');
+        $request->session()->put('google_auth_company_slug', $company->slug);
+
         return Inertia::render('auth/tenant-register', [
             'company' => [
                 'id' => $company->id,

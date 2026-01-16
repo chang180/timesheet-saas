@@ -1,7 +1,9 @@
+import GoogleAuthButton from '@/components/auth/google-auth-button';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Separator } from '@/components/ui/separator';
 import InputError from '@/components/input-error';
 import { Head, useForm, router } from '@inertiajs/react';
 import { Building2, UserPlus } from 'lucide-react';
@@ -76,6 +78,26 @@ export default function RegisterByInvitationPage({ company, organization, token,
                     )}
                 </CardHeader>
                 <CardContent>
+                    <GoogleAuthButton
+                        intent="organization_invitation"
+                        organizationInvitation={{
+                            companySlug: company.slug,
+                            token,
+                            type,
+                        }}
+                    />
+
+                    <div className="relative my-4">
+                        <div className="absolute inset-0 flex items-center">
+                            <Separator />
+                        </div>
+                        <div className="relative flex justify-center text-xs uppercase">
+                            <span className="bg-background px-2 text-muted-foreground">
+                                或
+                            </span>
+                        </div>
+                    </div>
+
                     <form onSubmit={handleSubmit} className="space-y-4">
                         <div className="space-y-2">
                             <Label htmlFor="name">姓名</Label>

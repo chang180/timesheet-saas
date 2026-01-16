@@ -1,3 +1,4 @@
+import GoogleAuthButton from '@/components/auth/google-auth-button';
 import InputError from '@/components/input-error';
 import TextLink from '@/components/text-link';
 import { Badge } from '@/components/ui/badge';
@@ -144,6 +145,22 @@ export default function TenantAuth({
                                             name="company_slug"
                                             value={company.slug}
                                         />
+                                        <GoogleAuthButton
+                                            intent="login"
+                                            companySlug={company.slug}
+                                        />
+
+                                        <div className="relative">
+                                            <div className="absolute inset-0 flex items-center">
+                                                <Separator />
+                                            </div>
+                                            <div className="relative flex justify-center text-xs uppercase">
+                                                <span className="bg-background px-2 text-muted-foreground">
+                                                    或
+                                                </span>
+                                            </div>
+                                        </div>
+
                                         <div className="space-y-4">
                                             <div className="space-y-2">
                                                 <Label htmlFor="login-email">Email</Label>
@@ -241,6 +258,22 @@ export default function TenantAuth({
                                                 name="company_slug"
                                                 value={company.slug}
                                             />
+                                            <GoogleAuthButton
+                                                intent="register"
+                                                companySlug={company.slug}
+                                            />
+
+                                            <div className="relative">
+                                                <div className="absolute inset-0 flex items-center">
+                                                    <Separator />
+                                                </div>
+                                                <div className="relative flex justify-center text-xs uppercase">
+                                                    <span className="bg-background px-2 text-muted-foreground">
+                                                        或
+                                                    </span>
+                                                </div>
+                                            </div>
+
                                             <div className="space-y-4">
                                                 <div className="space-y-2">
                                                     <Label htmlFor="register-name">姓名</Label>

@@ -9,6 +9,10 @@ use Inertia\Inertia;
 Route::get('/', [App\Http\Controllers\LandingController::class, 'global'])
     ->name('home');
 
+// Google OAuth 路由（公開）
+Route::get('/auth/google', [App\Http\Controllers\Auth\GoogleAuthController::class, 'redirect'])->name('google.redirect');
+Route::get('/auth/google/callback', [App\Http\Controllers\Auth\GoogleAuthController::class, 'callback'])->name('google.callback');
+
 // 租戶登入/註冊路由（公開，不需要認證）
 Route::prefix('app/{company:slug}')
     ->middleware('tenant')

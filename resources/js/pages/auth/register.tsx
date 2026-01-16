@@ -1,3 +1,4 @@
+import GoogleAuthButton from '@/components/auth/google-auth-button';
 import InputError from '@/components/input-error';
 import TextLink from '@/components/text-link';
 import { Badge } from '@/components/ui/badge';
@@ -61,6 +62,19 @@ export default function Register() {
                         </CardHeader>
                         <Separator className="mx-6" />
                         <CardContent className="space-y-5 pt-6">
+                            <GoogleAuthButton intent="register" />
+
+                            <div className="relative">
+                                <div className="absolute inset-0 flex items-center">
+                                    <Separator />
+                                </div>
+                                <div className="relative flex justify-center text-xs uppercase">
+                                    <span className="bg-background px-2 text-muted-foreground">
+                                        或
+                                    </span>
+                                </div>
+                            </div>
+
                             <div className="space-y-4">
                                 <div className="space-y-2">
                                     <Label htmlFor="company_name">公司或團隊名稱</Label>

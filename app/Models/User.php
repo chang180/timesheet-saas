@@ -33,12 +33,15 @@ class User extends Authenticatable
         'name',
         'email',
         'password',
+        'google_id',
+        'avatar',
         'role',
         'position',
         'phone',
         'timezone',
         'locale',
         'registered_via',
+        'email_verified_at',
         'onboarded_at',
         'last_active_at',
         'invitation_token',
@@ -129,6 +132,11 @@ class User extends Authenticatable
     public function belongsToCompany(int $companyId): bool
     {
         return $this->company_id === $companyId;
+    }
+
+    public function hasGoogleAccount(): bool
+    {
+        return $this->google_id !== null;
     }
 
     public function canManageHierarchy(?int $divisionId, ?int $departmentId, ?int $teamId): bool
