@@ -1,11 +1,20 @@
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogHeader,
+    DialogTitle,
+    DialogTrigger,
+} from '@/components/ui/dialog';
 import AppLayout from '@/layouts/app-layout';
 import tenantRoutes from '@/routes/tenant';
 import * as weeklyRoutes from '@/routes/tenant/weekly-reports';
 import { type BreadcrumbItem, type SharedData } from '@/types';
 import { Head, Link, usePage } from '@inertiajs/react';
-import { ArrowRight, ClipboardList, PenSquare, SquarePen, CheckCircle2, Clock, Lock, Eye, type LucideIcon } from 'lucide-react';
+import { ArrowRight, ClipboardList, PenSquare, SquarePen, CheckCircle2, Clock, Lock, Eye, type LucideIcon, CalendarPlus } from 'lucide-react';
+import { useState } from 'react';
 
 type WeeklyReportSummary = {
     id: number;
@@ -15,6 +24,13 @@ type WeeklyReportSummary = {
     summary: string | null;
     totalHours: number;
     updatedAt?: string | null;
+};
+
+type MissingWeek = {
+    year: number;
+    week: number;
+    startDate: string;
+    endDate: string;
 };
 
 interface WeeklyReportListProps {
@@ -32,6 +48,7 @@ interface WeeklyReportListProps {
         startDate: string;
         endDate: string;
     };
+    missingWeeks?: MissingWeek[];
 }
 
 const STATUS_CONFIG: Record<string, { text: string; icon: LucideIcon; className: string }> = {
@@ -62,7 +79,9 @@ export default function WeeklyReportList(props: WeeklyReportListProps) {
     const companySlug = props.company?.slug ?? sharedCompanySlug ?? '';
     const reports = props.reports ?? [];
     const defaults = props.defaults;
+    const missingWeeks = props.missingWeeks ?? [];
     const latestReport = reports[0];
+    const [isDialogOpen, setIsDialogOpen] = useState(false);
 
     // 檢查是否有本週週報
     const currentWeekReport = reports.find(
@@ -167,15 +186,67 @@ export default function WeeklyReportList(props: WeeklyReportListProps) {
                     <Card className="group flex flex-col border-2 border-border/60 bg-card shadow-sm transition-all duration-300 hover:shadow-lg hover:border-primary/40 hover:-translate-y-1">
                         <CardContent className="flex flex-1 flex-col gap-5 p-6">
                             <div className="flex size-16 items-center justify-center rounded-2xl bg-linear-to-br from-emerald-100 via-emerald-50 to-emerald-100/50 text-emerald-600 shadow-md transition-all duration-300 group-hover:scale-110 group-hover:shadow-lg dark:from-emerald-500/20 dark:via-emerald-500/10 dark:to-emerald-500/5 dark:text-emerald-400">
-                                <ClipboardList className="size-8" />
+                                <CalendarPlus className="size-8" />
                             </div>
                             <div className="space-y-2">
-                                <h2 className="text-xl font-semibold text-foreground">查看週報歷史</h2>
+                                <h2 className="text-xl font-semibold text-foreground">補填週報</h2>
                                 <p className="text-sm leading-relaxed text-muted-foreground">
-                                    蒐集過往週報、下載摘要或準備主管提報，可依週數快速定位並進入編輯。
+                                    補填之前略過或忘記填寫的週報，讓工作記錄更完整。
                                 </p>
+                                {missingWeeks.length > 0 && (
+                                    <p className="text-xs font-medium text-amber-600 dark:text-amber-400">
+                                        共有 {missingWeeks.length} 個週次待補填
+                                    </p>
+                                )}
                             </div>
-                            {latestReport ? (
+                            {canCreate && missingWeeks.length > 0 ? (
+                                <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+                                    <DialogTrigger asChild>
+                                        <Button
+                                            variant="outline"
+                                            className="mt-auto w-full gap-2 sm:w-auto"
+                                            data-testid="fill-missing-weekly-reports"
+                                        >
+                                            補填週報
+                                            <ArrowRight className="size-4" />
+                                        </Button>
+                                    </DialogTrigger>
+                                    <DialogContent className="max-w-lg">
+                                        <DialogHeader>
+                                            <DialogTitle>選擇要補填的週報</DialogTitle>
+                                            <DialogDescription>
+                                                選擇一個缺失的週報開始補填，系統會自動帶你到該週的建立頁面。
+                                            </DialogDescription>
+                                        </DialogHeader>
+                                        <div className="max-h-[60vh] space-y-2 overflow-y-auto">
+                                            {missingWeeks.map((missingWeek) => {
+                                                const createHrefWithWeek = weeklyRoutes.create.url({
+                                                    company: companySlug,
+                                                }) + `?year=${missingWeek.year}&week=${missingWeek.week}`;
+
+                                                return (
+                                                    <Link
+                                                        key={`${missingWeek.year}-${missingWeek.week}`}
+                                                        href={createHrefWithWeek}
+                                                        className="flex items-center justify-between rounded-lg border-2 border-border/60 bg-card p-4 transition-all hover:border-primary/40 hover:bg-muted/50"
+                                                        onClick={() => setIsDialogOpen(false)}
+                                                    >
+                                                        <div className="flex flex-col gap-1">
+                                                            <span className="font-semibold text-foreground">
+                                                                {missingWeek.year} 年第 {missingWeek.week} 週
+                                                            </span>
+                                                            <span className="text-xs text-muted-foreground">
+                                                                {missingWeek.startDate} ~ {missingWeek.endDate}
+                                                            </span>
+                                                        </div>
+                                                        <ArrowRight className="size-4 text-muted-foreground" />
+                                                    </Link>
+                                                );
+                                            })}
+                                        </div>
+                                    </DialogContent>
+                                </Dialog>
+                            ) : missingWeeks.length === 0 && latestReport ? (
                                 <Button
                                     variant="outline"
                                     asChild
@@ -188,7 +259,7 @@ export default function WeeklyReportList(props: WeeklyReportListProps) {
                                         })}
                                         data-testid="view-latest-weekly-report"
                                     >
-                                        檢視週報
+                                        檢視最新週報
                                         <ArrowRight className="size-4" />
                                     </Link>
                                 </Button>
@@ -198,7 +269,7 @@ export default function WeeklyReportList(props: WeeklyReportListProps) {
                                     disabled
                                     className="mt-auto w-full gap-2 sm:w-auto"
                                 >
-                                    尚無週報
+                                    無待補填週報
                                 </Button>
                             )}
                         </CardContent>

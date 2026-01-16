@@ -53,6 +53,13 @@ class WeeklyReportController extends Controller
             $company->timezone ?? config('app.timezone'),
         );
 
+        $missingWeeks = $this->calculateMissingWeeks(
+            $reports->toArray(),
+            $currentYear,
+            $currentWeekNumber,
+            $company->timezone ?? config('app.timezone'),
+        );
+
         return Inertia::render('weekly/list', [
             'reports' => $reports,
             'company' => [
@@ -65,6 +72,7 @@ class WeeklyReportController extends Controller
                 'week' => $currentWeekNumber,
             ],
             'weekDateRange' => $weekDateRange,
+            'missingWeeks' => $missingWeeks,
         ]);
     }
 
@@ -533,5 +541,84 @@ class WeeklyReportController extends Controller
             'startDate' => $startDate,
             'endDate' => $endDate,
         ];
+    }
+
+    /**
+     * 計算從最早的週報到當前週之間所有缺失的週報
+     *
+     * @param  array<int, array{workYear: int, workWeek: int}>  $reports
+     * @return array<int, array{year: int, week: int, startDate: string, endDate: string}>
+     */
+    private function calculateMissingWeeks(array $reports, int $currentYear, int $currentWeek, string $timezone): array
+    {
+        if (empty($reports)) {
+            return [];
+        }
+
+        // 找到最早的週報
+        $earliestReport = null;
+        foreach ($reports as $report) {
+            if ($earliestReport === null) {
+                $earliestReport = $report;
+            } else {
+                $reportYear = $report['workYear'];
+                $reportWeek = $report['workWeek'];
+                $earliestYear = $earliestReport['workYear'];
+                $earliestWeek = $earliestReport['workWeek'];
+
+                if ($reportYear < $earliestYear || ($reportYear === $earliestYear && $reportWeek < $earliestWeek)) {
+                    $earliestReport = $report;
+                }
+            }
+        }
+
+        if ($earliestReport === null) {
+            return [];
+        }
+
+        // 建立已存在的週報集合（使用 year-week 作為鍵值）
+        $existingWeeks = [];
+        foreach ($reports as $report) {
+            $key = "{$report['workYear']}-{$report['workWeek']}";
+            $existingWeeks[$key] = true;
+        }
+
+        // 從最早的週報開始，逐週檢查到當前週
+        $missingWeeks = [];
+        $startYear = $earliestReport['workYear'];
+        $startWeek = $earliestReport['workWeek'];
+        $currentDate = CarbonImmutable::now($timezone)->setISODate($currentYear, $currentWeek);
+
+        $checkDate = CarbonImmutable::now($timezone)->setISODate($startYear, $startWeek);
+        while ($checkDate->lte($currentDate)) {
+            $checkYear = (int) $checkDate->isoFormat('GGGG');
+            $checkWeek = (int) $checkDate->isoWeek();
+            $key = "{$checkYear}-{$checkWeek}";
+
+            // 如果這個週報不存在，加入缺失列表
+            if (! isset($existingWeeks[$key])) {
+                $weekDateRange = $this->getWeekDateRange($checkYear, $checkWeek, $timezone);
+                $missingWeeks[] = [
+                    'year' => $checkYear,
+                    'week' => $checkWeek,
+                    'startDate' => $weekDateRange['startDate'],
+                    'endDate' => $weekDateRange['endDate'],
+                ];
+            }
+
+            // 移到下一週
+            $checkDate = $checkDate->addWeek();
+        }
+
+        // 按照時間倒序排列（最新的在前）
+        usort($missingWeeks, function (array $a, array $b) {
+            if ($a['year'] !== $b['year']) {
+                return $b['year'] - $a['year'];
+            }
+
+            return $b['week'] - $a['week'];
+        });
+
+        return $missingWeeks;
     }
 }
