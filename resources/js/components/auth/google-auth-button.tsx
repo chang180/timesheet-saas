@@ -1,5 +1,4 @@
 import { Button } from '@/components/ui/button';
-import { router } from '@inertiajs/react';
 import { AlertCircle } from 'lucide-react';
 
 interface GoogleAuthButtonProps {
@@ -48,7 +47,8 @@ export default function GoogleAuthButton({
             url.searchParams.append(key, value);
         });
 
-        router.visit(url.toString());
+        // 使用完整頁面重定向，避免 CORS 問題
+        window.location.href = url.toString();
     };
 
     const buttonText = {
