@@ -1,11 +1,11 @@
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { cn } from '@/lib/utils';
-import { format, isSameDay, parseISO } from 'date-fns';
+import { format, parseISO } from 'date-fns';
 import { zhTW } from 'date-fns/locale';
 import { CalendarIcon, X } from 'lucide-react';
 import * as React from 'react';
-import type { DateRange, Matcher } from 'react-day-picker';
+import type { Matcher } from 'react-day-picker';
 
 interface DatePickerProps {
     /** 當前選中的日期 (YYYY-MM-DD 格式字串) */

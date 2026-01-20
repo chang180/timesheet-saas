@@ -3,7 +3,7 @@ import { HeroModule } from '@/tenant/welcome-modules/hero-module';
 import { QuickStartStepsModule } from '@/tenant/welcome-modules/quick-start-steps-module';
 import { SupportContactsModule } from '@/tenant/welcome-modules/support-contacts-module';
 import { WeeklyReportDemoModule } from '@/tenant/welcome-modules/weekly-report-demo-module';
-import { type CSSProperties, useMemo } from 'react';
+import { useMemo } from 'react';
 
 interface TenantSettings {
     companyName: string;
