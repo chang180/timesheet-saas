@@ -1,10 +1,12 @@
 import InputError from '@/components/input-error';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { DatePicker } from '@/components/ui/date-picker';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import AppLayout from '@/layouts/app-layout';
+import { isWeekend } from '@/lib/date-utils';
 import tenantRoutes from '@/routes/tenant';
 import * as weeklyRoutes from '@/routes/tenant/weekly-reports';
 import { type BreadcrumbItem, type SharedData } from '@/types';
@@ -171,16 +173,6 @@ function SortableCurrentWeekRow({
     getError,
     weekDateRange,
 }: SortableCurrentWeekRowProps) {
-    // 檢查日期是否為週六或週日
-    const isWeekend = (dateStr: string | null | undefined): boolean => {
-        if (!dateStr) {
-            return false;
-        }
-        const date = new Date(dateStr);
-        const day = date.getDay();
-        return day === 0 || day === 6; // 0 = 週日, 6 = 週六
-    };
-
     const startedAtIsWeekend = isWeekend(item.started_at);
     const endedAtIsWeekend = isWeekend(item.ended_at);
     const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
@@ -227,21 +219,15 @@ function SortableCurrentWeekRow({
                         <Label htmlFor={`started_at_${item.localKey}`} className="text-xs text-muted-foreground">
                             開始日期
                         </Label>
-                        <Input
+                        <DatePicker
                             id={`started_at_${item.localKey}`}
-                            type="date"
-                            value={item.started_at ?? ''}
-                            min={weekDateRange?.startDate}
-                            max={weekDateRange?.endDate}
-                            className={`w-full border-2 border-border/60 focus:border-primary focus:ring-2 focus:ring-primary/20 ${startedAtIsWeekend ? 'bg-yellow-50 dark:bg-yellow-950/20 border-yellow-300 dark:border-yellow-700' : ''} ${item.ended_at && item.started_at && item.started_at > item.ended_at ? 'border-red-500 dark:border-red-500' : ''}`}
-                            onChange={(event) => {
-                                const newStartedAt = event.target.value || null;
-                                updateItem('current_week', index, 'started_at', newStartedAt);
-                                // 如果新的開始日期晚於結束日期，清除結束日期或顯示錯誤
-                                if (newStartedAt && item.ended_at && newStartedAt > item.ended_at) {
-                                    // 保持結束日期，讓後端驗證處理錯誤訊息
-                                }
-                            }}
+                            value={item.started_at ?? null}
+                            onChange={(date) => updateItem('current_week', index, 'started_at', date)}
+                            minDate={weekDateRange?.startDate}
+                            maxDate={item.ended_at ?? weekDateRange?.endDate}
+                            weekRange={weekDateRange}
+                            placeholder="選擇開始日期"
+                            className={`w-full ${startedAtIsWeekend ? 'bg-yellow-50 dark:bg-yellow-950/20 border-yellow-300 dark:border-yellow-700' : ''}`}
                         />
                         {startedAtIsWeekend && (
                             <p className="text-xs text-yellow-600 dark:text-yellow-400 mt-1">週末日期</p>
@@ -251,16 +237,15 @@ function SortableCurrentWeekRow({
                         <Label htmlFor={`ended_at_${item.localKey}`} className="text-xs text-muted-foreground">
                             結束日期
                         </Label>
-                        <Input
+                        <DatePicker
                             id={`ended_at_${item.localKey}`}
-                            type="date"
-                            value={item.ended_at ?? ''}
-                            min={item.started_at || weekDateRange?.startDate}
-                            max={weekDateRange?.endDate}
-                            className={`w-full border-2 border-border/60 focus:border-primary focus:ring-2 focus:ring-primary/20 ${endedAtIsWeekend ? 'bg-yellow-50 dark:bg-yellow-950/20 border-yellow-300 dark:border-yellow-700' : ''} ${item.started_at && item.ended_at && item.ended_at < item.started_at ? 'border-red-500 dark:border-red-500' : ''}`}
-                            onChange={(event) =>
-                                updateItem('current_week', index, 'ended_at', event.target.value || null)
-                            }
+                            value={item.ended_at ?? null}
+                            onChange={(date) => updateItem('current_week', index, 'ended_at', date)}
+                            minDate={item.started_at ?? weekDateRange?.startDate}
+                            maxDate={weekDateRange?.endDate}
+                            weekRange={weekDateRange}
+                            placeholder="選擇結束日期"
+                            className={`w-full ${endedAtIsWeekend ? 'bg-yellow-50 dark:bg-yellow-950/20 border-yellow-300 dark:border-yellow-700' : ''}`}
                         />
                         {item.started_at && item.ended_at && item.ended_at < item.started_at && (
                             <p className="text-xs text-red-600 dark:text-red-400 mt-1">結束日期不能早於開始日期</p>
@@ -372,15 +357,6 @@ function SortableNextWeekRow({ item, index, updateItem, removeItem, getError, ne
         opacity: isDragging ? 0.5 : 1,
     };
 
-    const isWeekend = (dateStr: string | null | undefined): boolean => {
-        if (!dateStr) {
-            return false;
-        }
-        const date = new Date(dateStr);
-        const day = date.getDay();
-        return day === 0 || day === 6; // 0 = Sunday, 6 = Saturday
-    };
-
     const startedAtIsWeekend = isWeekend(item.started_at);
     const endedAtIsWeekend = isWeekend(item.ended_at);
 
@@ -418,17 +394,15 @@ function SortableNextWeekRow({ item, index, updateItem, removeItem, getError, ne
                         <Label htmlFor={`next_started_at_${item.localKey}`} className="text-xs text-muted-foreground">
                             開始日期
                         </Label>
-                        <Input
+                        <DatePicker
                             id={`next_started_at_${item.localKey}`}
-                            type="date"
-                            value={item.started_at ?? ''}
-                            min={nextWeekDateRange?.startDate}
-                            max={nextWeekDateRange?.endDate}
-                            className={`w-full border-2 border-border/60 focus:border-primary focus:ring-2 focus:ring-primary/20 ${startedAtIsWeekend ? 'bg-yellow-50 dark:bg-yellow-950/20 border-yellow-300 dark:border-yellow-700' : ''} ${item.ended_at && item.started_at && item.started_at > item.ended_at ? 'border-red-500 dark:border-red-500' : ''}`}
-                            onChange={(event) => {
-                                const newStartedAt = event.target.value || null;
-                                updateItem('next_week', index, 'started_at', newStartedAt);
-                            }}
+                            value={item.started_at ?? null}
+                            onChange={(date) => updateItem('next_week', index, 'started_at', date)}
+                            minDate={nextWeekDateRange?.startDate}
+                            maxDate={item.ended_at ?? nextWeekDateRange?.endDate}
+                            weekRange={nextWeekDateRange}
+                            placeholder="選擇開始日期"
+                            className={`w-full ${startedAtIsWeekend ? 'bg-yellow-50 dark:bg-yellow-950/20 border-yellow-300 dark:border-yellow-700' : ''}`}
                         />
                         {startedAtIsWeekend && (
                             <p className="text-xs text-yellow-600 dark:text-yellow-400 mt-1">週末日期</p>
@@ -438,16 +412,15 @@ function SortableNextWeekRow({ item, index, updateItem, removeItem, getError, ne
                         <Label htmlFor={`next_ended_at_${item.localKey}`} className="text-xs text-muted-foreground">
                             結束日期
                         </Label>
-                        <Input
+                        <DatePicker
                             id={`next_ended_at_${item.localKey}`}
-                            type="date"
-                            value={item.ended_at ?? ''}
-                            min={item.started_at || nextWeekDateRange?.startDate}
-                            max={nextWeekDateRange?.endDate}
-                            className={`w-full border-2 border-border/60 focus:border-primary focus:ring-2 focus:ring-primary/20 ${endedAtIsWeekend ? 'bg-yellow-50 dark:bg-yellow-950/20 border-yellow-300 dark:border-yellow-700' : ''} ${item.started_at && item.ended_at && item.ended_at < item.started_at ? 'border-red-500 dark:border-red-500' : ''}`}
-                            onChange={(event) =>
-                                updateItem('next_week', index, 'ended_at', event.target.value || null)
-                            }
+                            value={item.ended_at ?? null}
+                            onChange={(date) => updateItem('next_week', index, 'ended_at', date)}
+                            minDate={item.started_at ?? nextWeekDateRange?.startDate}
+                            maxDate={nextWeekDateRange?.endDate}
+                            weekRange={nextWeekDateRange}
+                            placeholder="選擇結束日期"
+                            className={`w-full ${endedAtIsWeekend ? 'bg-yellow-50 dark:bg-yellow-950/20 border-yellow-300 dark:border-yellow-700' : ''}`}
                         />
                         {item.started_at && item.ended_at && item.ended_at < item.started_at && (
                             <p className="text-xs text-red-600 dark:text-red-400 mt-1">結束日期不能早於開始日期</p>
