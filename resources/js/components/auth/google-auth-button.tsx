@@ -1,4 +1,6 @@
 import { Button } from '@/components/ui/button';
+import type { SharedData } from '@/types/index.d';
+import { usePage } from '@inertiajs/react';
 import { AlertCircle } from 'lucide-react';
 
 interface GoogleAuthButtonProps {
@@ -11,7 +13,13 @@ interface GoogleAuthButtonProps {
         type: string;
     };
     className?: string;
-    variant?: 'default' | 'outline' | 'ghost' | 'link' | 'destructive' | 'secondary';
+    variant?:
+        | 'default'
+        | 'outline'
+        | 'ghost'
+        | 'link'
+        | 'destructive'
+        | 'secondary';
     showWarning?: boolean;
 }
 
@@ -24,7 +32,14 @@ export default function GoogleAuthButton({
     variant = 'outline',
     showWarning = true,
 }: GoogleAuthButtonProps) {
+    const { appEnv } = usePage<{ props: SharedData }>().props;
+    const isLocal = appEnv === 'local';
+
     const handleClick = () => {
+        if (isLocal) {
+            return;
+        }
+
         const params: Record<string, string> = {
             intent,
         };
@@ -38,7 +53,9 @@ export default function GoogleAuthButton({
         }
 
         if (organizationInvitation) {
-            params.organization_invitation = JSON.stringify(organizationInvitation);
+            params.organization_invitation = JSON.stringify(
+                organizationInvitation,
+            );
         }
 
         // 構建 URL
@@ -64,6 +81,7 @@ export default function GoogleAuthButton({
                 type="button"
                 variant={variant}
                 onClick={handleClick}
+                disabled={isLocal}
                 className={`w-full gap-2 ${className}`}
             >
                 <svg
@@ -92,12 +110,24 @@ export default function GoogleAuthButton({
                 {buttonText}
             </Button>
             {showWarning && (
-                <div className="flex items-start gap-2 rounded-lg border border-amber-200 bg-amber-50 p-3 text-xs text-amber-800 dark:border-amber-800 dark:bg-amber-500/10 dark:text-amber-400">
-                    <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
-                    <span>
-                        請使用您自己的 Google 帳號，以免無法取回帳號
-                    </span>
-                </div>
+                <>
+                    {isLocal ? (
+                        <div className="flex items-start gap-2 rounded-lg border border-blue-200 bg-blue-50 p-3 text-xs text-blue-800 dark:border-blue-800 dark:bg-blue-500/10 dark:text-blue-400">
+                            <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
+                            <span>
+                                本機環境無法使用 Google
+                                登入功能，請在正式環境中配置必要參數後使用
+                            </span>
+                        </div>
+                    ) : (
+                        <div className="flex items-start gap-2 rounded-lg border border-amber-200 bg-amber-50 p-3 text-xs text-amber-800 dark:border-amber-800 dark:bg-amber-500/10 dark:text-amber-400">
+                            <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
+                            <span>
+                                請使用您自己的 Google 帳號，以免無法取回帳號
+                            </span>
+                        </div>
+                    )}
+                </>
             )}
         </div>
     );

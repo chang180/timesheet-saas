@@ -40,6 +40,7 @@ export interface SharedData {
         slugMode: string | null;
         primaryDomain: string | null;
     };
+    appEnv: string;
     [key: string]: unknown;
 }
 

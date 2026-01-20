@@ -57,6 +57,7 @@ class HandleInertiaRequests extends Middleware
                 'slugMode' => config('tenant.slug_mode'),
                 'primaryDomain' => config('tenant.primary_domain'),
             ],
+            'appEnv' => config('app.env'),
         ];
     }
 
