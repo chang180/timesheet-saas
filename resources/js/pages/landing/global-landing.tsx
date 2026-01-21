@@ -42,8 +42,8 @@ export default function GlobalLandingPage() {
                 <div className="absolute right-4 top-4 flex items-center gap-3 lg:right-8 lg:top-6">
                     <AppearanceToggleDropdown />
                 </div>
-                <div className="relative mx-auto flex max-w-6xl flex-col gap-16 px-6 lg:flex-row lg:items-center lg:px-8">
-                    <div className="relative max-w-xl space-y-8 text-center lg:max-w-lg lg:text-left">
+                <div className="relative mx-auto flex max-w-7xl flex-col gap-12 px-6 md:gap-16 lg:flex-row lg:items-start lg:px-8">
+                    <div className="relative mx-auto w-full space-y-8 text-center lg:mx-0 lg:max-w-lg lg:text-left">
                         <span className="inline-flex items-center justify-center gap-2 rounded-full border border-indigo-200/70 bg-indigo-50/70 px-4 py-1 text-sm font-medium text-indigo-600 shadow-sm dark:border-indigo-500/30 dark:bg-indigo-500/10 dark:text-indigo-200">
                             <Sparkles className="size-4" />
                             多用戶週報最佳實務
@@ -76,7 +76,7 @@ export default function GlobalLandingPage() {
                                 <Link href={login.url()}>已有帳號？直接登入</Link>
                             </Button>
                         </div>
-                        <dl className="grid gap-6 pt-4 text-left sm:grid-cols-3">
+                        <dl className="grid gap-4 pt-4 text-center sm:grid-cols-3 md:gap-6 lg:text-left">
                             <div className="rounded-2xl border border-indigo-100/70 bg-white/80 p-4 shadow-sm dark:border-indigo-500/30 dark:bg-indigo-500/10">
                                 <dt className="text-xs uppercase tracking-wide text-indigo-500 dark:text-indigo-200">
                                     週報提交成功率
@@ -104,7 +104,7 @@ export default function GlobalLandingPage() {
                         </dl>
                     </div>
 
-                    <div className="relative flex-1">
+                    <div className="relative mx-auto w-full max-w-4xl lg:mx-0 lg:max-w-none lg:flex-1">
                         <div className="absolute -inset-6 -z-10 rounded-3xl bg-white/60 blur-3xl dark:bg-indigo-500/10" />
                         <WelcomeShowcase />
                     </div>
@@ -112,18 +112,18 @@ export default function GlobalLandingPage() {
             </section>
 
             {/* Features Section */}
-            <section className="px-6 py-24 lg:px-8">
+            <section className="px-6 py-16 md:py-24 lg:px-8">
                 <div className="mx-auto max-w-7xl">
                     <div className="mx-auto max-w-2xl text-center">
-                        <h2 className="text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl dark:text-white">
+                        <h2 className="text-2xl font-bold tracking-tight text-gray-900 sm:text-3xl md:text-4xl dark:text-white">
                             核心功能
                         </h2>
-                        <p className="mt-4 text-lg text-gray-600 dark:text-gray-300">
+                        <p className="mt-3 text-base leading-relaxed text-gray-600 md:mt-4 md:text-lg dark:text-gray-300">
                             完整的週報管理解決方案，滿足各種規模團隊的需求
                         </p>
                     </div>
 
-                    <div className="mx-auto mt-16 grid max-w-7xl grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+                    <div className="mx-auto mt-12 grid max-w-7xl grid-cols-1 gap-5 sm:grid-cols-2 md:mt-16 md:gap-6 lg:grid-cols-3">
                         <Card>
                             <CardHeader>
                                 <div className="mb-4 flex size-12 items-center justify-center rounded-lg bg-blue-100 dark:bg-blue-900">
@@ -200,19 +200,19 @@ export default function GlobalLandingPage() {
             </section>
 
             {/* Quick Start Steps */}
-            <section className="bg-white px-6 py-24 lg:px-8 dark:bg-gray-800">
+            <section className="bg-white px-6 py-16 md:py-24 lg:px-8 dark:bg-gray-800">
                 <div className="mx-auto max-w-7xl">
                     <div className="mx-auto max-w-2xl text-center">
-                        <h2 className="text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl dark:text-white">
+                        <h2 className="text-2xl font-bold tracking-tight text-gray-900 sm:text-3xl md:text-4xl dark:text-white">
                             快速上手
                         </h2>
-                        <p className="mt-4 text-lg text-gray-600 dark:text-gray-300">
+                        <p className="mt-3 text-base leading-relaxed text-gray-600 md:mt-4 md:text-lg dark:text-gray-300">
                             只需三個步驟，即可開始使用週報通
                         </p>
                     </div>
 
-                    <div className="mx-auto mt-16 max-w-4xl">
-                        <ol className="space-y-8">
+                    <div className="mx-auto mt-12 max-w-4xl md:mt-16">
+                        <ol className="space-y-6 md:space-y-8">
                             <li className="flex gap-6">
                                 <div className="flex size-12 shrink-0 items-center justify-center rounded-full bg-blue-100 text-xl font-bold text-blue-600 dark:bg-blue-900 dark:text-blue-400">
                                     1
@@ -259,16 +259,16 @@ export default function GlobalLandingPage() {
             </section>
 
             {showDemoTenant && (
-                <section className="px-6 py-16 lg:px-8">
-                    <div className="mx-auto max-w-4xl rounded-3xl border border-emerald-200/70 bg-white/90 p-10 text-center shadow-lg dark:border-emerald-500/40 dark:bg-gray-900/70">
-                        <h2 className="text-2xl font-semibold text-gray-900 dark:text-white">
+                <section className="px-6 py-12 md:py-16 lg:px-8">
+                    <div className="mx-auto max-w-4xl rounded-3xl border border-emerald-200/70 bg-white/90 p-8 text-center shadow-lg md:p-10 dark:border-emerald-500/40 dark:bg-gray-900/70">
+                        <h2 className="text-xl font-semibold text-gray-900 md:text-2xl dark:text-white">
                             體驗 {demoTenant?.name ?? 'Demo 用戶'}
                         </h2>
-                        <p className="mt-4 text-base text-gray-600 dark:text-gray-300">
+                        <p className="mt-3 text-sm leading-relaxed text-gray-600 md:mt-4 md:text-base dark:text-gray-300">
                             {demoTenant?.description ??
                                 '即刻進入示範用戶，了解週報通的完整體驗與設定流程。'}
                         </p>
-                        <div className="mt-8 flex justify-center">
+                        <div className="mt-6 flex justify-center md:mt-8">
                             <Button asChild size="lg" className="shadow-md">
                                 <a
                                     href={demoTenant?.url ?? '#'}
@@ -285,15 +285,15 @@ export default function GlobalLandingPage() {
             )}
 
             {/* CTA Section */}
-            <section className="px-6 py-24 lg:px-8">
+            <section className="px-6 py-16 md:py-24 lg:px-8">
                 <div className="mx-auto max-w-4xl text-center">
-                    <h2 className="text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl dark:text-white">
+                    <h2 className="text-2xl font-bold tracking-tight text-gray-900 sm:text-3xl md:text-4xl dark:text-white">
                         準備好用週報掌握本週重點了嗎？
                     </h2>
-                    <p className="mt-6 text-lg leading-8 text-gray-600 dark:text-gray-300">
+                    <p className="mt-4 text-base leading-relaxed text-gray-600 md:mt-6 md:text-lg md:leading-8 dark:text-gray-300">
                         立即註冊，一本工作簿收好本週所有任務、支援與會議重點。
                     </p>
-                    <div className="mt-10 flex items-center justify-center gap-x-6">
+                    <div className="mt-8 flex items-center justify-center gap-x-6 md:mt-10">
                         <Button asChild size="lg">
                             <Link href={register.url()}>
                                 建立週報帳號

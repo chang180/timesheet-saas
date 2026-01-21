@@ -48,6 +48,9 @@ export function DatePicker({
     const selectedDate = value ? parseISO(value) : undefined;
     const minDateObj = minDate ? parseISO(minDate) : undefined;
     const maxDateObj = maxDate ? parseISO(maxDate) : undefined;
+    
+    // 計算當週所在的月份（用於顯示當週）
+    const currentMonth = weekRange ? parseISO(weekRange.startDate) : (selectedDate || new Date());
 
     // 處理日期選擇
     const handleSelect = (date: Date | undefined) => {
@@ -89,19 +92,11 @@ export function DatePicker({
             to: weekEndDate,
         };
 
-        modifiersClassNames.weekRange = 'bg-blue-50 hover:bg-blue-100 dark:bg-blue-900/30 dark:hover:bg-blue-800/40';
-    }
-
-    // 判斷是否為週末
-    const isWeekendDate = (date: Date): boolean => {
-        const day = date.getDay();
-        return day === 0 || day === 6;
-    };
-
-    // 為週末日期添加視覺標記
-    if (selectedDate && isWeekendDate(selectedDate)) {
-        modifiers.weekend = selectedDate;
-        modifiersClassNames.weekend = 'text-amber-600 dark:text-amber-400';
+        modifiersClassNames.weekRange = cn(
+            '!bg-blue-100/90 !text-blue-900 hover:!bg-blue-200 !font-semibold',
+            'dark:!bg-blue-900/60 dark:!text-blue-100 dark:hover:!bg-blue-800/70',
+            '!ring-2 !ring-blue-400/40 dark:!ring-blue-500/50'
+        );
     }
 
     return (
@@ -140,6 +135,9 @@ export function DatePicker({
                     disabled={disabledMatcher}
                     modifiers={modifiers}
                     modifiersClassNames={modifiersClassNames}
+                    month={currentMonth}
+                    fromMonth={currentMonth}
+                    toMonth={currentMonth}
                     initialFocus
                 />
             </PopoverContent>

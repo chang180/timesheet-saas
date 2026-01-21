@@ -16,19 +16,19 @@ import {
 
 export function WelcomeShowcase() {
     return (
-        <div className="rounded-3xl border border-gray-200/80 bg-white/80 p-8 shadow-xl backdrop-blur-md dark:border-gray-700/60 dark:bg-gray-900/70">
-            <div className="flex flex-col gap-8 lg:flex-row">
+        <div className="rounded-3xl border border-gray-200/80 bg-white/80 p-6 shadow-xl backdrop-blur-md md:p-8 dark:border-gray-700/60 dark:bg-gray-900/70">
+            <div className="flex flex-col gap-6 md:gap-8 xl:flex-row">
                 <Card className="w-full bg-gray-50/80 shadow-none dark:bg-gray-900/70">
                     <CardHeader>
-                        <CardTitle className="flex items-center gap-2 text-xl">
+                        <CardTitle className="flex items-center gap-2 text-lg md:text-xl">
                             <CheckCircle2 className="size-5 text-emerald-500" />
                             本週週報概覽
                         </CardTitle>
-                        <CardDescription>
+                        <CardDescription className="text-sm">
                             拖曳排序、同步 Issue 資料、自動累積工時
                         </CardDescription>
                     </CardHeader>
-                    <CardContent className="space-y-6">
+                    <CardContent className="space-y-4 md:space-y-6">
                         <div className="space-y-3 rounded-xl bg-white/80 p-4 dark:bg-gray-950/70">
                             <div className="flex items-center justify-between">
                                 <span className="text-sm font-medium text-gray-500 dark:text-gray-400">
@@ -77,14 +77,14 @@ export function WelcomeShowcase() {
                     </CardContent>
                 </Card>
 
-                <div className="flex w-full flex-col gap-6">
+                <div className="flex w-full flex-col gap-4 md:gap-6">
                     <Card className="bg-white/90 shadow-none dark:bg-gray-900/70">
                         <CardHeader>
-                            <CardTitle className="flex items-center gap-2 text-xl">
+                            <CardTitle className="flex items-center gap-2 text-lg md:text-xl">
                                 <ClipboardList className="size-5 text-sky-500" />
                                 快速複製 · 自動填寫
                             </CardTitle>
-                            <CardDescription>
+                            <CardDescription className="text-sm">
                                 一鍵帶入上一週，Issue 關聯自動補齊
                             </CardDescription>
                         </CardHeader>
@@ -105,11 +105,11 @@ export function WelcomeShowcase() {
 
                     <Card className="bg-white/90 shadow-none dark:bg-gray-900/70">
                         <CardHeader>
-                            <CardTitle className="flex items-center gap-2 text-xl">
+                            <CardTitle className="flex items-center gap-2 text-lg md:text-xl">
                                 <AlertTriangle className="size-5 text-amber-500" />
                                 假日警示 · 防止漏填
                             </CardTitle>
-                            <CardDescription>
+                            <CardDescription className="text-sm">
                                 整合行事曆，遇到國定假日立即提醒
                             </CardDescription>
                         </CardHeader>

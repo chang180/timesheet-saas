@@ -58,6 +58,12 @@ class HandleInertiaRequests extends Middleware
                 'primaryDomain' => config('tenant.primary_domain'),
             ],
             'appEnv' => config('app.env'),
+            'flash' => [
+                'success' => $request->session()->get('success'),
+                'error' => $request->session()->get('error'),
+                'info' => $request->session()->get('info'),
+                'warning' => $request->session()->get('warning'),
+            ],
         ];
     }
 
