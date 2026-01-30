@@ -9,9 +9,6 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Inertia\Testing\AssertableInertia;
 
 use function Pest\Laravel\actingAs;
-use function Pest\Laravel\get;
-use function Pest\Laravel\post;
-use function Pest\Laravel\put;
 
 uses(RefreshDatabase::class);
 
@@ -280,6 +277,90 @@ it('prevents submitting non-draft weekly report', function () {
     $response->assertSessionHas('warning');
 });
 
+it('allows manager to reopen submitted weekly report', function () {
+    $company = Company::factory()->create(['onboarded_at' => now()]);
+    CompanySetting::factory()->for($company)->create();
+
+    // 建立部門管理者
+    $manager = User::factory()->create([
+        'company_id' => $company->id,
+        'role' => 'company_admin',
+    ]);
+
+    // 建立一般成員
+    $member = User::factory()->create([
+        'company_id' => $company->id,
+        'role' => 'member',
+    ]);
+
+    // 建立已送出的週報
+    $report = WeeklyReport::factory()
+        ->forCompany($company, $member)
+        ->create([
+            'work_year' => now()->isoFormat('GGGG'),
+            'work_week' => now()->isoWeek(),
+            'status' => WeeklyReport::STATUS_SUBMITTED,
+            'submitted_at' => now(),
+            'submitted_by' => $member->id,
+        ]);
+
+    // 管理者重新開啟週報
+    $response = actingAs($manager)->post(route('tenant.weekly-reports.reopen', [$company, $report]));
+
+    $response->assertRedirect(route('tenant.weekly-reports.edit', [$company, $report]));
+    $response->assertSessionHas('success');
+
+    $report->refresh();
+    expect($report->status)->toBe(WeeklyReport::STATUS_DRAFT);
+    expect($report->submitted_at)->toBeNull();
+    expect($report->submitted_by)->toBeNull();
+});
+
+it('prevents member from reopening their own submitted weekly report', function () {
+    $user = createUserWithCompany(['role' => 'member'], ['onboarded_at' => now()]);
+    $company = $user->company;
+
+    $report = WeeklyReport::factory()
+        ->forCompany($company, $user)
+        ->create([
+            'work_year' => now()->isoFormat('GGGG'),
+            'work_week' => now()->isoWeek(),
+            'status' => WeeklyReport::STATUS_SUBMITTED,
+        ]);
+
+    $response = actingAs($user)->post(route('tenant.weekly-reports.reopen', [$company, $report]));
+
+    $response->assertForbidden();
+});
+
+it('prevents reopening already draft weekly report', function () {
+    $company = Company::factory()->create(['onboarded_at' => now()]);
+    CompanySetting::factory()->for($company)->create();
+
+    $manager = User::factory()->create([
+        'company_id' => $company->id,
+        'role' => 'company_admin',
+    ]);
+
+    $member = User::factory()->create([
+        'company_id' => $company->id,
+        'role' => 'member',
+    ]);
+
+    $report = WeeklyReport::factory()
+        ->forCompany($company, $member)
+        ->create([
+            'work_year' => now()->isoFormat('GGGG'),
+            'work_week' => now()->isoWeek(),
+            'status' => WeeklyReport::STATUS_DRAFT,
+        ]);
+
+    // Policy returns false for draft reports, so reopen should be forbidden
+    $response = actingAs($manager)->post(route('tenant.weekly-reports.reopen', [$company, $report]));
+
+    $response->assertForbidden();
+});
+
 it('renders preview page for weekly report', function () {
     $user = createUserWithCompany(['role' => 'member'], ['onboarded_at' => now()]);
     $company = $user->company;
@@ -316,4 +397,3 @@ it('renders preview page for weekly report', function () {
             ->where('report.currentWeek.0.planned_hours', 6)
         );
 });
-

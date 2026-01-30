@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Middleware\EnsureHqAdmin;
+use App\Http\Middleware\EnsureIpWhitelist;
 use App\Http\Middleware\EnsureTenantScope;
 use App\Http\Middleware\HandleAppearance;
 use App\Http\Middleware\HandleInertiaRequests;
@@ -22,6 +23,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->alias([
             'tenant' => EnsureTenantScope::class,
             'hq' => EnsureHqAdmin::class,
+            'ip.whitelist' => EnsureIpWhitelist::class,
         ]);
 
         $middleware->web(append: [

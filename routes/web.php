@@ -13,9 +13,9 @@ Route::get('/', [App\Http\Controllers\LandingController::class, 'global'])
 Route::get('/auth/google', [App\Http\Controllers\Auth\GoogleAuthController::class, 'redirect'])->name('google.redirect');
 Route::get('/auth/google/callback', [App\Http\Controllers\Auth\GoogleAuthController::class, 'callback'])->name('google.callback');
 
-// 租戶登入/註冊路由（公開，不需要認證）
+// 租戶登入/註冊路由（公開，不需要認證；仍檢查 IP 白名單）
 Route::prefix('app/{company:slug}')
-    ->middleware('tenant')
+    ->middleware(['tenant', 'ip.whitelist'])
     ->group(function () {
         Route::get('auth', [App\Http\Controllers\Tenant\TenantAuthController::class, 'show'])->name('tenant.auth');
         // 保留舊的 register 路由以向後兼容
@@ -72,7 +72,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     })->name('app.home');
 
     Route::prefix('app/{company:slug}')
-        ->middleware('tenant')
+        ->middleware(['tenant', 'ip.whitelist'])
         ->group(function () {
             Route::get('/', function (Request $request, Company $company) {
                 $user = $request->user();
@@ -94,6 +94,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
             Route::get('weekly-reports/{weeklyReport}/preview', [WeeklyReportController::class, 'preview'])->name('tenant.weekly-reports.preview');
             Route::put('weekly-reports/{weeklyReport}', [WeeklyReportController::class, 'update'])->name('tenant.weekly-reports.update');
             Route::post('weekly-reports/{weeklyReport}/submit', [WeeklyReportController::class, 'submit'])->name('tenant.weekly-reports.submit');
+            Route::post('weekly-reports/{weeklyReport}/reopen', [WeeklyReportController::class, 'reopen'])->name('tenant.weekly-reports.reopen');
 
             Route::get('settings', [App\Http\Controllers\TenantSettingsController::class, 'index'])->name('tenant.settings');
             Route::patch('settings/welcome-page', [App\Http\Controllers\TenantSettingsController::class, 'updateWelcomePage'])->name('tenant.settings.welcome-page');

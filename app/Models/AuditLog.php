@@ -13,6 +13,24 @@ class AuditLog extends Model
     use BelongsToTenant;
     use HasFactory;
 
+    public const EVENT_CREATED = 'created';
+
+    public const EVENT_UPDATED = 'updated';
+
+    public const EVENT_DELETED = 'deleted';
+
+    public const EVENT_EXPORTED = 'exported';
+
+    public const EVENT_IMPORTED = 'imported';
+
+    public const EVENT_LOGIN = 'login';
+
+    public const EVENT_LOGOUT = 'logout';
+
+    public const EVENT_REOPEN = 'reopen';
+
+    public const EVENT_SUBMIT = 'submit';
+
     /**
      * @var list<string>
      */
@@ -21,6 +39,8 @@ class AuditLog extends Model
         'user_id',
         'event',
         'description',
+        'auditable_type',
+        'auditable_id',
         'properties',
         'ip_address',
         'user_agent',

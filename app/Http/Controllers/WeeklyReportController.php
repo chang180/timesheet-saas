@@ -6,6 +6,7 @@ use App\Http\Requests\WeeklyReportUpsertRequest;
 use App\Models\Company;
 use App\Models\WeeklyReport;
 use App\Models\WeeklyReportItem;
+use App\Services\AuditService;
 use Carbon\CarbonImmutable;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -279,6 +280,7 @@ class WeeklyReportController extends Controller
                 'currentWeek' => [],
                 'nextWeek' => [],
             ],
+            'canReopen' => $user->can('reopen', $weeklyReport),
         ]);
     }
 
@@ -330,6 +332,34 @@ class WeeklyReportController extends Controller
         return redirect()
             ->route('tenant.weekly-reports.edit', [$company, $weeklyReport])
             ->with('success', '週報已成功發佈。');
+    }
+
+    public function reopen(Request $request, Company $company, WeeklyReport $weeklyReport): RedirectResponse
+    {
+        $user = $request->user();
+        $this->assertBelongsToCompany($user->company_id ?? null, $company);
+
+        if (! $user->can('reopen', $weeklyReport)) {
+            abort(403, '無權限重新開啟此週報');
+        }
+
+        if ($weeklyReport->status === WeeklyReport::STATUS_DRAFT) {
+            return redirect()
+                ->route('tenant.weekly-reports.edit', [$company, $weeklyReport])
+                ->with('info', '此週報已是草稿狀態。');
+        }
+
+        $weeklyReport->update([
+            'status' => WeeklyReport::STATUS_DRAFT,
+            'submitted_at' => null,
+            'submitted_by' => null,
+        ]);
+
+        AuditService::reopened($weeklyReport, '週報已重新開啟為草稿');
+
+        return redirect()
+            ->route('tenant.weekly-reports.edit', [$company, $weeklyReport])
+            ->with('success', '週報已重新開啟，可繼續編輯。');
     }
 
     public function preview(Request $request, Company $company, WeeklyReport $weeklyReport): Response|RedirectResponse

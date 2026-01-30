@@ -2,11 +2,30 @@
 
 > 目標：串接前後端流程、實作通知與報表匯出功能，並完成假期同步、IP 白名單等安全措施，確保系統可於準生產環境穩定運作。
 
-## 📊 完成度：約 5%
+## 📊 完成度：約 25%
 
 **最後更新：** 2026-01-30
 
-**說明**：IP 白名單前端 UI 已完成（Phase 2）；後端 middleware 檢查、假期同步、匯總報表、報表匯出、通知機制等尚未實作。
+**說明**：以下項目已完成（Claude 實作、Cursor 接續補齊）：週報 Reopen 流程、IP 白名單 Middleware（登入與已認證租戶路由皆檢查）、審計日誌（AuditService、IP 白名單/歡迎頁/Reopen 寫入 audit_logs）、相關 Feature 測試。尚未實作：假期同步、匯總報表、報表匯出、通知與提醒、Rate limiting 等。
+
+**差距分析與實作說明**：已撰寫 [phase-3-implementation-guide.md](./phase-3-implementation-guide.md)，列出與現行專案的差距及各待完成項目的具體實作步驟，供其他 AI 或開發者依序實作。
+
+### ✅ Phase 3 已完成項目（Claude + Cursor，2026-01-30）
+
+1. **週報 Reopen 流程**
+   - ✅ `WeeklyReportController::reopen()`、POST 路由、Policy 授權；成功後寫入審計（AuditService::reopened）。
+   - ✅ 前端 `weekly/form.tsx`：已送出且 `canReopen` 時顯示「重新開啟」按鈕。
+   - ✅ Feature 測試：管理者可 reopen、成員不可 reopen 自己的、草稿不可 reopen。
+
+2. **IP 白名單 Middleware**
+   - ✅ `App\Http\Middleware\EnsureIpWhitelist`：依 `TenantContext` 讀取 `login_ip_whitelist`，空則放行；使用 `App\Support\IpMatcher` 支援 IPv4/IPv6/CIDR。
+   - ✅ 已套用至租戶登入/註冊路由（`tenant.auth`、`register` 等）與已認證租戶路由（`app/{company:slug}` 下所有路由）。
+   - ✅ Feature 測試：`tests/Feature/Middleware/IpWhitelistMiddlewareTest.php`（空名單放行、IP/CIDR 比對、IpMatcher 單元）。
+
+3. **審計日誌**
+   - ✅ `App\Services\AuditService`：log / created / updated / deleted / exported / submitted / reopened；寫入 `audit_logs`（auditable_type/auditable_id、event、properties、ip、user_agent）。
+   - ✅ `AuditLog` 模型：EVENT_* 常數、fillable 含 auditable_type/auditable_id。
+   - ✅ IP 白名單更新、歡迎頁更新、週報 Reopen 成功時皆呼叫 AuditService 寫入。
 
 **注意：** Phase 2 的組織層級管理與邀請連結功能已於 2026-01-02 完成，包含：
 - ✅ 組織層級彈性設定（公司管理者可決定使用幾層）
@@ -37,9 +56,9 @@
 
 1. **後端 Feature / Pest 測試**
    - ⚠️ 認證流程（登入、登出、自助註冊 reaching user limit）
-   - ⚠️ 週報 CRUD + submit/reopen 流程
+   - ✅ 週報 CRUD + submit/reopen 流程（含 reopen 權限與審計）
    - ⚠️ 匯總 API（公司/單位/部門/小組）含時間範圍
-   - ⚠️ 歡迎頁與 IP 白名單設定
+   - ✅ 歡迎頁與 IP 白名單設定（含 IP 白名單 middleware 測試）
    - ⚠️ **組織層級管理與邀請連結功能測試**（待完成）
      - 組織層級設定更新
      - 邀請連結生成、啟用/停用
@@ -136,26 +155,29 @@
 
 1. **IP 白名單 Middleware**
    - ✅ 前端 UI 已完成（Phase 2）：`IPWhitelistForm` 元件
-   - ⚠️ 於登入、API 請求階段檢查來源 IP 是否在 `login_ip_whitelist`
-   - ⚠️ 若設定為空列表，即視為全開放
-   - ⚠️ 支援 IPv4/IPv6/CIDR，並記錄 `audit_logs`
+   - ✅ 於登入、已認證租戶請求階段檢查來源 IP 是否在 `login_ip_whitelist`（`EnsureIpWhitelist` + `IpMatcher`）
+   - ✅ 若設定為空列表，即視為全開放
+   - ✅ 支援 IPv4/IPv6/CIDR；IP 白名單更新時寫入 `audit_logs`
+   - ⚠️ 非允許 IP 登入時記錄事件至 audit_logs（可選：middleware 內 reject 時寫入）
 2. **Rate Limiting**
    - ⚠️ 依 `company_id + user_id` 控制 API 呼叫頻率
    - ⚠️ 提供 `429` 錯誤訊息與建議
 3. **Audit Logging**
-   - ⚠️ 記錄匯出報表、IP 設定變更、歡迎頁更新等操作
+   - ✅ 記錄 IP 設定變更、歡迎頁更新、週報 Reopen（`AuditService` + `AuditLog`）
+   - ⚠️ 記錄匯出報表（待實作匯出 API 時一併寫入）
    - ⚠️ 前端設定頁顯示近期操作摘要
    - ✅ **組織層級設定變更記錄**（已完成，Phase 2）：透過 `UpdateOrganizationLevelsRequest` 驗證並記錄
 
 **驗收檢查**
-- ⚠️ 嘗試非允許 IP 登入時，應收到拒絕訊息並記錄事件。
-- ⚠️ 匯出與設定變更皆寫入 `audit_logs` 並可透過 API 查詢。
+- ✅ 嘗試非允許 IP 存取租戶路由時，收到 403 並通過 Feature 測試。
+- ✅ IP 白名單/歡迎頁/Reopen 變更皆寫入 `audit_logs`；匯出待實作後寫入並可透過 API 查詢。
 
 ## 7. 文件與交付
 
 - ⚠️ 更新 `.ai-dev/laravel_weekly_report_spec.md` 若需要調整細節。
 - ⚠️ 完成 `README` 的通知、匯出、假期同步啟用指南。
 - ✅ 在 `development/phase-3.md` 標記已完成項目與遇到的阻礙（本文件）。
+- ✅ **Phase 3 差距與實作說明**：見 [phase-3-implementation-guide.md](./phase-3-implementation-guide.md)，供其他 AI/開發者依步驟實作未完成項目。
 - ⚠️ 建議撰寫外掛說明（設定 Slack/Teams、假期 API key）。
 - ✅ **組織層級管理功能文件**（已完成，Phase 2）：
   - 組織層級設定說明
@@ -220,8 +242,8 @@
 
 2. **中優先級**
    - 通知與提醒（週報填寫、主管匯總）
-   - IP 白名單 middleware（前端已完成）
-   - 審計日誌實際記錄（Observer/Service）
+   - ~~IP 白名單 middleware~~（✅ 已完成）
+   - ~~審計日誌實際記錄~~（✅ AuditService 已完成；匯出報表時再寫入）
 
 3. **測試**
    - ⚠️ 組織層級管理功能的 Feature Tests

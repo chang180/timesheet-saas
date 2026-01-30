@@ -9,7 +9,7 @@ import tenantRoutes from '@/routes/tenant';
 import * as weeklyRoutes from '@/routes/tenant/weekly-reports';
 import { type BreadcrumbItem, type SharedData } from '@/types';
 import { Head, Link, router, useForm, usePage } from '@inertiajs/react';
-import { ArrowLeft, PlusCircle, CheckCircle2, Clock, Lock, AlertTriangle, type LucideIcon } from 'lucide-react';
+import { ArrowLeft, PlusCircle, CheckCircle2, Clock, Lock, AlertTriangle, RotateCcw, type LucideIcon } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import {
     DndContext,
@@ -57,6 +57,7 @@ interface WeeklyReportFormProps {
         currentWeek: Omit<WeeklyReportItemInput, 'localKey' | 'tagsText'>[];
         nextWeek: Omit<WeeklyReportItemInput, 'localKey' | 'tagsText'>[];
     };
+    canReopen?: boolean;
 }
 
 type FormData = {
@@ -136,6 +137,7 @@ export default function WeeklyReportForm({
     nextWeekDateRange,
     prefill,
     company,
+    canReopen,
 }: WeeklyReportFormProps) {
     const { tenant, flash } = usePage<
         SharedData & { flash: { success?: string; info?: string; warning?: string } }
@@ -895,6 +897,34 @@ export default function WeeklyReportForm({
                                 >
                                     <CheckCircle2 className="size-5" />
                                     發佈週報
+                                </Button>
+                            )}
+                            {report?.status === 'submitted' && canReopen && (
+                                <Button
+                                    type="button"
+                                    variant="outline"
+                                    size="lg"
+                                    disabled={form.processing || !canNavigate}
+                                    className="gap-2 border-amber-300 text-amber-700 shadow-md hover:bg-amber-50 hover:shadow-lg transition-all dark:border-amber-700 dark:text-amber-400 dark:hover:bg-amber-950/30"
+                                    onClick={() => {
+                                        if (!canNavigate || !report) {
+                                            return;
+                                        }
+                                        router.post(
+                                            `/app/${companySlug}/weekly-reports/${report.id}/reopen`,
+                                            {},
+                                            {
+                                                preserveScroll: true,
+                                                onSuccess: () => {
+                                                    router.reload({ only: ['report', 'canReopen'] });
+                                                },
+                                            },
+                                        );
+                                    }}
+                                    data-testid="reopen-weekly-report"
+                                >
+                                    <RotateCcw className="size-5" />
+                                    重新開啟
                                 </Button>
                             )}
                             <Button
