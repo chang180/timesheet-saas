@@ -10,6 +10,9 @@ beforeEach(function () {
     if (app()->environment('local') && str_contains(config('app.url'), '.test')) {
         $this->markTestSkipped('Google OAuth tests are skipped in local .test environment');
     }
+
+    // Feature 測試需要 array session driver（cookie driver 與 withSession() 不相容）
+    config(['session.driver' => 'array']);
 });
 
 test('google oauth redirect route is accessible', function () {

@@ -8,12 +8,19 @@ import {
     DialogTitle,
     DialogTrigger,
 } from '@/components/ui/dialog';
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from '@/components/ui/select';
 import AppLayout from '@/layouts/app-layout';
 import tenantRoutes from '@/routes/tenant';
 import * as weeklyRoutes from '@/routes/tenant/weekly-reports';
 import { type BreadcrumbItem, type SharedData } from '@/types';
-import { Head, Link, usePage } from '@inertiajs/react';
-import { ArrowRight, ClipboardList, PenSquare, SquarePen, CheckCircle2, Clock, Lock, Eye, type LucideIcon, CalendarPlus } from 'lucide-react';
+import { Head, Link, router, usePage } from '@inertiajs/react';
+import { ArrowRight, ClipboardList, PenSquare, SquarePen, CheckCircle2, Clock, Lock, Eye, type LucideIcon, CalendarPlus, Filter, X } from 'lucide-react';
 import { useState } from 'react';
 
 type WeeklyReportSummary = {
@@ -49,6 +56,11 @@ interface WeeklyReportListProps {
         endDate: string;
     };
     missingWeeks?: MissingWeek[];
+    filters?: {
+        year: string;
+        status: string;
+    };
+    availableYears?: number[];
 }
 
 const STATUS_CONFIG: Record<string, { text: string; icon: LucideIcon; className: string }> = {
@@ -82,6 +94,50 @@ export default function WeeklyReportList(props: WeeklyReportListProps) {
     const missingWeeks = props.missingWeeks ?? [];
     const latestReport = reports[0];
     const [isDialogOpen, setIsDialogOpen] = useState(false);
+    const availableYears = props.availableYears ?? [defaults.year];
+
+    // 篩選狀態
+    const [filterYear, setFilterYear] = useState(props.filters?.year ?? 'all');
+    const [filterStatus, setFilterStatus] = useState(props.filters?.status ?? 'all');
+
+    // 是否有啟用篩選
+    const hasActiveFilters = filterYear !== 'all' || filterStatus !== 'all';
+
+    // 套用篩選
+    const applyFilters = (year: string, status: string) => {
+        const params: Record<string, string> = {};
+        if (year !== 'all') params.filter_year = year;
+        if (status !== 'all') params.filter_status = status;
+
+        router.get(
+            tenantRoutes.weeklyReports.url({ company: companySlug }),
+            params,
+            { preserveState: true, preserveScroll: true },
+        );
+    };
+
+    // 處理年度篩選變更
+    const handleYearChange = (value: string) => {
+        setFilterYear(value);
+        applyFilters(value, filterStatus);
+    };
+
+    // 處理狀態篩選變更
+    const handleStatusChange = (value: string) => {
+        setFilterStatus(value);
+        applyFilters(filterYear, value);
+    };
+
+    // 清除所有篩選
+    const clearFilters = () => {
+        setFilterYear('all');
+        setFilterStatus('all');
+        router.get(
+            tenantRoutes.weeklyReports.url({ company: companySlug }),
+            {},
+            { preserveState: true, preserveScroll: true },
+        );
+    };
 
     // 檢查是否有本週週報
     const currentWeekReport = reports.find(
@@ -280,9 +336,9 @@ export default function WeeklyReportList(props: WeeklyReportListProps) {
                     <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                         <div>
                             <h2 className="text-xl font-bold text-foreground sm:text-2xl">
-                                最近週報 · 第 {defaults.year} 年第 {defaults.week} 週
+                                {hasActiveFilters ? '篩選結果' : `最近週報 · 第 ${defaults.year} 年第 ${defaults.week} 週`}
                             </h2>
-                            {props.weekDateRange && (
+                            {!hasActiveFilters && props.weekDateRange && (
                                 <p className="mt-2 text-sm text-muted-foreground sm:text-base">
                                     {props.weekDateRange.startDate} ~ {props.weekDateRange.endDate}
                                 </p>
@@ -294,6 +350,62 @@ export default function WeeklyReportList(props: WeeklyReportListProps) {
                             </span>
                         </div>
                     </div>
+
+                    {/* FiltersPanel */}
+                    <Card className="border-2 border-border/60 bg-card/50 shadow-sm">
+                        <CardContent className="p-4">
+                            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                                <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
+                                    <Filter className="size-4" />
+                                    篩選條件
+                                </div>
+                                <div className="flex flex-wrap items-center gap-3">
+                                    <div className="flex items-center gap-2">
+                                        <span className="text-sm text-muted-foreground">年度</span>
+                                        <Select value={filterYear} onValueChange={handleYearChange}>
+                                            <SelectTrigger className="w-[120px]" data-testid="filter-year">
+                                                <SelectValue placeholder="全部年度" />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                <SelectItem value="all">全部年度</SelectItem>
+                                                {availableYears.map((year) => (
+                                                    <SelectItem key={year} value={year.toString()}>
+                                                        {year} 年
+                                                    </SelectItem>
+                                                ))}
+                                            </SelectContent>
+                                        </Select>
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                        <span className="text-sm text-muted-foreground">狀態</span>
+                                        <Select value={filterStatus} onValueChange={handleStatusChange}>
+                                            <SelectTrigger className="w-[120px]" data-testid="filter-status">
+                                                <SelectValue placeholder="全部狀態" />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                <SelectItem value="all">全部狀態</SelectItem>
+                                                <SelectItem value="draft">草稿</SelectItem>
+                                                <SelectItem value="submitted">已送出</SelectItem>
+                                                <SelectItem value="locked">已鎖定</SelectItem>
+                                            </SelectContent>
+                                        </Select>
+                                    </div>
+                                    {hasActiveFilters && (
+                                        <Button
+                                            variant="ghost"
+                                            size="sm"
+                                            onClick={clearFilters}
+                                            className="gap-1.5 text-muted-foreground hover:text-foreground"
+                                            data-testid="clear-filters"
+                                        >
+                                            <X className="size-4" />
+                                            清除篩選
+                                        </Button>
+                                    )}
+                                </div>
+                            </div>
+                        </CardContent>
+                    </Card>
 
                     {reports.length === 0 ? (
                         <Card className="border-2 border-dashed border-border/50 bg-linear-to-br from-muted/30 to-muted/10">

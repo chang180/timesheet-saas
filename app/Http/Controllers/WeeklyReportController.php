@@ -23,10 +23,26 @@ class WeeklyReportController extends Controller
             return $redirect;
         }
 
-        $reports = WeeklyReport::query()
+        // 取得篩選參數
+        $filterYear = $request->input('filter_year');
+        $filterStatus = $request->input('filter_status');
+
+        $query = WeeklyReport::query()
             ->with(['items'])
             ->where('company_id', $company->id)
-            ->where('user_id', $user->id)
+            ->where('user_id', $user->id);
+
+        // 套用年度篩選
+        if ($filterYear && $filterYear !== 'all') {
+            $query->where('work_year', (int) $filterYear);
+        }
+
+        // 套用狀態篩選
+        if ($filterStatus && $filterStatus !== 'all') {
+            $query->where('status', $filterStatus);
+        }
+
+        $reports = $query
             ->orderByDesc('work_year')
             ->orderByDesc('work_week')
             ->get()
@@ -60,6 +76,21 @@ class WeeklyReportController extends Controller
             $company->timezone ?? config('app.timezone'),
         );
 
+        // 計算可用的年份選項（從最早的週報到當前年）
+        $availableYears = WeeklyReport::query()
+            ->where('company_id', $company->id)
+            ->where('user_id', $user->id)
+            ->selectRaw('DISTINCT work_year')
+            ->orderByDesc('work_year')
+            ->pluck('work_year')
+            ->values()
+            ->all();
+
+        // 確保當前年度在選項中
+        if (! in_array($currentYear, $availableYears)) {
+            array_unshift($availableYears, $currentYear);
+        }
+
         return Inertia::render('weekly/list', [
             'reports' => $reports,
             'company' => [
@@ -73,6 +104,11 @@ class WeeklyReportController extends Controller
             ],
             'weekDateRange' => $weekDateRange,
             'missingWeeks' => $missingWeeks,
+            'filters' => [
+                'year' => $filterYear ?? 'all',
+                'status' => $filterStatus ?? 'all',
+            ],
+            'availableYears' => $availableYears,
         ]);
     }
 

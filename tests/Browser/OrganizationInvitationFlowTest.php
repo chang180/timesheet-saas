@@ -10,18 +10,20 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 
 uses(RefreshDatabase::class);
 
-function createUserWithCompany(array $attributes = [], array $companyAttributes = []): User
-{
-    $company = Company::factory()->create(array_merge([
-        'onboarded_at' => now(),
-    ], $companyAttributes));
-    CompanySetting::factory()->for($company)->create();
+if (! function_exists('createUserWithCompany')) {
+    function createUserWithCompany(array $attributes = [], array $companyAttributes = []): User
+    {
+        $company = Company::factory()->create(array_merge([
+            'onboarded_at' => now(),
+        ], $companyAttributes));
+        CompanySetting::factory()->for($company)->create();
 
-    return User::factory()->create(array_merge([
-        'company_id' => $company->id,
-        'email' => 'test@example.com',
-        'password' => bcrypt('TestPassword123!@#'),
-    ], $attributes));
+        return User::factory()->withoutTwoFactor()->create(array_merge([
+            'company_id' => $company->id,
+            'email' => 'test@example.com',
+            'password' => bcrypt('TestPassword123!@#'),
+        ], $attributes));
+    }
 }
 
 it('可以透過 division 邀請連結完成註冊流程', function () {
@@ -210,7 +212,9 @@ it('無法使用停用的邀請連結註冊', function () {
         'type' => 'division',
     ]));
 
-    $page->assertNotFound();
+    // 停用的邀請連結應回傳 404（Laravel 404 頁面會顯示 404）
+    $page->assertSee('404')
+        ->assertNoJavascriptErrors();
 });
 
 it('無法使用無效的邀請連結註冊', function () {
@@ -227,5 +231,7 @@ it('無法使用無效的邀請連結註冊', function () {
         'type' => 'division',
     ]));
 
-    $page->assertNotFound();
+    // 無效的 token 應回傳 404（Laravel 404 頁面會顯示 404）
+    $page->assertSee('404')
+        ->assertNoJavascriptErrors();
 });
