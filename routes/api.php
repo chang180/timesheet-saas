@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Hq\HqCompanyController;
 use App\Http\Controllers\Tenant\IpWhitelistController;
 use App\Http\Controllers\Tenant\MemberApprovalController;
 use App\Http\Controllers\Tenant\MemberInviteController;
@@ -13,9 +14,13 @@ Route::prefix('v1')
     ->group(function (): void {
         Route::prefix('hq')
             ->as('hq.')
-            ->middleware(['auth:sanctum'])
+            ->middleware(['auth:sanctum', 'hq'])
             ->group(function (): void {
-                //
+                Route::get('companies', [HqCompanyController::class, 'index'])->name('companies.index');
+                Route::post('companies', [HqCompanyController::class, 'store'])->name('companies.store');
+                Route::get('companies/{company}', [HqCompanyController::class, 'show'])->name('companies.show');
+                Route::patch('companies/{company}', [HqCompanyController::class, 'update'])->name('companies.update');
+                Route::patch('companies/{company}/user-limit', [HqCompanyController::class, 'updateUserLimit'])->name('companies.user-limit.update');
             });
 
         Route::prefix('{company:slug}')
