@@ -22,6 +22,9 @@ npm-debug.log
 yarn-error.log
 /auth.json
 /.cursor
+/.mcp.json
+/.claude/settings.local.json
+/.agents
 /.fleet
 /.idea
 /.nova
