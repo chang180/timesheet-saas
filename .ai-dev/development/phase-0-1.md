@@ -2,6 +2,10 @@
 
 > 目標：建立可運行的 Laravel × React monorepo 基礎環境，完成多租戶核心模型、資料庫結構與初始認證流程，確保其他團隊成員能在穩定基底上持續開發。
 
+## 📊 完成度：約 90%
+
+**說明**：認證與租戶基礎、組織與成員 API、歡迎頁與 IP 白名單已完成；HQ Portal 未實作（優先級：中，未來規劃）。
+
 ## 0. 前置準備
 
 - **輸入資料**
@@ -59,11 +63,12 @@
 ### 3.2 認證流程
 - ✅ 啟用 Sanctum SPA 流程，確認 CSRF Cookie 與 `stateful` 網域設定。
 - ✅ 使用 Laravel Fortify 處理認證流程（非獨立 API 路由）：
-  - 登入：透過 Fortify 的 `authenticateUsing` 回調，自動檢查 `TenantContext` 並限制在同一租戶內
-  - 註冊：透過 `CreateNewUser` Action，自動建立新公司與公司管理者帳號
-  - 兩階段驗證、密碼重設等功能由 Fortify 內建處理
-- ⚠️ 邀請接受流程：`POST /api/v1/{company_slug}/auth/invitations/accept` API 尚未實作（待補完）
-- ⚠️ HQ Portal 以獨立 Route Prefix `api/v1/hq` 並限制 `hq_admin` 角色（路由已預留，功能待實作）
+  - 登入：透過 Fortify 的 `authenticateUsing` 回調，自動檢查 `TenantContext` 並限制在同一租戶內。
+  - 註冊：透過 `CreateNewUser` Action，自動建立新公司與公司管理者帳號。
+  - 兩階段驗證（2FA）、密碼重設由 Fortify 內建處理。
+  - ✅ Google OAuth：已整合 Laravel Socialite，支援租戶範圍登入／註冊；本機環境可禁用按鈕。
+- ✅ 邀請接受流程：透過 Web 路由（InvitationAcceptController）接受邀請並設定密碼；`POST /api/v1/.../auth/invitations/accept` API 為預留。
+- 📋 HQ Portal：未實作，優先級為中。以獨立 Route Prefix `api/v1/hq` 並限制 `hq_admin` 角色為未來規劃；路由已預留。
 
 ### 3.3 模型與 Policy
 - ✅ 定義模型關聯、Observer（自動填入 `company_id`, `work_year`, `work_week` 等欄位）。
@@ -109,11 +114,18 @@
 
 ### 2025-12-13 更新（現況盤點）
 
-- ✅ 認證流程：已透過 Laravel Fortify 實作，支援租戶範圍的登入驗證
-- ✅ 自助註冊：已實作，會自動建立新公司與公司管理者帳號
-- ⚠️ 組織層級管理：Division/Department/Team 的 CRUD API 尚未實作（待補完）
-- ⚠️ 成員管理前端：後端 API 已完成，但前端頁面尚未建立（待補完）
-- ⚠️ 邀請接受流程：`POST /api/v1/{company_slug}/auth/invitations/accept` API 尚未實作（待補完）
+- ✅ 認證流程：已透過 Laravel Fortify 實作，支援租戶範圍的登入驗證。
+- ✅ 自助註冊：已實作，會自動建立新公司與公司管理者帳號。
+- ⚠️ 組織層級管理：Division/Department/Team 的 CRUD API 尚未實作（待補完）。
+- ⚠️ 成員管理前端：後端 API 已完成，但前端頁面尚未建立（待補完）。
+- ⚠️ 邀請接受流程：`POST /api/v1/{company_slug}/auth/invitations/accept` API 尚未實作（待補完）。
+
+### 後續現況（與 Phase 2 完成後對齊）
+
+- ✅ 組織層級管理：Division/Department/Team CRUD API 與前端已於 2026-01-02 完成；組織層級彈性設定、各層級邀請連結、邀請連結註冊均已實作。
+- ✅ 成員管理前端：成員列表、邀請、角色管理、邀請連結註冊頁面均已實作。
+- ✅ Google OAuth：已實作並文件化於 README。
+- 📋 HQ Portal：維持未實作，列為未來規劃。
 
 ## 6. 風險與待確認事項
 

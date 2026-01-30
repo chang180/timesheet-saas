@@ -4,11 +4,14 @@
 
 ## 核心特色
 
-- 多用戶架構：每間公司對應獨立 `slug` 或子網域，資料權限隔離。
-- 組織層級：公司 → 單位 → 部門 → 小組，多角色權限管理。
-- 週報體驗：上一週複製、拖曳排序、Redmine/Jira 連動、假日警示。
-- 匯總與匯出：依公司／單位／部門／小組下載 CSV ，支援日期區間。
-- 通知與提醒：Email、Webhook 提醒填寫與提交，主管可即時掌握狀態。
+- **多租戶架構**：每間公司對應獨立 `slug` 路徑（`/app/{company_slug}`），資料權限隔離。
+- **認證與安全**：Laravel Fortify + Sanctum，支援 Google OAuth、雙因素認證（2FA）、邀請系統。
+- **組織層級**：公司 → 單位（Division）→ 部門（Department）→ 小組（Team），多角色權限管理；公司管理者可彈性選擇啟用的層級。
+- **組織邀請連結**：各層級可生成專屬邀請連結，透過連結註冊自動加入對應層級。
+- **週報體驗**：上一週複製、拖曳排序（@dnd-kit）、工時統計、智慧表單驗證與錯誤提示；假日警示為規劃中。
+- **匯總與匯出**：依公司／單位／部門／小組下載 CSV，支援日期區間（規劃中）。
+- **通知與提醒**：成員邀請通知已實作；週報填寫提醒、主管匯總為規劃中。
+- **未來規劃**：HQ Portal（系統管理者主控台）、Redmine/Jira 整合（可選）。
 
 ## 技術棧
 
@@ -50,25 +53,27 @@ npm run dev
 npm run build
 ```
 
-## 多用戶後端基礎
+## 多租戶後端基礎
 
 - 新增 `config/tenant.php` 管理主網域、slug 模式與 Sanctum stateful domains。
 - `config/sanctum.php` 合併用戶白名單設定，API 採 cookie-based 認證並需透過 `auth:sanctum`。
-- `EnsureTenantScope` middleware 會依 `{company:slug}` 或子網域載入用戶 Context。
-- 核心模型：`Company`、`CompanySetting`、`Division`、`Department`、`Team`、`WeeklyReport`、`AuditLog` 與 `TenantContext`。
-- 路由：
-    - `GET /api/v1/{company}/settings`
-    - `PUT /api/v1/{company}/welcome-page`
-    - `PUT /api/v1/{company}/settings/ip-whitelist`
-    - `POST /api/v1/{company}/members/invite`
-    - `PATCH /api/v1/{company}/members/{id}/roles`
+- `EnsureTenantScope` middleware 會依 `{company:slug}` 或子網域載入租戶 Context。
+- 核心模型：`Company`、`CompanySetting`、`Division`、`Department`、`Team`、`WeeklyReport`、`WeeklyReportItem`、`AuditLog` 與 `TenantContext`。
+- 主要路由（Web 採 `/app/{company:slug}` 前綴，API 採 `/api/v1/{company:slug}`）：
+    - 設定：`GET /api/v1/{company}/settings`、`PUT /api/v1/{company}/welcome-page`、`PUT /api/v1/{company}/settings/ip-whitelist`
+    - 組織：Division/Department/Team CRUD、組織層級設定、各層級邀請連結
+    - 成員：`POST /api/v1/{company}/members/invite`、`PATCH /api/v1/{company}/members/{id}/roles`、成員列表
+    - 週報：週報 CRUD、提交、預覽、預填上週
     - `POST /api/v1/{company}/members/{id}/approve`（暫回 404，預留未來審核流程）
 
 ## 測試
 
-```
+- **後端**：Pest Feature Tests（約 26 個）、Pest Browser Tests（2 個）。
+- **執行**：
+
+```bash
 php artisan migrate:fresh --seed
-php artisan test tests/Feature/Tenant/SettingsTest.php
+php artisan test --compact
 ```
 
 > 若環境 PHP 版本低於 8.3，執行測試時可能遇到 `typed class constant` 解析錯誤，需升級 PHP 或調整套件版本。
