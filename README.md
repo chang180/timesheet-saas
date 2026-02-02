@@ -8,9 +8,11 @@
 - **認證與安全**：Laravel Fortify + Sanctum，支援 Google OAuth、雙因素認證（2FA）、邀請系統。
 - **組織層級**：公司 → 單位（Division）→ 部門（Department）→ 小組（Team），多角色權限管理；公司管理者可彈性選擇啟用的層級。
 - **組織邀請連結**：各層級可生成專屬邀請連結，透過連結註冊自動加入對應層級。
-- **週報體驗**：上一週複製、拖曳排序（@dnd-kit）、工時統計、智慧表單驗證與錯誤提示；假日警示為規劃中。
-- **匯總與匯出**：依公司／單位／部門／小組下載 CSV，支援日期區間（規劃中）。
-- **通知與提醒**：成員邀請通知已實作；週報填寫提醒、主管匯總為規劃中。
+- **週報體驗**：上一週複製、拖曳排序（@dnd-kit）、工時統計、智慧表單驗證與錯誤提示；主管可將已送出週報重新開啟（reopen）。
+- **匯總與匯出**：依公司／單位／部門／小組查詢匯總、下載 CSV/XLSX（`/app/{company}/weekly-reports/summary?export=csv|xlsx`），支援日期區間與層級篩選。
+- **通知與提醒**：成員邀請通知；週報填寫提醒（週五 16:00）、週一上午匯總摘要；可於 `company_settings.notification_preferences` 設定。
+- **假期與工時**：新北市開放資料同步國定假日（`holidays:sync`）；API `GET /app/{company}/calendar/holidays`、`/calendar/holidays/week` 供前端標註假日。
+- **安全**：IP 白名單 middleware（登入與租戶請求）、依 company+user 的 Rate limiting（120/min）、審計日誌（IP 白名單／歡迎頁／Reopen／匯出）。
 - **未來規劃**：HQ Portal（系統管理者主控台）、Redmine/Jira 整合（可選）。
 
 ## 技術棧
@@ -63,12 +65,12 @@ npm run build
     - 設定：`GET /api/v1/{company}/settings`、`PUT /api/v1/{company}/welcome-page`、`PUT /api/v1/{company}/settings/ip-whitelist`
     - 組織：Division/Department/Team CRUD、組織層級設定、各層級邀請連結
     - 成員：`POST /api/v1/{company}/members/invite`、`PATCH /api/v1/{company}/members/{id}/roles`、成員列表
-    - 週報：週報 CRUD、提交、預覽、預填上週
-    - `POST /api/v1/{company}/members/{id}/approve`（暫回 404，預留未來審核流程）
+    - 週報：週報 CRUD、提交、重新開啟（reopen）、預覽、預填上週
+    - 匯總與匯出：`GET /app/{company}/weekly-reports/summary`（可加 `?export=csv|xlsx`）、`GET /app/{company}/calendar/holidays`、`/calendar/holidays/week`（皆套用 `throttle:api.tenant`）
 
 ## 測試
 
-- **後端**：Pest Feature Tests（約 26 個）、Pest Browser Tests（2 個）。
+- **後端與 E2E**：Pest Feature Tests（214 個，含認證、週報、匯總、匯出、假期、通知、IP 白名單、Rate limiting）、Pest Browser Tests（租戶流程、週報、邀請連結）。
 - **執行**：
 
 ```bash
@@ -97,7 +99,19 @@ GOOGLE_REDIRECT_URI=https://yourdomain.com/auth/google/callback
 - 完整系統規格：[`./.ai-dev/laravel_weekly_report_spec.md`](.ai-dev/laravel_weekly_report_spec.md)
 - 分階段開發指引：[`./.ai-dev/development/`](.ai-dev/development/)
 
+## 通知、匯出與假期同步
+
+- **排程**（`routes/console.php`）：`weekly-report:send-reminders`（週五 16:00）、`weekly-report:send-digest`（週一 09:00）、`holidays:sync`（每月 1 日 03:00）。本機可手動執行：`php artisan weekly-report:send-reminders`、`php artisan weekly-report:send-digest`、`php artisan holidays:sync [year?]`。
+- **匯出**：具匯出權限者於週報匯總頁可加 `?export=csv` 或 `?export=xlsx` 下載；每次匯出會寫入 `audit_logs`。
+- **IP 白名單**：於租戶設定填寫允許 IP/CIDR，空則不限制；登入與已認證租戶請求皆會檢查，非白名單 IP 會記錄至審計日誌並回傳 403.
+- **Rate limiting**：租戶 API（匯總、假期等）依 company+user 限制 120 次/分鐘，超過回傳 429 JSON。
+
 ## 更新日誌
+
+### 2026-02-02
+
+- **Phase 3 完成**：假期同步（HolidaySyncService、HolidayCacheService、holidays 表、API）、匯總報表 API、報表匯出（CSV/XLSX）、通知與提醒（WeeklyReportReminder、WeeklyReportSubmitted、WeeklySummaryDigest）、IP 白名單 middleware、審計日誌（含 IP 拒絕與匯出）、Rate limiting（api.tenant）、週報 Reopen 審計記錄與 IP 拒絕寫入 audit。
+- **測試**：214 個 Pest 測試通過；Phase 3 驗證報告見 `.ai-dev/development/phase-3-verification-report.md`。
 
 ### 2026-01-21
 

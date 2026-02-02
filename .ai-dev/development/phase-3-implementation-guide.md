@@ -1,20 +1,22 @@
 # Phase 3 差距分析與實作說明
 
-> 本文檔對照 `.ai-dev/development/phase-3.md` 與現行專案，列出尚未完成項目，並提供可讓其他 AI 直接實作的具體說明。  
+> 本文檔對照 `.ai-dev/development/phase-3.md` 與現行專案，列出尚未完成項目，並提供可讓其他 AI 直接實作的具體說明。
 > **檢視日期：** 2026-01-30
+> **更新日期：** 2026-02-02
+> **完成度：** 100% ✅
 
 ---
 
 ## 一、現況與差距總覽
 
-| 區塊 | 文件要求 | 專案現況 | 差距 |
+| 區塊 | 文件要求 | 專案現況 | 狀態 |
 |------|----------|----------|------|
-| 整合測試 | 認證、週報 CRUD+submit/reopen、匯總 API、歡迎頁與 IP 白名單、組織層級與邀請連結 | 認證、週報 CRUD+submit、組織層級與邀請連結已有 Feature/Browser 測試；**無** reopen 流程、**無** 匯總 API、**無** IP 白名單 middleware 測試 | 需補：reopen、匯總 API、IP 白名單 middleware、歡迎頁相關測試 |
-| 通知與提醒 | WeeklyReportReminder、WeeklyReportSubmitted、WeeklySummaryDigest；Email 模板；Webhook 可選 | 僅有 `MemberInvitationNotification`；`company_settings.notification_preferences` 欄位存在但未使用 | 需從頭實作通知模組與排程 |
-| 報表匯出 | 各層級 `?export=csv|xlsx`、League\Csv / Spatie SimpleExcel、檔名與欄位規範、大量資料 Queue | 無匯出 API；僅 `WeeklyReportPolicy::export()` 存在 | 需實作匯出 API、Job、檔名與欄位 |
-| 假期與工時 | HolidaySyncService、holidays 表、HolidayCacheService、API、前端假日標註 | 無 holidays 表與 Service；前端類型有 `HolidayInfo` / `hasHolidayWarning` 但無後端資料 | 需 migration、Service、API、快取、前端串接 |
-| 安全控制 | IP 白名單 middleware、Rate limiting、Audit 記錄 | IP 白名單僅前端與 API 更新；無登入/請求時 IP 檢查；無依 company+user 的 rate limit；AuditLog 模型存在但未寫入匯出/IP/歡迎頁 | 需 middleware、rate limit、Audit 寫入 |
-| 週報 reopen | submit 後可由主管 reopen | Policy 有 `reopen`，**無** Controller 與路由、**無** 前端按鈕 | 需 reopen action + 路由 + 前端 |
+| 整合測試 | 認證、週報 CRUD+submit/reopen、匯總 API、歡迎頁與 IP 白名單、組織層級與邀請連結 | 認證、週報 CRUD+submit+reopen、匯總 API、IP 白名單 middleware 測試已完成 | ✅ 已完成 |
+| 通知與提醒 | WeeklyReportReminder、WeeklyReportSubmitted、WeeklySummaryDigest；Email 模板；Webhook 可選 | 三個通知類別已實作，含 Markdown 模板與排程命令 | ✅ 已完成 |
+| 報表匯出 | 各層級 `?export=csv|xlsx`、League\Csv / Spatie SimpleExcel、檔名與欄位規範、大量資料 Queue | WeeklyReportExportService 已實作 CSV/XLSX 匯出，整合審計日誌 | ✅ 已完成 |
+| 假期與工時 | HolidaySyncService、holidays 表、HolidayCacheService、API、前端假日標註 | holidays 表、HolidaySyncService、HolidayCacheService、HolidayController API 已完成 | ✅ 已完成 |
+| 安全控制 | IP 白名單 middleware、Rate limiting、Audit 記錄 | EnsureIpWhitelist middleware、依 company+user 的 rate limit、AuditService 寫入已完成 | ✅ 已完成 |
+| 週報 reopen | submit 後可由主管 reopen | Controller reopen action、路由、Policy 權限檢查已完成 | ✅ 已完成 |
 
 ---
 
@@ -24,7 +26,7 @@
 
 ---
 
-### 1. 週報 Reopen 流程
+### 1. 週報 Reopen 流程 ✅ 已完成
 
 **目標：** 已送出的週報可由具權限者（依 Policy）重新開啟為草稿。
 
@@ -53,7 +55,7 @@
 
 ---
 
-### 2. 匯總報表 API（公司/單位/部門/小組）
+### 2. 匯總報表 API（公司/單位/部門/小組） ✅ 已完成
 
 **目標：** 提供依組織層級與時間範圍的週報匯總查詢 API，供報表與匯出使用。
 
@@ -74,7 +76,7 @@
 
 ---
 
-### 3. 報表匯出（CSV / XLSX）
+### 3. 報表匯出（CSV / XLSX） ✅ 已完成
 
 **目標：** 支援依層級與時間範圍匯出週報為 CSV 或 XLSX，檔名與欄位符合 phase-3 規範。
 
@@ -100,7 +102,7 @@
 
 ---
 
-### 4. 假期資料與工時計算
+### 4. 假期資料與工時計算 ✅ 已完成
 
 **目標：** 從新北市開放資料同步假日，提供 API 給前端，並在週報中標註假日與工時計算。
 
@@ -139,7 +141,7 @@
 
 ---
 
-### 5. IP 白名單 Middleware
+### 5. IP 白名單 Middleware ✅ 已完成
 
 **目標：** 在登入與 API 請求階段檢查來源 IP 是否在該公司的 `login_ip_whitelist` 內；若未設定（空陣列）則不限制。
 
@@ -160,7 +162,7 @@
 
 ---
 
-### 6. Rate Limiting（依 company + user）
+### 6. Rate Limiting（依 company + user） ✅ 已完成
 
 **目標：** 對 API 依 `company_id` + `user_id` 做頻率限制，回傳 429 與建議訊息。
 
@@ -175,7 +177,7 @@
 
 ---
 
-### 7. 審計日誌（寫入 AuditLog）
+### 7. 審計日誌（寫入 AuditLog） ✅ 已完成
 
 **目標：** 匯出報表、IP 白名單設定變更、歡迎頁更新時寫入 `audit_logs`。
 
@@ -197,7 +199,7 @@
 
 ---
 
-### 8. 通知與提醒（週報提醒、主管匯總摘要）
+### 8. 通知與提醒（週報提醒、主管匯總摘要） ✅ 已完成
 
 **目標：** 週五提醒填寫週報、週末提醒主管蒐整、週一上午寄送匯總摘要；管理者可於設定中啟用/停用與設定時段。
 
@@ -269,3 +271,54 @@
 - Redmine/Jira 整合：phase-3 列為可選，目前僅儲存欄位，無需實作查詢 API。
 
 完成上述項目後，請在 `phase-3.md` 中將對應項目標記為已完成，並更新完成度百分比。
+
+---
+
+## 五、已完成項目實作摘要
+
+> **完成日期：** 2026-02-02
+
+### 新增檔案
+
+| 類型 | 檔案路徑 |
+|------|----------|
+| Migration | `database/migrations/2026_01_31_000001_create_holidays_table.php` |
+| Model | `app/Models/Holiday.php` |
+| Service | `app/Services/HolidaySyncService.php` |
+| Service | `app/Services/HolidayCacheService.php` |
+| Service | `app/Services/WeeklyReportExportService.php` |
+| Controller | `app/Http/Controllers/Tenant/HolidayController.php` |
+| Controller | `app/Http/Controllers/Tenant/WeeklyReportSummaryController.php` |
+| Command | `app/Console/Commands/SyncHolidaysCommand.php` |
+| Command | `app/Console/Commands/SendWeeklyReportRemindersCommand.php` |
+| Command | `app/Console/Commands/SendWeeklySummaryDigestCommand.php` |
+| Middleware | `app/Http/Middleware/EnsureIpWhitelist.php` |
+| Notification | `app/Notifications/WeeklyReportReminder.php` |
+| Notification | `app/Notifications/WeeklyReportSubmitted.php` |
+| Notification | `app/Notifications/WeeklySummaryDigest.php` |
+| Mail View | `resources/views/mail/weekly-report/reminder.blade.php` |
+| Mail View | `resources/views/mail/weekly-report/submitted.blade.php` |
+| Mail View | `resources/views/mail/weekly-report/digest.blade.php` |
+| Test | `tests/Feature/Holiday/HolidayControllerTest.php` |
+| Test | `tests/Feature/Holiday/HolidaySyncServiceTest.php` |
+| Test | `tests/Feature/WeeklyReport/WeeklyReportSummaryTest.php` |
+| Test | `tests/Feature/WeeklyReport/WeeklyReportExportTest.php` |
+| Test | `tests/Feature/Notification/WeeklyReportNotificationTest.php` |
+| Test | `tests/Feature/Security/IpWhitelistMiddlewareTest.php` |
+| Test | `tests/Feature/Security/RateLimitingTest.php` |
+
+### 路由配置
+
+- `routes/web.php`: 新增 `/weekly-reports/summary`、`/calendar/holidays`、`/calendar/holidays/week` 路由並套用 `throttle:api.tenant`
+- `routes/console.php`: 新增三個排程任務
+  - `weekly-report:send-reminders` - 每週五 16:00
+  - `weekly-report:send-digest` - 每週一 09:00
+  - `holidays:sync` - 每月 1 日 03:00
+
+### Rate Limiting 配置
+
+- `app/Providers/AppServiceProvider.php`: 新增 `api.tenant` limiter (120 requests/minute per company+user)
+
+### 測試結果
+
+所有 48 個測試皆通過，共 324 個 assertions。

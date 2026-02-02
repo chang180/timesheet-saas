@@ -31,6 +31,8 @@ class AuditLog extends Model
 
     public const EVENT_SUBMIT = 'submit';
 
+    public const EVENT_IP_WHITELIST_REJECTED = 'auth.ip_whitelist.rejected';
+
     /**
      * @var list<string>
      */

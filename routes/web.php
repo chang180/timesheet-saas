@@ -95,6 +95,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
             Route::put('weekly-reports/{weeklyReport}', [WeeklyReportController::class, 'update'])->name('tenant.weekly-reports.update');
             Route::post('weekly-reports/{weeklyReport}/submit', [WeeklyReportController::class, 'submit'])->name('tenant.weekly-reports.submit');
             Route::post('weekly-reports/{weeklyReport}/reopen', [WeeklyReportController::class, 'reopen'])->name('tenant.weekly-reports.reopen');
+            Route::get('weekly-reports/summary', [App\Http\Controllers\Tenant\WeeklyReportSummaryController::class, 'index'])
+                ->middleware('throttle:api.tenant')
+                ->name('tenant.weekly-reports.summary');
 
             Route::get('settings', [App\Http\Controllers\TenantSettingsController::class, 'index'])->name('tenant.settings');
             Route::patch('settings/welcome-page', [App\Http\Controllers\TenantSettingsController::class, 'updateWelcomePage'])->name('tenant.settings.welcome-page');
@@ -117,6 +120,12 @@ Route::middleware(['auth', 'verified'])->group(function () {
             Route::post('teams', [App\Http\Controllers\Tenant\TeamController::class, 'store'])->name('tenant.teams.store');
             Route::patch('teams/{team}', [App\Http\Controllers\Tenant\TeamController::class, 'update'])->name('tenant.teams.update');
             Route::delete('teams/{team}', [App\Http\Controllers\Tenant\TeamController::class, 'destroy'])->name('tenant.teams.destroy');
+
+            // 假期 API（有 rate limiting）
+            Route::middleware('throttle:api.tenant')->group(function () {
+                Route::get('calendar/holidays', [App\Http\Controllers\Tenant\HolidayController::class, 'index'])->name('tenant.holidays');
+                Route::get('calendar/holidays/week', [App\Http\Controllers\Tenant\HolidayController::class, 'week'])->name('tenant.holidays.week');
+            });
         });
 });
 

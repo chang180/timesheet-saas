@@ -2,6 +2,8 @@
 
 namespace App\Http\Middleware;
 
+use App\Models\AuditLog;
+use App\Services\AuditService;
 use App\Support\IpMatcher;
 use App\Tenancy\TenantContext;
 use Closure;
@@ -38,6 +40,16 @@ class EnsureIpWhitelist
         }
 
         if (! IpMatcher::matches($clientIp, $whitelist)) {
+            $settings = $tenant->settings();
+            if ($settings !== null) {
+                AuditService::log(
+                    AuditLog::EVENT_IP_WHITELIST_REJECTED,
+                    $settings,
+                    'IP 不在白名單內',
+                    ['ip' => $clientIp]
+                );
+            }
+
             abort(403, __('您的 IP 位址不在允許名單內。'));
         }
 
