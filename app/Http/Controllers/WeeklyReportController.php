@@ -504,6 +504,8 @@ class WeeklyReportController extends Controller
                     'issue_reference' => $item->issue_reference,
                     'is_billable' => false,
                     'tags' => $item->tags ?? [],
+                    'started_at' => $item->started_at,
+                    'ended_at' => $item->ended_at,
                 ];
             });
 
@@ -518,6 +520,8 @@ class WeeklyReportController extends Controller
                         'issue_reference' => $plan['issue_reference'],
                         'is_billable' => $plan['is_billable'],
                         'tags' => $plan['tags'],
+                        'started_at' => $plan['started_at'],
+                        'ended_at' => $plan['ended_at'],
                     ];
                 })
                 ->values()

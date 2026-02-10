@@ -82,6 +82,8 @@ it('prefills create page with previous next week plans', function () {
         ->state([
             'title' => '準備 API 試跑',
             'planned_hours' => 5,
+            'started_at' => '2025-01-01',
+            'ended_at' => '2025-01-05',
         ])
         ->create();
 
@@ -93,6 +95,8 @@ it('prefills create page with previous next week plans', function () {
             ->where('prefill.currentWeek.0.title', '準備 API 試跑')
             ->where('prefill.currentWeek.0.hours_spent', 0) // 實際工時初始為0
             ->where('prefill.currentWeek.0.planned_hours', 5) // 預計工時從上週帶入
+            ->where('prefill.currentWeek.0.started_at', fn (string $value) => str_starts_with($value, '2025-01-01'))
+            ->where('prefill.currentWeek.0.ended_at', fn (string $value) => str_starts_with($value, '2025-01-05'))
         );
 });
 
