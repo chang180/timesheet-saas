@@ -36,6 +36,14 @@ class UpdateOrganizationLevelsRequest extends FormRequest
                 'string',
                 Rule::in(['division', 'department', 'team']),
             ],
+            'force_remove_levels' => [
+                'sometimes',
+                'array',
+            ],
+            'force_remove_levels.*' => [
+                'string',
+                Rule::in(['division', 'department', 'team']),
+            ],
         ];
     }
 
@@ -50,10 +58,14 @@ class UpdateOrganizationLevelsRequest extends FormRequest
             $settings = Company::find($tenantId)?->settings;
             $currentLevels = $settings?->getEnabledLevels() ?? ['department'];
 
-            // Check if removing a level that has data
+            // Check if removing a level that has data (unless force_remove_levels is requested)
             $removedLevels = array_diff($currentLevels, $newLevels);
+            $forceRemove = $this->input('force_remove_levels', []);
 
             foreach ($removedLevels as $level) {
+                if (in_array($level, $forceRemove, true)) {
+                    continue;
+                }
                 if ($level === 'division' && Division::where('company_id', $tenantId)->exists()) {
                     $validator->errors()->add('organization_levels', '無法移除「事業群」層級，因為已有事業群資料。');
                 } elseif ($level === 'department' && Department::where('company_id', $tenantId)->exists()) {

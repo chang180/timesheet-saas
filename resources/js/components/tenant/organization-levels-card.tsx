@@ -1,10 +1,18 @@
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+} from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import InputError from '@/components/input-error';
 import { Building2, AlertTriangle } from 'lucide-react';
-import { useForm, router } from '@inertiajs/react';
+import { useForm } from '@inertiajs/react';
 import { useState } from 'react';
 
 interface OrganizationLevelsCardProps {
@@ -23,13 +31,24 @@ const LEVEL_LABELS: Record<string, string> = {
     team: '小組',
 };
 
+function levelHasData(
+    level: string,
+    org: OrganizationLevelsCardProps['organization']
+): boolean {
+    if (level === 'division') return org.divisions.length > 0;
+    if (level === 'department') return org.departments.length > 0;
+    if (level === 'team') return org.teams.length > 0;
+    return false;
+}
+
 export function OrganizationLevelsCard({
     companySlug,
     initialLevels,
     organization,
 }: OrganizationLevelsCardProps) {
     const [selectedLevels, setSelectedLevels] = useState<string[]>(initialLevels);
-    const [hasDataWarning, setHasDataWarning] = useState<string | null>(null);
+    const [forceRemoveConfirmOpen, setForceRemoveConfirmOpen] = useState(false);
+    const [pendingForceRemoveLevels, setPendingForceRemoveLevels] = useState<string[]>([]);
 
     const form = useForm<{
         organization_levels: string[];
@@ -37,50 +56,67 @@ export function OrganizationLevelsCard({
         organization_levels: initialLevels,
     });
 
-    const { data, errors, processing, recentlySuccessful } = form;
+    const { errors, processing, recentlySuccessful } = form;
 
     const handleLevelToggle = (level: string, checked: boolean) => {
         const newLevels = checked
             ? [...selectedLevels, level]
             : selectedLevels.filter((l) => l !== level);
-
-        // Check if removing a level that has data
-        if (!checked) {
-            if (level === 'division' && organization.divisions.length > 0) {
-                setHasDataWarning('無法移除「事業群」層級，因為已有事業群資料。');
-                return;
-            }
-            if (level === 'department' && organization.departments.length > 0) {
-                setHasDataWarning('無法移除「部門」層級，因為已有部門資料。');
-                return;
-            }
-            if (level === 'team' && organization.teams.length > 0) {
-                setHasDataWarning('無法移除「小組」層級，因為已有小組資料。');
-                return;
-            }
-        }
-
-        setHasDataWarning(null);
         setSelectedLevels(newLevels);
         form.setData('organization_levels', newLevels);
     };
 
+    const getRemovedLevels = (): string[] =>
+        initialLevels.filter((l) => !form.data.organization_levels.includes(l));
+
+    const getRemovedLevelsWithData = (): string[] => {
+        const removed = getRemovedLevels();
+        return removed.filter((l) => levelHasData(l, organization));
+    };
+
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
+        const levelsToForceRemove = getRemovedLevelsWithData();
 
-        if (hasDataWarning) {
+        if (levelsToForceRemove.length > 0) {
+            setPendingForceRemoveLevels(levelsToForceRemove);
+            setForceRemoveConfirmOpen(true);
             return;
         }
 
-        router.put(`/api/v1/${companySlug}/settings/organization-levels`, data, {
+        submitPatch();
+    };
+
+    const submitPatch = (forceRemoveLevels: string[] = []) => {
+        if (forceRemoveLevels.length > 0) {
+            form.transform((data) => ({
+                ...data,
+                force_remove_levels: forceRemoveLevels,
+            }));
+        }
+        form.patch(`/app/${companySlug}/settings/organization-levels`, {
             preserveScroll: true,
-            onError: () => {
-                setHasDataWarning(null);
+            onSuccess: () => {
+                form.transform((data) => data);
+                setForceRemoveConfirmOpen(false);
+                setPendingForceRemoveLevels([]);
+            },
+            onError: (errors) => {
+                const msg = errors.organization_levels as string | undefined;
+                if (msg && /無法移除.*層級.*已有.*資料/.test(msg)) {
+                    setPendingForceRemoveLevels(getRemovedLevels());
+                    setForceRemoveConfirmOpen(true);
+                }
             },
         });
     };
 
+    const handleConfirmForceRemove = () => {
+        submitPatch(pendingForceRemoveLevels);
+    };
+
     return (
+        <>
         <Card>
             <CardHeader>
                 <CardTitle className="flex items-center gap-2">
@@ -112,7 +148,7 @@ export function OrganizationLevelsCard({
                                         onCheckedChange={(checked) =>
                                             handleLevelToggle(level, checked === true)
                                         }
-                                        disabled={processing || (hasData && !isChecked)}
+                                        disabled={processing}
                                     />
                                     <div className="flex-1 space-y-1">
                                         <Label
@@ -133,7 +169,7 @@ export function OrganizationLevelsCard({
                                             <div className="flex items-center gap-2 text-xs text-amber-600 dark:text-amber-400">
                                                 <AlertTriangle className="h-4 w-4" />
                                                 <span>
-                                                    此層級已有資料，無法移除。請先處理或刪除該層級下的所有資料。
+                                                    此層級已有資料。儲存時將移除該層級並清空相關資料（成員歸屬與週報歸屬會一併清除）。
                                                 </span>
                                             </div>
                                         )}
@@ -143,19 +179,10 @@ export function OrganizationLevelsCard({
                         })}
                     </div>
 
-                    {hasDataWarning && (
-                        <div className="rounded-lg border border-amber-200 bg-amber-50 p-4 dark:border-amber-800 dark:bg-amber-950">
-                            <div className="flex items-center gap-2 text-sm text-amber-800 dark:text-amber-200">
-                                <AlertTriangle className="h-4 w-4" />
-                                <span>{hasDataWarning}</span>
-                            </div>
-                        </div>
-                    )}
-
                     <InputError message={errors.organization_levels} />
 
                     <div className="flex items-center gap-4">
-                        <Button type="submit" disabled={processing || hasDataWarning !== null}>
+                        <Button type="submit" disabled={processing}>
                             儲存層級設定
                         </Button>
                         {recentlySuccessful && (
@@ -167,6 +194,35 @@ export function OrganizationLevelsCard({
                 </form>
             </CardContent>
         </Card>
+
+        <Dialog open={forceRemoveConfirmOpen} onOpenChange={setForceRemoveConfirmOpen}>
+            <DialogContent>
+                <DialogHeader>
+                    <DialogTitle>確認強制移除組織層級</DialogTitle>
+                    <DialogDescription>
+                        以下層級目前有資料，移除後將刪除該層級的所有資料，並清除成員與週報的歸屬設定，此操作無法復原。確定要繼續嗎？
+                        {pendingForceRemoveLevels.length > 0 && (
+                            <span className="mt-2 block font-medium text-foreground">
+                                {pendingForceRemoveLevels.map((l) => LEVEL_LABELS[l]).join('、')}
+                            </span>
+                        )}
+                    </DialogDescription>
+                </DialogHeader>
+                <DialogFooter>
+                    <Button
+                        type="button"
+                        variant="outline"
+                        onClick={() => setForceRemoveConfirmOpen(false)}
+                    >
+                        取消
+                    </Button>
+                    <Button type="button" variant="destructive" onClick={handleConfirmForceRemove}>
+                        確認強制移除並儲存
+                    </Button>
+                </DialogFooter>
+            </DialogContent>
+        </Dialog>
+        </>
     );
 }
 

@@ -1,7 +1,6 @@
 <?php
 
 use App\Models\Company;
-use App\Models\CompanySetting;
 use App\Models\Department;
 use App\Models\Division;
 use App\Models\Team;
@@ -153,6 +152,51 @@ it('無法移除已有小組資料的層級', function (): void {
         ->assertJsonValidationErrors(['organization_levels']);
 });
 
+it('帶 force_remove_levels 時可移除已有資料的層級並清空該層級資料', function (): void {
+    $settings = $this->company->settings()->firstOrCreate([]);
+    $settings->update(['organization_levels' => ['division', 'department', 'team']]);
+
+    $division = Division::factory()->create([
+        'company_id' => $this->company->id,
+        'name' => 'Test Division',
+        'slug' => 'test-division',
+    ]);
+    $department = Department::factory()->create([
+        'company_id' => $this->company->id,
+        'division_id' => $division->id,
+        'name' => 'Test Department',
+        'slug' => 'test-department',
+    ]);
+    $team = Team::factory()->create([
+        'company_id' => $this->company->id,
+        'department_id' => $department->id,
+        'division_id' => $division->id,
+        'name' => 'Test Team',
+        'slug' => 'test-team',
+    ]);
+
+    $this->admin->update(['division_id' => $division->id, 'department_id' => $department->id, 'team_id' => $team->id]);
+
+    $response = $this->putJson(
+        route('api.v1.tenant.settings.organization-levels.update', ['company' => $this->company->slug]),
+        [
+            'organization_levels' => ['department'],
+            'force_remove_levels' => ['division', 'department', 'team'],
+        ]
+    );
+
+    $response->assertOk()
+        ->assertJsonPath('organization_levels', ['department']);
+
+    $this->assertDatabaseMissing('teams', ['id' => $team->id]);
+    $this->assertDatabaseMissing('departments', ['id' => $department->id]);
+    $this->assertDatabaseMissing('divisions', ['id' => $division->id]);
+    $this->admin->refresh();
+    expect($this->admin->division_id)->toBeNull()
+        ->and($this->admin->department_id)->toBeNull()
+        ->and($this->admin->team_id)->toBeNull();
+});
+
 it('驗證組織層級陣列格式', function (): void {
     $response = $this->putJson(
         route('api.v1.tenant.settings.organization-levels.update', ['company' => $this->company->slug]),
@@ -163,4 +207,27 @@ it('驗證組織層級陣列格式', function (): void {
 
     $response->assertStatus(422)
         ->assertJsonValidationErrors(['organization_levels.0']);
+});
+
+it('可透過 web 路由 PATCH 更新組織層級設定', function (): void {
+    $this->actingAs($this->admin);
+
+    $response = $this->patch(
+        route('tenant.settings.organization-levels', [$this->company]),
+        [
+            'organization_levels' => ['division', 'department', 'team'],
+        ],
+        [
+            'Accept' => 'application/json',
+            'Referer' => route('tenant.settings', [$this->company]),
+        ]
+    );
+
+    $response->assertRedirect();
+    $response->assertSessionHas('success', '組織層級設定已更新');
+
+    $this->assertDatabaseHas('company_settings', [
+        'company_id' => $this->company->id,
+        'organization_levels' => json_encode(['division', 'department', 'team']),
+    ]);
 });

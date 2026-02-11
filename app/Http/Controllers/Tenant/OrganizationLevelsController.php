@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Tenant;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Tenant\UpdateOrganizationLevelsRequest;
 use App\Models\Company;
+use App\Services\OrganizationLevelsService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -34,6 +35,12 @@ class OrganizationLevelsController extends Controller
      */
     public function update(UpdateOrganizationLevelsRequest $request, Company $company): JsonResponse
     {
+        $forceRemove = $request->validated('force_remove_levels', []);
+
+        if ($forceRemove !== []) {
+            app(OrganizationLevelsService::class)->clearLevelData($company, $forceRemove);
+        }
+
         $settings = $company->settings()->firstOrCreate([]);
         $settings->update([
             'organization_levels' => $request->validated('organization_levels'),

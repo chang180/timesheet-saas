@@ -3,9 +3,11 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\Tenant\UpdateBrandingRequest;
+use App\Http\Requests\Tenant\UpdateOrganizationLevelsRequest;
 use App\Http\Requests\Tenant\UpdateWelcomePageRequest;
 use App\Http\Requests\UpdateIPWhitelistRequest;
 use App\Models\Company;
+use App\Services\OrganizationLevelsService;
 use Illuminate\Http\RedirectResponse;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -95,5 +97,24 @@ class TenantSettingsController extends Controller
         }
 
         return redirect()->back()->with('success', '品牌設定已更新');
+    }
+
+    public function updateOrganizationLevels(UpdateOrganizationLevelsRequest $request, Company $company): RedirectResponse
+    {
+        $forceRemove = $request->validated('force_remove_levels', []);
+
+        if ($forceRemove !== []) {
+            app(OrganizationLevelsService::class)->clearLevelData($company, $forceRemove);
+        }
+
+        $company->settings()->firstOrCreate([])->update([
+            'organization_levels' => $request->validated('organization_levels'),
+        ]);
+
+        if ($company->onboarded_at === null) {
+            $company->forceFill(['onboarded_at' => now()])->save();
+        }
+
+        return redirect()->back()->with('success', '組織層級設定已更新');
     }
 }
