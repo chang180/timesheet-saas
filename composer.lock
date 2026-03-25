@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "73cb14c950a0a8e3eb4133193de47c60",
+    "content-hash": "730241f29d3fc34566855a89c8f354c7",
     "packages": [
         {
             "name": "bacon/bacon-qr-code",
@@ -1289,6 +1289,77 @@
                 "source": "https://github.com/inertiajs/inertia-laravel/tree/v2.0.19"
             },
             "time": "2026-01-13T15:29:20+00:00"
+        },
+        {
+            "name": "inspector-apm/inspector-laravel",
+            "version": "4.19.0",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/inspector-apm/inspector-laravel.git",
+                "reference": "c2c4c9bf76730ac6285a3964f7fbb742ecfe28ba"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/inspector-apm/inspector-laravel/zipball/c2c4c9bf76730ac6285a3964f7fbb742ecfe28ba",
+                "reference": "c2c4c9bf76730ac6285a3964f7fbb742ecfe28ba",
+                "shasum": ""
+            },
+            "require": {
+                "illuminate/console": "^9.0|^10.0|^11.0|^12.0|^13.0",
+                "illuminate/contracts": "^9.0|^10.0|^11.0|^12.0|^13.0",
+                "illuminate/support": "^9.0|^10.0|^11.0|^12.0|^13.0",
+                "inspector-apm/inspector-php": "^3.16.0",
+                "php": "^8.1"
+            },
+            "require-dev": {
+                "friendsofphp/php-cs-fixer": "^3.75",
+                "larastan/larastan": "^2.0|^3.0",
+                "livewire/livewire": "^2.0|^3.7|^4.0",
+                "orchestra/testbench": "^8.0|^9.0|^10.0|^11.0",
+                "rector/rector": "^1.0|^2.2",
+                "tomasvotruba/type-coverage": "^0.2|^2.0"
+            },
+            "type": "library",
+            "extra": {
+                "laravel": {
+                    "aliases": {
+                        "Inspector": "Inspector\\Laravel\\Facades\\Inspector"
+                    },
+                    "providers": [
+                        "Inspector\\Laravel\\InspectorServiceProvider"
+                    ]
+                }
+            },
+            "autoload": {
+                "files": [
+                    "src/helpers.php"
+                ],
+                "psr-4": {
+                    "Inspector\\Laravel\\": "src/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Valerio Barbera",
+                    "email": "valerio@inspector.dev"
+                }
+            ],
+            "description": "Code Execution Monitoring, built for developers.",
+            "keywords": [
+                "inspector",
+                "laravel",
+                "monitoring",
+                "php"
+            ],
+            "support": {
+                "issues": "https://github.com/inspector-apm/inspector-laravel/issues",
+                "source": "https://github.com/inspector-apm/inspector-laravel/tree/4.19.0"
+            },
+            "time": "2026-03-19T10:40:57+00:00"
         },
         {
             "name": "inspector-apm/inspector-php",
