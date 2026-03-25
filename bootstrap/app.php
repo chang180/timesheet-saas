@@ -9,7 +9,7 @@ use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
 use Illuminate\Http\Middleware\AddLinkHeadersForPreloadedAssets;
-use \Inspector\Laravel\Middleware\WebRequestMonitoring;
+use Inspector\Laravel\Middleware\WebRequestMonitoring;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -35,8 +35,11 @@ return Application::configure(basePath: dirname(__DIR__))
             AddLinkHeadersForPreloadedAssets::class,
         ]);
 
-        // 配置 Sanctum SPA 認證
-        $middleware->statefulApi();
+        // 測試環境中禁用 statefulApi 來避免 CSRF 問題
+        if (! app()->environment('testing')) {
+            // 配置 Sanctum SPA 認證
+            $middleware->statefulApi();
+        }
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         //

@@ -26,8 +26,10 @@ class AgenticTeamRunCommand extends Command
     {
         $epicId = (string) $this->argument('epicId') ?: 'EPIC-01-doc-alignment';
         $now = new DateTimeImmutable('now');
+        $runId = $now->format('Ymd-His').'-pid'.getmypid();
         $runNeuron = (bool) $this->option('neuron');
-        $offline = (bool) $this->option('offline');
+        $offlineOption = $this->option('offline');
+        $offline = (bool) $offlineOption;
 
         $orchestratorRolePath = base_path('.ai-dev/agentic-team/roles/orchestrator.md');
         $decisionReportTemplatePath = base_path('.ai-dev/agentic-team/templates/decision-report.md');
@@ -68,6 +70,7 @@ class AgenticTeamRunCommand extends Command
         $content[] = '';
         $content[] = '史詩 ID： '.$epicId;
         $content[] = '執行時間（伺服器時間）：'.$now->format('Y-m-d H:i:s');
+        $content[] = 'Run ID：'.$runId;
         $content[] = '';
         $content[] = '你是 **Orchestrator**，你的工作是：';
         $content[] = '- 將史詩拆成四份任務包';
@@ -131,7 +134,7 @@ class AgenticTeamRunCommand extends Command
 
         $outDir = storage_path('app/agentic-team');
         File::ensureDirectoryExists($outDir);
-        $outPath = $outDir.'/orchestrator-entry-'.$this->slugify($epicId).'-'.$now->format('Ymd-His').'.md';
+        $outPath = $outDir.'/orchestrator-entry-'.$this->slugify($epicId).'-'.$runId.'.md';
         File::put($outPath, $generatedMarkdown);
 
         $this->line('');
@@ -143,13 +146,15 @@ class AgenticTeamRunCommand extends Command
             if ($runToolExec) {
                 $this->line('');
                 $this->info('=== ToolExecutorAgent：套用變更→測試→commit/push ===');
+                $this->line('（Debug）--offline(bool): '.($offline ? 'ON' : 'OFF'));
+                $this->line('（Debug）--offline(raw): '.var_export($offlineOption, true));
 
                 $toolExecOutput = $this->runToolExecutorAgent(
                     epicId: $epicId,
                     offline: $offline
                 );
 
-                $neuronPath = $outDir.'/orchestrator-toolexec-output-'.$this->slugify($epicId).'-'.$now->format('Ymd-His').'.md';
+                $neuronPath = $outDir.'/orchestrator-toolexec-output-'.$this->slugify($epicId).'-'.$runId.'.md';
                 File::put($neuronPath, $toolExecOutput);
 
                 $this->line('');
@@ -158,13 +163,15 @@ class AgenticTeamRunCommand extends Command
             } else {
                 $this->line('');
                 $this->info('=== Neuron runtime：最小決策報告 ===');
+                $this->line('（Debug）--offline(bool): '.($offline ? 'ON' : 'OFF'));
+                $this->line('（Debug）--offline(raw): '.var_export($offlineOption, true));
 
                 $neuronOutput = $this->runNeuronAgent(
                     epicId: $epicId,
                     offline: $offline
                 );
 
-                $neuronPath = $outDir.'/orchestrator-neuron-output-'.$this->slugify($epicId).'-'.$now->format('Ymd-His').'.md';
+                $neuronPath = $outDir.'/orchestrator-neuron-output-'.$this->slugify($epicId).'-'.$runId.'.md';
                 File::put($neuronPath, $neuronOutput);
 
                 $this->line('');
@@ -183,8 +190,21 @@ class AgenticTeamRunCommand extends Command
      */
     private function runNeuronAgent(string $epicId, bool $offline): string
     {
+        $optionOfflineRaw = $this->option('offline');
+        $optionOfflineBool = (bool) $optionOfflineRaw;
+
+        $debugHeader = implode("\n", [
+            '# NeuronAgent（Debug Header）',
+            '',
+            'passedOffline(bool)：'.($offline ? 'ON' : 'OFF'),
+            'optionOffline(bool)：'.($optionOfflineBool ? 'ON' : 'OFF'),
+            'optionOffline(raw)：'.var_export($optionOfflineRaw, true),
+            '',
+        ]);
+
         if ($offline) {
             return implode("\n", [
+                $debugHeader,
                 '# Neuron 執行輸出（離線 stub）',
                 '',
                 '史詩 ID： '.$epicId,
@@ -217,7 +237,7 @@ class AgenticTeamRunCommand extends Command
             key: $key,
             model: $model,
             baseUriOverride: $baseUri,
-            maxTokens: 600,
+            maxTokens: 220,
             parameters: [
                 'temperature' => 0.2,
             ],
@@ -231,10 +251,10 @@ class AgenticTeamRunCommand extends Command
             '給定 epicId，請產出一份「短版 Markdown 待決策報告 stub」。',
             '必須使用以下章節（用 Markdown headings）：',
             '- 摘要',
-            '- 風險',
+            '- 風險與嚴重度',
             '- 需要人類決策的問題',
-            '- 建議下一個史詩 ID',
-            '內容保持精簡，建議低於 ~250 行。',
+            '- 建議下一史詩 ID',
+            '內容保持更精簡，建議低於 ~120 行。',
         ]));
 
         $userPrompt = implode("\n", [
@@ -243,18 +263,60 @@ class AgenticTeamRunCommand extends Command
             '請立刻產出該 stub（僅輸出 Markdown 內容）。',
         ]);
 
-        $response = $agent
-            ->chat(new UserMessage($userPrompt))
-            ->getMessage()
-            ->getContent();
+        $maxAttempts = 3;
+        $lastErrorMessage = '';
 
-        return ($response ?? '')."\n";
+        for ($attempt = 1; $attempt <= $maxAttempts; $attempt++) {
+            try {
+                $response = $agent
+                    ->chat(new UserMessage($userPrompt))
+                    ->getMessage()
+                    ->getContent();
+
+                return $debugHeader.(($response ?? '') !== '' ? "\n".$response : '')."\n";
+            } catch (\NeuronAI\Exceptions\HttpException $e) {
+                $lastErrorMessage = $e->getMessage();
+
+                // Simple backoff to reduce immediate retries during transient network issues.
+                if ($attempt < $maxAttempts) {
+                    usleep((int) (500_000 * $attempt)); // 0.5s, 1.0s ...
+
+                    continue;
+                }
+            } catch (\Throwable $e) {
+                // Catch-all: avoid throwing to Inspector when upstream network flaps.
+                $lastErrorMessage = $e->getMessage();
+                break;
+            }
+        }
+
+        return implode("\n", [
+            $debugHeader,
+            '# Neuron 執行輸出（錯誤）',
+            '',
+            '史詩 ID： '.$epicId,
+            '原因：'.$lastErrorMessage,
+            '',
+            '備註：本次已嘗試重試（'.$maxAttempts.' 次）仍失敗；請稍後再跑一次或改用 `--offline`。',
+        ])."\n";
     }
 
     private function runToolExecutorAgent(string $epicId, bool $offline): string
     {
+        $optionOfflineRaw = $this->option('offline');
+        $optionOfflineBool = (bool) $optionOfflineRaw;
+
+        $debugHeader = implode("\n", [
+            '# ToolExecutorAgent（Debug Header）',
+            '',
+            'passedOffline(bool)：'.($offline ? 'ON' : 'OFF'),
+            'optionOffline(bool)：'.($optionOfflineBool ? 'ON' : 'OFF'),
+            'optionOffline(raw)：'.var_export($optionOfflineRaw, true),
+            '',
+        ]);
+
         if ($offline) {
-            return implode("\n", [
+            return $debugHeader.implode("\n", [
                 '# ToolExecutorAgent 執行輸出（離線 stub）',
                 '',
                 '史詩 ID：'.$epicId,
@@ -263,22 +325,28 @@ class AgenticTeamRunCommand extends Command
         }
 
         $agent = ToolExecutorAgent::make();
+        // Tool 呼叫次數上限預設偏低（容易在 read_file 迭代時觸發 ToolRunsExceededException）。
+        // 提高上限讓 ToolExecutorAgent 有機會完成套用→測試→commit/push 流程。
+        $agent->toolMaxRuns(30);
 
         $userPrompt = implode("\n", [
             '史詩 ID：'.$epicId,
             '',
             '目標：',
-            '- 在白名單允許的範圍內，修正文件/規格不一致（若有）。',
-            '- 修正後執行 pint（若適用）與 `php artisan test --compact`。',
-            '- 測試 PASS 後 commit/push；FAIL 則嘗試修正後重試。',
+            '- 在 repo 可允許的範圍內，修正文件/規格不一致（若有）。',
+            '- 必須先呼叫 `run_tests` 取得實際測試失敗摘要（不要只用推測）。',
+            '- 若 `run_tests` PASS：呼叫 `git_commit_push`。',
+            '- 若 `run_tests` FAIL：請先用 `read_file` 確認需要修改的測試/程式碼位置，接著用 `write_file` 直接套用修正，然後再次呼叫 `run_pint`（若適用）與 `run_tests`，直到 PASS 或到達工具呼叫上限。',
             '',
-            '重要：你只能透過工具 read_file/write_file/run_pint/run_tests/git_commit_push 完成操作。',
+            '重要：你只能透過工具 read_file/write_file/run_pint/run_tests/git_commit_push 完成操作；不要輸出「未執行的修正計畫」。',
         ]);
 
-        return $agent
+        $content = $agent
             ->chat(new UserMessage($userPrompt))
             ->getMessage()
-            ->getContent()."\n";
+            ->getContent();
+
+        return $debugHeader.($content ?? '')."\n";
     }
 
     /**

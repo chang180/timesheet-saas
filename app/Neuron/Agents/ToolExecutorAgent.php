@@ -40,10 +40,11 @@ class ToolExecutorAgent extends Agent
     protected function instructions(): string
     {
         return implode("\n", [
-            '你是 ToolExecutorAgent，負責在白名單允許的範圍內套用變更，跑測試，通過才 commit/push。',
+            '你是 ToolExecutorAgent，負責在 repo 可允許的範圍內套用變更，跑測試，通過才 commit/push。',
             '',
             '規則：',
             '- 僅使用工具完成操作，不要直接在輸出文字中附帶需要人類手動套用的 diff。',
+            '- 控制 tool 呼叫次數：優先列出你要讀取的檔案路徑後再用最少 read_file 次數取得內容；不要重複讀同一檔案。',
             '- 僅修改允許的路徑（詳見 read_file/write_file 工具的限制；你不得要求突破限制）。',
             '- 在任何檔案修改後，先執行 `vendor/bin/pint --dirty`（若適用），再執行 `php artisan test --compact`。',
             '- 若測試 FAIL：請根據測試輸出反推原因並繼續修正，再重跑測試。',
@@ -77,9 +78,13 @@ class ToolExecutorAgent extends Agent
             return false;
         }
 
-        return str_starts_with($path, '.ai-dev/')
-            || str_starts_with($path, '.cursor/rules/')
-            || in_array($path, ['README.md', 'AGENTS.md', '.env.example'], true);
+        // Still prevent writing real environment secrets by default.
+        // (User asked to cancel whitelist; this is a safety exception.)
+        if ($path === '.env' || str_starts_with($path, '.env.')) {
+            return false;
+        }
+
+        return true;
     }
 
     private function allowedReadPath(string $relativePath): bool
@@ -90,9 +95,12 @@ class ToolExecutorAgent extends Agent
             return false;
         }
 
-        return str_starts_with($path, '.ai-dev/')
-            || str_starts_with($path, '.cursor/rules/')
-            || in_array($path, ['README.md', 'AGENTS.md', '.env.example', 'composer.json', 'composer.lock'], true);
+        // Read .env secrets is also blocked.
+        if ($path === '.env' || str_starts_with($path, '.env.')) {
+            return false;
+        }
+
+        return true;
     }
 
     private function runProcess(string $command, int $timeoutSeconds = 600): array
@@ -113,11 +121,11 @@ class ToolExecutorAgent extends Agent
     {
         return Tool::make(
             name: 'read_file',
-            description: '讀取專案檔案內容（只允許白名單路徑；路徑以 repo 根為相對路徑）。',
+            description: '讀取專案檔案內容（路徑以 repo 根為相對路徑；預設阻擋讀取 `.env` 類敏感設定）。',
             properties: [
                 ToolProperty::make('path', PropertyType::STRING, '相對於 repo 根的檔案路徑（例如 .ai-dev/development/README.md）。', true),
             ],
-        )->setCallable(function (string $path): string {
+        )->setMaxRuns(30)->setCallable(function (string $path): string {
             if (! $this->allowedReadPath($path)) {
                 return 'ERROR: path is not allowed for reading.';
             }
@@ -137,14 +145,20 @@ class ToolExecutorAgent extends Agent
     {
         return Tool::make(
             name: 'write_file',
-            description: '在允許的白名單路徑寫入檔案內容（路徑以 repo 根為相對路徑）。',
+            description: '在 repo 內寫入檔案內容（路徑以 repo 根為相對路徑；預設阻擋寫入 `.env` 類敏感設定）。',
             properties: [
                 ToolProperty::make('path', PropertyType::STRING, '相對於 repo 根的檔案路徑（例如 .ai-dev/development/README.md）。', true),
-                ToolProperty::make('content', PropertyType::STRING, '要寫入的檔案內容（UTF-8）。', true),
+                // NOTE: Neuron 可能在某些情況下未帶上 content；此處避免工具執行直接爆 MissingCallbackParameter，
+                // 讓 callable 內改回傳「缺少 content」錯誤供 Orchestrator/人類判斷並重試。
+                ToolProperty::make('content', PropertyType::STRING, '要寫入的檔案內容（UTF-8）。', false),
             ],
-        )->setCallable(function (string $path, string $content): string {
+        )->setMaxRuns(30)->setCallable(function (string $path, ?string $content = null): string {
             if (! $this->allowedWritePath($path)) {
                 return 'ERROR: path is not allowed for writing.';
+            }
+
+            if ($content === null) {
+                return 'ERROR: missing write_file content.';
             }
 
             $abs = base_path(ltrim($path, '/'));
@@ -165,7 +179,7 @@ class ToolExecutorAgent extends Agent
             name: 'run_pint',
             description: '執行 vendor/bin/pint --dirty，用於套用程式碼格式（若本次只有修改 Markdown 可能不會有實質變更）。',
             properties: [],
-        )->setCallable(function (): string {
+        )->setMaxRuns(5)->setCallable(function (): string {
             $result = $this->runProcess('vendor/bin/pint --dirty', 600);
 
             return json_encode([
@@ -183,7 +197,7 @@ class ToolExecutorAgent extends Agent
             name: 'run_tests',
             description: '執行 php artisan test --compact，回傳結果。',
             properties: [],
-        )->setCallable(function (): string {
+        )->setMaxRuns(5)->setCallable(function (): string {
             $result = $this->runProcess('php artisan test --compact', 900);
 
             return json_encode([
@@ -199,14 +213,14 @@ class ToolExecutorAgent extends Agent
     {
         return Tool::make(
             name: 'git_commit_push',
-            description: '若目前白名單範圍內有變更：git add、commit、並 push 到 origin（推送到目前分支）。若無變更則回傳 NO_CHANGES。',
+            description: '若目前 repo 內有變更：git add、commit、並 push 到 origin（推送到目前分支）。若無變更則回傳 NO_CHANGES。',
             properties: [
                 ToolProperty::make('message', PropertyType::STRING, 'commit message', true),
             ],
-        )->setCallable(function (string $message): string {
-            // Always stage only known safe areas to avoid accidental commits.
-            $stageCmd = 'git add .ai-dev .cursor/rules README.md AGENTS.md .env.example';
-            $this->runProcess($stageCmd, 120);
+        )->setMaxRuns(3)->setCallable(function (string $message): string {
+            // Stage all changes (excluding unstaged local changes is not handled here).
+            // Note: write_file tool still blocks writing to real `.env` by default.
+            $this->runProcess('git add -A', 120);
 
             // No staged changes?
             $diff = $this->runProcess('git diff --cached --name-only', 120);
