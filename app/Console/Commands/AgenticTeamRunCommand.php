@@ -2,6 +2,7 @@
 
 namespace App\Console\Commands;
 
+use App\Neuron\Agents\ToolExecutorAgent;
 use App\Neuron\Providers\MinimaxAnthropic;
 use DateTimeImmutable;
 use Illuminate\Console\Command;
@@ -14,12 +15,12 @@ class AgenticTeamRunCommand extends Command
     /**
      * @var string
      */
-    protected $signature = 'agentic-team:run {epicId? : 史詩 ID（例如 EPIC-01-doc-alignment）} {--neuron : 執行最小 Neuron Agent 以產出短版決策報告（用 Inspector 追蹤時間軸）} {--offline : 搭配 --neuron 時跳過真實 LLM 呼叫，改用可預期 stub 供測試}';
+    protected $signature = 'agentic-team:run {epicId? : 史詩 ID（例如 EPIC-01-doc-alignment）} {--neuron : 執行最小 Neuron Agent 以產出短版決策報告（用 Inspector 追蹤時間軸）} {--toolexec : 在 --neuron 下改由 ToolExecutorAgent 嘗試套用變更→跑測試→pass 才 commit/push} {--offline : 搭配 --neuron（或 --toolexec）時跳過真實 LLM 呼叫，改用可預期 stub 供測試}';
 
     /**
      * @var string
      */
-    protected $description = '為 Agentic Team 產出 Orchestrator 入場訊息 + 任務包';
+    protected $description = '為 Agentic Team 產出 Orchestrator 入場訊息 + 任務包（可選 Neuron/ToolExecutor）';
 
     public function handle(): int
     {
@@ -44,7 +45,13 @@ class AgenticTeamRunCommand extends Command
             return self::FAILURE;
         }
 
-        $taskRoles = ['SecurityAgent', 'FeatureCompletenessAgent', 'TestCoverageAgent', 'UXConsistencyAgent'];
+        $taskRoles = [
+            'SecurityAgent',
+            'FeatureCompletenessAgent',
+            'TestCoverageAgent',
+            'UXConsistencyAgent',
+            'ToolExecutorAgent',
+        ];
 
         $this->line('');
         $this->info('=== Agentic Team：Orchestrator 入場訊息已生成 ===');
@@ -131,20 +138,39 @@ class AgenticTeamRunCommand extends Command
         $this->info('Saved: '.$outPath);
 
         if ($runNeuron) {
-            $this->line('');
-            $this->info('=== Neuron runtime：最小決策報告 ===');
+            $runToolExec = (bool) $this->option('toolexec');
 
-            $neuronOutput = $this->runNeuronAgent(
-                epicId: $epicId,
-                offline: $offline
-            );
+            if ($runToolExec) {
+                $this->line('');
+                $this->info('=== ToolExecutorAgent：套用變更→測試→commit/push ===');
 
-            $neuronPath = $outDir.'/orchestrator-neuron-output-'.$this->slugify($epicId).'-'.$now->format('Ymd-His').'.md';
-            File::put($neuronPath, $neuronOutput);
+                $toolExecOutput = $this->runToolExecutorAgent(
+                    epicId: $epicId,
+                    offline: $offline
+                );
 
-            $this->line('');
-            $this->line($neuronOutput);
-            $this->info('Saved: '.$neuronPath);
+                $neuronPath = $outDir.'/orchestrator-toolexec-output-'.$this->slugify($epicId).'-'.$now->format('Ymd-His').'.md';
+                File::put($neuronPath, $toolExecOutput);
+
+                $this->line('');
+                $this->line($toolExecOutput);
+                $this->info('Saved: '.$neuronPath);
+            } else {
+                $this->line('');
+                $this->info('=== Neuron runtime：最小決策報告 ===');
+
+                $neuronOutput = $this->runNeuronAgent(
+                    epicId: $epicId,
+                    offline: $offline
+                );
+
+                $neuronPath = $outDir.'/orchestrator-neuron-output-'.$this->slugify($epicId).'-'.$now->format('Ymd-His').'.md';
+                File::put($neuronPath, $neuronOutput);
+
+                $this->line('');
+                $this->line($neuronOutput);
+                $this->info('Saved: '.$neuronPath);
+            }
         }
 
         return self::SUCCESS;
@@ -223,6 +249,36 @@ class AgenticTeamRunCommand extends Command
             ->getContent();
 
         return ($response ?? '')."\n";
+    }
+
+    private function runToolExecutorAgent(string $epicId, bool $offline): string
+    {
+        if ($offline) {
+            return implode("\n", [
+                '# ToolExecutorAgent 執行輸出（離線 stub）',
+                '',
+                '史詩 ID：'.$epicId,
+                '注意：已啟用 `--offline`，不會呼叫 Neuron LLM，也不會套用任何變更。',
+            ])."\n";
+        }
+
+        $agent = ToolExecutorAgent::make();
+
+        $userPrompt = implode("\n", [
+            '史詩 ID：'.$epicId,
+            '',
+            '目標：',
+            '- 在白名單允許的範圍內，修正文件/規格不一致（若有）。',
+            '- 修正後執行 pint（若適用）與 `php artisan test --compact`。',
+            '- 測試 PASS 後 commit/push；FAIL 則嘗試修正後重試。',
+            '',
+            '重要：你只能透過工具 read_file/write_file/run_pint/run_tests/git_commit_push 完成操作。',
+        ]);
+
+        return $agent
+            ->chat(new UserMessage($userPrompt))
+            ->getMessage()
+            ->getContent()."\n";
     }
 
     /**

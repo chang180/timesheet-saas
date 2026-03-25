@@ -2,7 +2,7 @@
 
 **史詩 ID**：  
 **派工者**：Orchestrator  
-**受命角色**：（SecurityAgent / FeatureCompletenessAgent / TestCoverageAgent / UXConsistencyAgent）  
+**受命角色**：（SecurityAgent / FeatureCompletenessAgent / TestCoverageAgent / UXConsistencyAgent / ToolExecutorAgent）  
 **派工日期**：
 
 ---

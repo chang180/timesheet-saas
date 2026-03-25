@@ -53,3 +53,10 @@
 ## 7. 與檢視助手銜接
 
 報告末尾附上「給檢視助手」三行：**改了哪些目錄**、**必跑測試**、**已知不測原因**（若無）。
+
+## 8. ToolExecutor（需要直接套用變更時）
+
+若本史詩屬於「需要直接套用變更（apply→test→pass→commit/push）」的類型：
+
+1. Orchestrator 的任務包必須包含 **ToolExecutorAgent**（並在範圍明確列出允許修改的路徑）。
+2. ToolExecutorAgent 負責「套用變更、跑測試、通過才 commit/push（必要時修到通過）」，而 Orchestrator 只做拆題、合併與待人類決策輸出。
