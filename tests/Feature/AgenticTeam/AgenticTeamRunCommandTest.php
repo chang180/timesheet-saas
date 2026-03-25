@@ -6,8 +6,8 @@ it('agentic-team:run generates orchestrator entry output', function () {
     $this->artisan('agentic-team:run', [
         'epicId' => 'EPIC-01-doc-alignment',
     ])
-        ->expectsOutputToContain('=== Agentic Team: Orchestrator entry generated ===')
-        ->expectsOutputToContain('Epic ID: EPIC-01-doc-alignment')
+        ->expectsOutputToContain('=== Agentic Team：Orchestrator 入場訊息已生成 ===')
+        ->expectsOutputToContain('史詩 ID： EPIC-01-doc-alignment')
         ->assertExitCode(0);
 
     $dir = storage_path('app/agentic-team');

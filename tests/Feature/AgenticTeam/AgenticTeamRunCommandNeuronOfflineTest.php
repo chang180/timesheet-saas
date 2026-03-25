@@ -10,8 +10,8 @@ it('agentic-team:run --neuron --offline saves deterministic neuron output', func
         '--neuron' => true,
         '--offline' => true,
     ])
-        ->expectsOutputToContain('=== Neuron runtime: minimal decision report ===')
-        ->expectsOutputToContain('# Neuron Runtime Output (OFFLINE STUB)')
+        ->expectsOutputToContain('=== Neuron runtime：最小決策報告 ===')
+        ->expectsOutputToContain('# Neuron 執行輸出（離線 stub）')
         ->assertExitCode(0);
 
     $dir = storage_path('app/agentic-team');

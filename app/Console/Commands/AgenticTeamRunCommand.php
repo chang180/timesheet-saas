@@ -14,12 +14,12 @@ class AgenticTeamRunCommand extends Command
     /**
      * @var string
      */
-    protected $signature = 'agentic-team:run {epicId? : Epic ID (e.g. EPIC-01-doc-alignment)} {--neuron : Run a minimal Neuron agent to generate a short decision report (use Inspector for timeline)} {--offline : When used with --neuron, skip the real LLM call and generate a deterministic stub for testing}';
+    protected $signature = 'agentic-team:run {epicId? : 史詩 ID（例如 EPIC-01-doc-alignment）} {--neuron : 執行最小 Neuron Agent 以產出短版決策報告（用 Inspector 追蹤時間軸）} {--offline : 搭配 --neuron 時跳過真實 LLM 呼叫，改用可預期 stub 供測試}';
 
     /**
      * @var string
      */
-    protected $description = 'Generate an Orchestrator entry message + task packages for Agentic Team';
+    protected $description = '為 Agentic Team 產出 Orchestrator 入場訊息 + 任務包';
 
     public function handle(): int
     {
@@ -33,13 +33,13 @@ class AgenticTeamRunCommand extends Command
         $taskPackageTemplatePath = base_path('.ai-dev/agentic-team/templates/task-package.md');
 
         if (! File::exists($orchestratorRolePath)) {
-            $this->error('Missing orchestrator role file: '.$orchestratorRolePath);
+            $this->error('找不到 Orchestrator 角色檔：'.$orchestratorRolePath);
 
             return self::FAILURE;
         }
 
         if (! File::exists($decisionReportTemplatePath) || ! File::exists($taskPackageTemplatePath)) {
-            $this->error('Missing one or more agentic-team templates under .ai-dev/agentic-team/templates/');
+            $this->error('找不到 agentic-team 範本（必需檔案位於 .ai-dev/agentic-team/templates/）');
 
             return self::FAILURE;
         }
@@ -47,9 +47,9 @@ class AgenticTeamRunCommand extends Command
         $taskRoles = ['SecurityAgent', 'FeatureCompletenessAgent', 'TestCoverageAgent', 'UXConsistencyAgent'];
 
         $this->line('');
-        $this->info('=== Agentic Team: Orchestrator entry generated ===');
+        $this->info('=== Agentic Team：Orchestrator 入場訊息已生成 ===');
         $this->line('');
-        $this->warn('Note: This command only generates the structured “Orchestrator” message. Neuron runtime is intentionally deferred in this repo.');
+        $this->warn('注意：此指令僅產出結構化「Orchestrator」訊息；Neuron runtime 在此 repo 內刻意延後，除非加上 --neuron。');
         $this->line('');
 
         $orchestratorRole = File::get($orchestratorRolePath);
@@ -57,28 +57,28 @@ class AgenticTeamRunCommand extends Command
         $decisionReportTemplate = File::get($decisionReportTemplatePath);
 
         $content = [];
-        $content[] = '# Orchestrator Mode: Starting';
+        $content[] = '# Orchestrator 模式：開始';
         $content[] = '';
-        $content[] = 'Epic ID: '.$epicId;
-        $content[] = 'Run date (UTC or server time): '.$now->format('Y-m-d H:i:s');
+        $content[] = '史詩 ID： '.$epicId;
+        $content[] = '執行時間（伺服器時間）：'.$now->format('Y-m-d H:i:s');
         $content[] = '';
-        $content[] = 'You are the **Orchestrator** and your job is to:';
-        $content[] = '- decompose the epic into task packages';
-        $content[] = '- dispatch to four specialists';
-        $content[] = '- merge outputs and produce a decision-ready report';
+        $content[] = '你是 **Orchestrator**，你的工作是：';
+        $content[] = '- 將史詩拆成四份任務包';
+        $content[] = '- 指派給四位專責角色';
+        $content[] = '- 合併回覆並產出「待決策報告」';
         $content[] = '';
-        $content[] = '### Required output';
-        $content[] = '- One task package per specialist role (use the structure from task-package.md)';
-        $content[] = '- One merged decision report (use decision-report.md structure)';
+        $content[] = '### 必要輸出';
+        $content[] = '- 每位專責角色各一份任務包（使用 task-package.md 結構）';
+        $content[] = '- 合併後一份待決策報告（使用 decision-report.md 結構）';
         $content[] = '';
-        $content[] = '### Orchestrator role reference (do not paste fully unless needed)';
+        $content[] = '### Orchestrator 角色參考（除非需要，勿貼全文）';
         $content[] = '```';
         $content[] = $this->truncateForConsole($orchestratorRole, 3500);
         $content[] = '```';
         $content[] = '';
         $content[] = '---';
         $content[] = '';
-        $content[] = '# Task packages (dispatch)';
+        $content[] = '# 任務包（派工）';
         $content[] = '';
 
         foreach ($taskRoles as $role) {
@@ -114,7 +114,7 @@ class AgenticTeamRunCommand extends Command
             $content[] = '';
         }
 
-        $content[] = '# Decision report (merged)';
+        $content[] = '# 待決策報告（合併）';
         $content[] = '';
         $content[] = $decisionReportTemplate;
 
@@ -132,7 +132,7 @@ class AgenticTeamRunCommand extends Command
 
         if ($runNeuron) {
             $this->line('');
-            $this->info('=== Neuron runtime: minimal decision report ===');
+            $this->info('=== Neuron runtime：最小決策報告 ===');
 
             $neuronOutput = $this->runNeuronAgent(
                 epicId: $epicId,
@@ -159,12 +159,12 @@ class AgenticTeamRunCommand extends Command
     {
         if ($offline) {
             return implode("\n", [
-                '# Neuron Runtime Output (OFFLINE STUB)',
+                '# Neuron 執行輸出（離線 stub）',
                 '',
-                'Epic ID: '.$epicId,
-                'Timestamp: '.(new DateTimeImmutable('now'))->format('Y-m-d H:i:s'),
+                '史詩 ID： '.$epicId,
+                '時間戳： '.(new DateTimeImmutable('now'))->format('Y-m-d H:i:s'),
                 '',
-                'Note: `--offline` was set, so Neuron LLM call was skipped. This is only for local testing stability.',
+                '注意：已啟用 `--offline`，因此 Neuron LLM 呼叫被跳過；此僅用於本機測試穩定性。',
             ])."\n";
         }
 
@@ -173,15 +173,15 @@ class AgenticTeamRunCommand extends Command
         $model = (string) config('neuron.anthropic.model');
 
         if ($key === '' || $baseUri === '' || $model === '') {
-            $this->error('Missing Neuron provider configuration (neuron.anthropic.*). Please set ANTHROPIC_BASE_URL/ANTHROPIC_API_KEY/ANTHROPIC_MODEL in .env.');
+            $this->error('缺少 Neuron 供應商設定（neuron.anthropic.*）。請在 .env 設定 ANTHROPIC_BASE_URL/ANTHROPIC_API_KEY/ANTHROPIC_MODEL。');
 
             return implode("\n", [
-                '# Neuron Runtime Output (ERROR)',
+                '# Neuron 執行輸出（錯誤）',
                 '',
-                'Epic ID: '.$epicId,
-                'Timestamp: '.(new DateTimeImmutable('now'))->format('Y-m-d H:i:s'),
+                '史詩 ID： '.$epicId,
+                '時間戳： '.(new DateTimeImmutable('now'))->format('Y-m-d H:i:s'),
                 '',
-                'Reason: Missing Neuron provider configuration.',
+                '原因：Neuron 供應商設定缺失。',
             ])."\n";
         }
 
@@ -201,20 +201,20 @@ class AgenticTeamRunCommand extends Command
 
         // Keep prompt intentionally small for quick results.
         $agent->setInstructions(implode("\n", [
-            'You are an Orchestrator assistant inside an agentic development workflow.',
-            'Given an epicId, output a short markdown decision report stub.',
-            'Required sections (use headings):',
-            '- Summary',
-            '- Risks',
-            '- Questions for human',
-            '- Suggested next epic id',
-            'Keep under ~250 lines.',
+            '你是一個在 agentic 開發流程中協助 Orchestrator 的助理。',
+            '給定 epicId，請產出一份「短版 Markdown 待決策報告 stub」。',
+            '必須使用以下章節（用 Markdown headings）：',
+            '- 摘要',
+            '- 風險',
+            '- 需要人類決策的問題',
+            '- 建議下一個史詩 ID',
+            '內容保持精簡，建議低於 ~250 行。',
         ]));
 
         $userPrompt = implode("\n", [
-            'Epic ID: '.$epicId,
+            '史詩 ID： '.$epicId,
             '',
-            'Generate the decision report stub now.',
+            '請立刻產出該 stub（僅輸出 Markdown 內容）。',
         ]);
 
         $response = $agent
