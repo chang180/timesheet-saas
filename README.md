@@ -13,7 +13,7 @@
 - **通知與提醒**：成員邀請通知；週報填寫提醒（週五 16:00）、週一上午匯總摘要；可於 `company_settings.notification_preferences` 設定。
 - **假期與工時**：新北市開放資料同步國定假日（`holidays:sync`）；API `GET /app/{company}/calendar/holidays`、`/calendar/holidays/week` 供前端標註假日。
 - **安全**：IP 白名單 middleware（登入與租戶請求）、依 company+user 的 Rate limiting（120/min）、審計日誌（IP 白名單／歡迎頁／Reopen／匯出）。
-- **未來規劃**：HQ Portal（系統管理者主控台）、Redmine/Jira 整合（可選）。
+- **HQ Portal**：系統管理者 API（`/api/v1/hq/*`），限 `hq_admin`；Redmine/Jira 整合仍為可選。
 
 ## 技術棧
 
@@ -70,7 +70,7 @@ npm run build
 
 ## 測試
 
-- **後端與 E2E**：Pest Feature Tests（214 個，含認證、週報、匯總、匯出、假期、通知、IP 白名單、Rate limiting）、Pest Browser Tests（租戶流程、週報、邀請連結）。
+- **後端與 E2E**：Pest Feature／Browser Tests（數量以 `php artisan test --compact` 為準；涵蓋認證、週報、匯總、匯出、假期、通知、IP 白名單、Rate limiting、租戶流程等）。
 - **執行**：
 
 ```bash
@@ -98,6 +98,8 @@ GOOGLE_REDIRECT_URI=https://yourdomain.com/auth/google/callback
 
 - 完整系統規格：[`./.ai-dev/laravel_weekly_report_spec.md`](.ai-dev/laravel_weekly_report_spec.md)
 - 分階段開發指引：[`./.ai-dev/development/`](.ai-dev/development/)
+- **多角色 AI 協作（Orchestrator 主導）**：[`./.ai-dev/agentic-team/README.md`](.ai-dev/agentic-team/README.md) · [`./AGENTS.md`](./AGENTS.md)
+- 已取代文件快照：[`./.ai-dev/archive/`](.ai-dev/archive/)
 
 ## 通知、匯出與假期同步
 
@@ -111,7 +113,7 @@ GOOGLE_REDIRECT_URI=https://yourdomain.com/auth/google/callback
 ### 2026-02-02
 
 - **Phase 3 完成**：假期同步（HolidaySyncService、HolidayCacheService、holidays 表、API）、匯總報表 API、報表匯出（CSV/XLSX）、通知與提醒（WeeklyReportReminder、WeeklyReportSubmitted、WeeklySummaryDigest）、IP 白名單 middleware、審計日誌（含 IP 拒絕與匯出）、Rate limiting（api.tenant）、週報 Reopen 審計記錄與 IP 拒絕寫入 audit。
-- **測試**：214 個 Pest 測試通過；Phase 3 驗證報告見 `.ai-dev/development/phase-3-verification-report.md`。
+- **測試**：`php artisan test --compact` 全數通過；Phase 3 驗證報告見 `.ai-dev/development/phase-3-verification-report.md`。
 
 ### 2026-01-21
 

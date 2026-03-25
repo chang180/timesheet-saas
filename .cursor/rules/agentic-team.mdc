@@ -1,0 +1,15 @@
+---
+description: Agentic Team（Orchestrator 主導之多角色開發）；於多角色審查、派工、驗收時啟用
+alwaysApply: false
+---
+
+# Agentic Team
+
+當使用者要求「Orchestrator、專責 Agent、多角色審查、待決策報告、agentic team」或類似流程時：
+
+1. 先讀專案根目錄 [AGENTS.md](mdc:AGENTS.md) 與 [.ai-dev/agentic-team/roles/orchestrator.md](mdc:.ai-dev/agentic-team/roles/orchestrator.md)。
+2. 依派工讀取 [.ai-dev/agentic-team/roles/](mdc:.ai-dev/agentic-team/roles) 內對應角色、`templates/` 範本、[governance/acceptance-checklist.md](mdc:.ai-dev/agentic-team/governance/acceptance-checklist.md)。
+3. 若為檢視／驗收情境，不搶在 Orchestrator 之前主導拆題。
+4. 開發文件單一最新版與封存規則： [.ai-dev/archive/README.md](mdc:.ai-dev/archive/README.md)。
+
+Rule 內容與 `.ai-dev` 衝突時以 `.ai-dev` 為準。
