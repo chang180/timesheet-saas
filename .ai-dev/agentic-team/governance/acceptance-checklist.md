@@ -20,6 +20,20 @@
 - [ ] 若本次**無** Neuron 執行：報告中「執行觀測」為 **不適用**。
 - [ ] 若有 Neuron 執行：報告含 Inspector 對照（時間區間或可辨識敘述）；`INSPECTOR_INGESTION_KEY` 僅經環境變數／`config`，未硬編於程式庫。
 
+## 【最高警戒】開機路徑護欄
+
+> 違反此項視同本次 Epic 交付失敗，必須 revert 並重新執行。
+
+- [ ] 若本次有修改**任何**以下「開機路徑」檔案，ToolExecutorAgent 的執行記錄中必須包含 `http_healthcheck PASS`，才可允許 commit/push：
+  - `bootstrap/app.php`、`bootstrap/providers.php`、`public/index.php`
+  - `config/*.php`（任何設定檔）
+  - `app/Http/Middleware/*.php`（任何 middleware）
+  - `app/Providers/*.php`（任何 ServiceProvider）
+  - `composer.json` / `composer.lock`
+- [ ] 若上述健康檢查缺失：立即執行 `curl -s -o /dev/null -w "%{http_code}" https://timesheet-saas.test/` 確認為 `200`，並檢查回應不含 `Fatal error`。
+
+**背景**：2026-03-26 EPIC-DEBUG-HOMEPAGE ——ToolExecutorAgent 修改 `bootstrap/app.php` 加入 `app()->environment('testing')` 判斷，在 PHP Unit test bootstrap 下可正常運作故測試通過，但 HTTP 啟動時 `env` service 尚未綁定導致 `ReflectionException: Class "env" does not exist`，造成首頁全面爆掉。單靠測試無法偵測開機期錯誤，**必須輔以 HTTP 健康檢查**。
+
 ## 程式與專案慣例
 
 - [ ] 若有 PHP 改動：已執行 `vendor/bin/pint --dirty`（或 CI 等效）。

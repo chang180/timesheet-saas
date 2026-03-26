@@ -55,8 +55,20 @@ class ToolExecutorAgent extends Agent
             '2. 用 write_file 套用修改（每次修改後不重複讀取同一檔案）。',
             '3. 若有 PHP 程式碼變更，執行 run_pint 格式化。',
             '4. 執行 run_tests 跑測試。',
-            '5. 測試 PASS → 呼叫 git_commit_push 提交並推送。',
-            '6. 測試 FAIL → 根據錯誤訊息修正後重跑測試，直到 PASS 或達到重試上限。',
+            '5. 測試 PASS → 呼叫 http_healthcheck 確認首頁正常回應（HTTP 200 且含有效 HTML）。',
+            '6. 健康檢查 PASS → 呼叫 git_commit_push 提交並推送。',
+            '7. 測試或健康檢查 FAIL → 根據錯誤訊息修正後重跑，直到全數通過或達到重試上限。',
+            '',
+            '【最高警戒：開機路徑檔案】',
+            '若修改了以下任何一個「開機路徑」檔案，必須在 run_tests PASS 後立即執行 http_healthcheck，',
+            '健康檢查通過才能 commit/push。違反此規則等同任務失敗：',
+            '- bootstrap/app.php',
+            '- bootstrap/providers.php',
+            '- public/index.php',
+            '- config/*.php（任何設定檔）',
+            '- app/Http/Middleware/*.php（任何 middleware）',
+            '- app/Providers/*.php（任何 ServiceProvider）',
+            '- composer.json / composer.lock',
             '',
             '規則：',
             '- 僅使用工具完成操作，不要輸出需要人類手動套用的 diff。',
@@ -66,6 +78,7 @@ class ToolExecutorAgent extends Agent
             '最終輸出（繁體中文摘要）：',
             '- 套用了哪些檔案（列出路徑）',
             '- 測試結果 PASS/FAIL',
+            '- HTTP 健康檢查結果',
             '- commit hash（若有）',
             '- 推送狀態',
         ]);
@@ -82,6 +95,7 @@ class ToolExecutorAgent extends Agent
             $this->writeFileTool(),
             $this->runPintTool(),
             $this->runTestsTool(),
+            $this->httpHealthcheckTool(),
             $this->gitCommitPushTool(),
         ];
     }
@@ -273,6 +287,49 @@ class ToolExecutorAgent extends Agent
                 'success' => $result['success'],
                 'stdoutTail' => mb_substr($result['stdout'], -4000),
                 'stderrTail' => mb_substr($result['stderr'], -4000),
+            ], JSON_UNESCAPED_UNICODE);
+        });
+    }
+
+    private function httpHealthcheckTool(): ToolInterface
+    {
+        return Tool::make(
+            name: 'http_healthcheck',
+            description: '對本機應用程式首頁發送 HTTP GET 請求，確認回應為 200 且含有效 HTML（<!DOCTYPE html>）。修改開機路徑檔案（bootstrap/app.php、config/*.php、middleware、ServiceProvider 等）後必須呼叫此工具，確認應用程式仍可正常啟動。',
+            properties: [],
+        )->setMaxRuns(5)->setCallable(function (): string {
+            $url = config('app.url', 'https://timesheet-saas.test');
+            $result = $this->runProcess(
+                'curl -s -m 10 -o /tmp/hc_response.html -w "%{http_code}" '.escapeshellarg($url).'/',
+                30
+            );
+
+            $statusCode = (int) trim($result['stdout']);
+            $body = is_file('/tmp/hc_response.html') ? (string) file_get_contents('/tmp/hc_response.html') : '';
+
+            if ($statusCode !== 200) {
+                return json_encode([
+                    'status' => 'FAIL',
+                    'httpCode' => $statusCode,
+                    'bodyHead' => mb_substr($body, 0, 500),
+                ], JSON_UNESCAPED_UNICODE);
+            }
+
+            $hasValidHtml = str_contains(strtolower($body), '<!doctype html>') || str_contains(strtolower($body), '<html');
+
+            if (! $hasValidHtml) {
+                return json_encode([
+                    'status' => 'FAIL',
+                    'httpCode' => $statusCode,
+                    'reason' => '回應不含有效 HTML（疑似 PHP fatal error）',
+                    'bodyHead' => mb_substr($body, 0, 500),
+                ], JSON_UNESCAPED_UNICODE);
+            }
+
+            return json_encode([
+                'status' => 'PASS',
+                'httpCode' => $statusCode,
+                'reason' => '首頁正常回應且含有效 HTML',
             ], JSON_UNESCAPED_UNICODE);
         });
     }
