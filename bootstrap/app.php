@@ -45,11 +45,13 @@ return Application::configure(basePath: dirname(__DIR__))
             ],
         );
 
-        // 測試環境中禁用 statefulApi 來避免 CSRF 問題
-        if (! app()->environment('testing') && ! app()->runningUnitTests()) {
-            // 配置 Sanctum SPA 認證
-            $middleware->statefulApi();
-        }
+        /**
+         * Configure Sanctum SPA authentication.
+         *
+         * Note: CSRF bypass for testing environments is handled in
+         * VerifyCsrfToken::isTestingEnvironment().
+         */
+        $middleware->statefulApi();
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         //

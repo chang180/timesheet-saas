@@ -10,8 +10,8 @@ import {
 import { Head, Link, usePage } from '@inertiajs/react';
 import {
     ArrowRight,
+    Bell,
     Calendar,
-    Clock,
     Shield,
     Sparkles,
     TrendingUp,
@@ -57,7 +57,7 @@ export default function GlobalLandingPage() {
                             </span>
                         </h1>
                         <p className="text-lg leading-8 text-gray-600 dark:text-gray-300">
-                            針對多用戶與跨層級團隊設計。整合 Redmine / Jira 任務、假日行事曆與自動提醒，
+                            針對多用戶與跨層級團隊設計。內建假日行事曆、工時統計與自動提醒，
                             幫助主管即時掌握團隊狀態，成員也能 5 分鐘完成週報。
                         </p>
                         <div className="flex flex-wrap items-center justify-center gap-4 lg:justify-start">
@@ -79,26 +79,26 @@ export default function GlobalLandingPage() {
                         <dl className="grid gap-4 pt-4 text-center sm:grid-cols-3 md:gap-6 lg:text-left">
                             <div className="rounded-2xl border border-indigo-100/70 bg-white/80 p-4 shadow-sm dark:border-indigo-500/30 dark:bg-indigo-500/10">
                                 <dt className="text-xs uppercase tracking-wide text-indigo-500 dark:text-indigo-200">
-                                    週報提交成功率
+                                    多層級組織
                                 </dt>
-                                <dd className="mt-2 text-2xl font-semibold text-gray-900 dark:text-white">
-                                    98%
+                                <dd className="mt-2 text-sm font-semibold leading-snug text-gray-900 dark:text-white">
+                                    公司 → 單位 → 部門 → 小組
                                 </dd>
                             </div>
                             <div className="rounded-2xl border border-emerald-100/70 bg-white/80 p-4 shadow-sm dark:border-emerald-500/30 dark:bg-emerald-500/10">
                                 <dt className="text-xs uppercase tracking-wide text-emerald-500 dark:text-emerald-200">
-                                    工時校對時間
+                                    快速完成
                                 </dt>
                                 <dd className="mt-2 text-2xl font-semibold text-gray-900 dark:text-white">
-                                    -65%
+                                    5 分鐘
                                 </dd>
                             </div>
                             <div className="rounded-2xl border border-sky-100/70 bg-white/80 p-4 shadow-sm dark:border-sky-500/30 dark:bg-sky-500/10">
                                 <dt className="text-xs uppercase tracking-wide text-sky-500 dark:text-sky-200">
-                                    主管審核效率
+                                    自動化提醒
                                 </dt>
-                                <dd className="mt-2 text-2xl font-semibold text-gray-900 dark:text-white">
-                                    3× faster
+                                <dd className="mt-2 text-sm font-semibold leading-snug text-gray-900 dark:text-white">
+                                    週五填報 + 週一摘要
                                 </dd>
                             </div>
                         </dl>
@@ -139,11 +139,11 @@ export default function GlobalLandingPage() {
                         <Card>
                             <CardHeader>
                                 <div className="mb-4 flex size-12 items-center justify-center rounded-lg bg-green-100 dark:bg-green-900">
-                                    <Clock className="size-6 text-green-600 dark:text-green-400" />
+                                    <Bell className="size-6 text-green-600 dark:text-green-400" />
                                 </div>
-                                <CardTitle>Redmine/Jira 整合</CardTitle>
+                                <CardTitle>自動提醒通知</CardTitle>
                                 <CardDescription>
-                                    自動帶入 Issue 資訊與預估工時，減少重複輸入
+                                    週五填報提醒、週一摘要通知，可依公司需求調整通知偏好設定
                                 </CardDescription>
                             </CardHeader>
                         </Card>
@@ -219,11 +219,10 @@ export default function GlobalLandingPage() {
                                 </div>
                                 <div>
                                     <h3 className="text-xl font-semibold text-gray-900 dark:text-white">
-                                        建立用戶帳號
+                                        建立公司帳號
                                     </h3>
                                     <p className="mt-2 text-gray-600 dark:text-gray-300">
-                                        註冊公司帳號，設定品牌色彩與
-                                        Logo，打造專屬的週報系統
+                                        填寫公司名稱取得專屬網址（<code className="rounded bg-gray-100 px-1 text-sm dark:bg-gray-700">/app/your-company</code>），支援 Google OAuth 或帳密登入，可開啟雙因素認證（2FA）
                                     </p>
                                 </div>
                             </li>
@@ -233,10 +232,10 @@ export default function GlobalLandingPage() {
                                 </div>
                                 <div>
                                     <h3 className="text-xl font-semibold text-gray-900 dark:text-white">
-                                        設定組織層級
+                                        設定組織與邀請成員
                                     </h3>
                                     <p className="mt-2 text-gray-600 dark:text-gray-300">
-                                        建立部門與小組結構，設定成員權限與主管階層
+                                        彈性建立單位、部門、小組架構，透過邀請連結讓成員快速加入對應層級，設定主管與審核權限
                                     </p>
                                 </div>
                             </li>
@@ -246,10 +245,10 @@ export default function GlobalLandingPage() {
                                 </div>
                                 <div>
                                     <h3 className="text-xl font-semibold text-gray-900 dark:text-white">
-                                        開始填寫週報
+                                        開始填寫與審核週報
                                     </h3>
                                     <p className="mt-2 text-gray-600 dark:text-gray-300">
-                                        邀請成員加入，開始記錄每週工作成果與計畫
+                                        成員每週填報、拖曳排序工作項目；主管可查看匯總、重新開啟週報；系統自動於週五提醒、週一發送摘要
                                     </p>
                                 </div>
                             </li>
