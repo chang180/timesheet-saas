@@ -9,6 +9,7 @@ use Illuminate\Console\Command;
 use Illuminate\Support\Facades\File;
 use NeuronAI\Agent\Agent;
 use NeuronAI\Chat\Messages\UserMessage;
+use Symfony\Component\Process\Process;
 
 class AgenticTeamRunCommand extends Command
 {
@@ -247,6 +248,8 @@ class AgenticTeamRunCommand extends Command
 
         // Keep prompt intentionally small for quick results.
         $agent->setInstructions(implode("\n", [
+            '語言規定：所有輸出一律使用繁體中文。禁止輸出英文或任何推理過程，直接輸出結果。',
+            '',
             '你是一個在 agentic 開發流程中協助 Orchestrator 的助理。',
             '給定 epicId，請產出一份「短版 Markdown 待決策報告 stub」。',
             '必須使用以下章節（用 Markdown headings）：',
@@ -254,7 +257,7 @@ class AgenticTeamRunCommand extends Command
             '- 風險與嚴重度',
             '- 需要人類決策的問題',
             '- 建議下一史詩 ID',
-            '內容保持更精簡，建議低於 ~120 行。',
+            '內容保持精簡，低於 ~120 行；只輸出 Markdown 本文，不要任何前言或後記。',
         ]));
 
         $userPrompt = implode("\n", [
@@ -324,29 +327,106 @@ class AgenticTeamRunCommand extends Command
             ])."\n";
         }
 
+        // Run tests in this process first so the agent starts with full context
+        // instead of wasting tool budget on blind exploration.
+        $this->line('（先在本機跑一次測試，結果會附在 agent 的初始訊息內）');
+        $preTestProcess = Process::fromShellCommandline('php artisan test --compact', base_path());
+        $preTestProcess->setTimeout(900);
+        $preTestProcess->run();
+        $preTestPassed = $preTestProcess->isSuccessful();
+        $preTestOutput = mb_substr((string) $preTestProcess->getOutput(), -4000)
+            .(($preTestProcess->getErrorOutput() !== '') ? "\nSTDERR:\n".mb_substr((string) $preTestProcess->getErrorOutput(), -2000) : '');
+
         $agent = ToolExecutorAgent::make();
-        // Tool 呼叫次數上限預設偏低（容易在 read_file 迭代時觸發 ToolRunsExceededException）。
-        // 提高上限讓 ToolExecutorAgent 有機會完成套用→測試→commit/push 流程。
         $agent->toolMaxRuns(30);
 
-        $userPrompt = implode("\n", [
+        if ($preTestPassed) {
+            $userPrompt = implode("\n", [
+                '史詩 ID：'.$epicId,
+                '',
+                '【已知狀態】測試全部通過（以下為測試輸出）：',
+                '```',
+                $preTestOutput,
+                '```',
+                '',
+                '任務：若目前 repo 有未提交的變更（git diff --cached 或 working tree），呼叫 `git_commit_push` 提交。若無任何變更，直接輸出「所有測試通過，無需提交」。',
+                '不需要呼叫 run_tests（已知通過）、find_files、read_file 或 write_file。',
+            ]);
+        } else {
+            $userPrompt = implode("\n", [
+                '史詩 ID：'.$epicId,
+                '',
+                '【已知狀態】測試失敗（以下為測試輸出）：',
+                '```',
+                $preTestOutput,
+                '```',
+                '',
+                '任務：根據上方失敗訊息，用 `find_files` 定位相關檔案（每次只搜尋一個具體目錄），再用 `read_file` 讀取，用 `write_file` 修正，跑 `run_pint`（若有 PHP 變更），再跑 `run_tests` 驗證。PASS 後呼叫 `git_commit_push`。',
+                '限制：只搜尋與失敗測試直接相關的目錄；不要讀取與修復無關的檔案。',
+            ]);
+        }
+
+        $maxAttempts = 2;
+        $lastError = '';
+
+        for ($attempt = 1; $attempt <= $maxAttempts; $attempt++) {
+            try {
+                $content = $agent
+                    ->chat(new UserMessage($userPrompt))
+                    ->getMessage()
+                    ->getContent();
+
+                return $debugHeader.($content ?? '')."\n";
+            } catch (\NeuronAI\Exceptions\ToolRunsExceededException $e) {
+                // No point retrying — tool limit is deterministic for this session.
+                return implode("\n", [
+                    $debugHeader,
+                    '# ToolExecutorAgent 執行輸出（錯誤：工具呼叫次數超限）',
+                    '',
+                    '史詩 ID：'.$epicId,
+                    '原因：'.$e->getMessage(),
+                    '',
+                    '備註：請縮小任務範圍或分批執行。',
+                ])."\n";
+            } catch (\NeuronAI\Exceptions\HttpException $e) {
+                $lastError = $e->getMessage();
+
+                if ($attempt < $maxAttempts) {
+                    usleep((int) (1_000_000 * $attempt)); // 1s, 2s...
+
+                    continue;
+                }
+            } catch (\Throwable $e) {
+                $lastError = get_class($e).'：'.$e->getMessage();
+                break;
+            }
+        }
+
+        // All retries exhausted — determine which error bucket to use.
+        $isHttp = str_contains($lastError, 'Network error') || str_contains($lastError, 'cURL') || str_contains($lastError, '520') || str_contains($lastError, '429');
+
+        if ($isHttp) {
+            return implode("\n", [
+                $debugHeader,
+                '# ToolExecutorAgent 執行輸出（錯誤：HTTP 通訊失敗）',
+                '',
+                '史詩 ID：'.$epicId,
+                '原因（最後一次）：'.$lastError,
+                '已重試：'.$maxAttempts.' 次',
+                '',
+                '備註：請確認 ANTHROPIC_BASE_URL/ANTHROPIC_API_KEY，或稍後再試。',
+            ])."\n";
+        }
+
+        return implode("\n", [
+            $debugHeader,
+            '# ToolExecutorAgent 執行輸出（錯誤）',
+            '',
             '史詩 ID：'.$epicId,
+            '原因：'.$lastError,
             '',
-            '目標：',
-            '- 在 repo 可允許的範圍內，修正文件/規格不一致（若有）。',
-            '- 必須先呼叫 `run_tests` 取得實際測試失敗摘要（不要只用推測）。',
-            '- 若 `run_tests` PASS：呼叫 `git_commit_push`。',
-            '- 若 `run_tests` FAIL：請先用 `read_file` 確認需要修改的測試/程式碼位置，接著用 `write_file` 直接套用修正，然後再次呼叫 `run_pint`（若適用）與 `run_tests`，直到 PASS 或到達工具呼叫上限。',
-            '',
-            '重要：你只能透過工具 read_file/write_file/run_pint/run_tests/git_commit_push 完成操作；不要輸出「未執行的修正計畫」。',
-        ]);
-
-        $content = $agent
-            ->chat(new UserMessage($userPrompt))
-            ->getMessage()
-            ->getContent();
-
-        return $debugHeader.($content ?? '')."\n";
+            '備註：執行期間發生未預期錯誤；可加上 --offline 進行本機測試。',
+        ])."\n";
     }
 
     /**

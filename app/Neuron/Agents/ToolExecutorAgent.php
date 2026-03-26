@@ -6,6 +6,7 @@ namespace App\Neuron\Agents;
 
 use App\Neuron\Providers\MinimaxAnthropic;
 use NeuronAI\Agent\Agent;
+use NeuronAI\HttpClient\GuzzleHttpClient;
 use NeuronAI\Providers\AIProviderInterface;
 use NeuronAI\Tools\PropertyType;
 use NeuronAI\Tools\Tool;
@@ -26,32 +27,47 @@ class ToolExecutorAgent extends Agent
             throw new \InvalidArgumentException('Missing Neuron provider configuration (neuron.anthropic.*).');
         }
 
+        // Tool-calling requests can take longer than the default 60s Guzzle timeout.
+        // Use 180s to allow the LLM time to process complex tool definitions.
+        $httpClient = new GuzzleHttpClient(timeout: 180.0, connectTimeout: 15.0);
+
         return new MinimaxAnthropic(
             key: $key,
             model: $model,
             baseUriOverride: $baseUri,
-            maxTokens: 900,
+            maxTokens: 4096,
             parameters: [
                 'temperature' => 0.2,
             ],
+            httpClient: $httpClient,
         );
     }
 
     protected function instructions(): string
     {
         return implode("\n", [
+            '語言規定：所有輸出一律使用繁體中文。禁止輸出英文或任何推理思考過程，直接執行工具並在最後輸出結果摘要。',
+            '',
             '你是 ToolExecutorAgent，負責在 repo 可允許的範圍內套用變更，跑測試，通過才 commit/push。',
             '',
-            '規則：',
-            '- 僅使用工具完成操作，不要直接在輸出文字中附帶需要人類手動套用的 diff。',
-            '- 控制 tool 呼叫次數：優先列出你要讀取的檔案路徑後再用最少 read_file 次數取得內容；不要重複讀同一檔案。',
-            '- 僅修改允許的路徑（詳見 read_file/write_file 工具的限制；你不得要求突破限制）。',
-            '- 在任何檔案修改後，先執行 `vendor/bin/pint --dirty`（若適用），再執行 `php artisan test --compact`。',
-            '- 若測試 FAIL：請根據測試輸出反推原因並繼續修正，再重跑測試。',
-            '- 若測試 PASS：呼叫 git_commit_push 工具 commit/push。',
+            '操作流程（依序執行）：',
+            '1. 使用 find_files 定位需要修改的檔案，再用 read_file 讀取，避免盲目掃描整個 repo。',
+            '2. 用 write_file 套用修改（每次修改後不重複讀取同一檔案）。',
+            '3. 若有 PHP 程式碼變更，執行 run_pint 格式化。',
+            '4. 執行 run_tests 跑測試。',
+            '5. 測試 PASS → 呼叫 git_commit_push 提交並推送。',
+            '6. 測試 FAIL → 根據錯誤訊息修正後重跑測試，直到 PASS 或達到重試上限。',
             '',
-            '輸出（給人類/Orchestrator）：',
-            '- 最後請用繁體中文摘要：套用哪些檔案、測試結果 PASS/FAIL、commit hash（若有）以及是否推送成功。',
+            '規則：',
+            '- 僅使用工具完成操作，不要輸出需要人類手動套用的 diff。',
+            '- 不重複讀取同一檔案；不讀取與任務無關的檔案。',
+            '- 不得修改 .env 或 .env.* 檔案。',
+            '',
+            '最終輸出（繁體中文摘要）：',
+            '- 套用了哪些檔案（列出路徑）',
+            '- 測試結果 PASS/FAIL',
+            '- commit hash（若有）',
+            '- 推送狀態',
         ]);
     }
 
@@ -61,6 +77,7 @@ class ToolExecutorAgent extends Agent
     protected function tools(): array
     {
         return [
+            $this->findFilesTool(),
             $this->readFileTool(),
             $this->writeFileTool(),
             $this->runPintTool(),
@@ -115,6 +132,57 @@ class ToolExecutorAgent extends Agent
             'stdout' => (string) $process->getOutput(),
             'stderr' => (string) $process->getErrorOutput(),
         ];
+    }
+
+    private function findFilesTool(): ToolInterface
+    {
+        return Tool::make(
+            name: 'find_files',
+            description: '以 glob 模式列出 repo 內符合條件的檔案路徑（相對於 repo 根）。用於在 read_file 之前定位目標檔案，避免盲目掃描。範例：app/**/*.php、.ai-dev/**/*.md、tests/**/*Test.php。',
+            properties: [
+                ToolProperty::make('pattern', PropertyType::STRING, 'glob 模式（相對於 repo 根，例如 app/Neuron/**/*.php）。', true),
+            ],
+        )->setMaxRuns(20)->setCallable(function (string $pattern): string {
+            if (str_contains($pattern, '..')) {
+                return 'ERROR: pattern contains path traversal.';
+            }
+
+            $base = base_path();
+            $absPattern = $base.'/'.ltrim($pattern, '/');
+
+            // PHP glob doesn't support ** recursive; use RecursiveDirectoryIterator for that.
+            if (str_contains($pattern, '**')) {
+                $parts = explode('**/', $pattern, 2);
+                $baseDir = $base.'/'.ltrim($parts[0], '/');
+                $subPattern = $parts[1] ?? '*';
+
+                if (! is_dir($baseDir)) {
+                    return 'ERROR: directory does not exist: '.$parts[0];
+                }
+
+                $iterator = new \RecursiveIteratorIterator(
+                    new \RecursiveDirectoryIterator($baseDir, \RecursiveDirectoryIterator::SKIP_DOTS)
+                );
+
+                $matches = [];
+                foreach ($iterator as $file) {
+                    if ($file->isFile() && fnmatch($subPattern, $file->getFilename())) {
+                        $matches[] = str_replace($base.'/', '', $file->getPathname());
+                    }
+                }
+
+                sort($matches);
+
+                return $matches === [] ? 'NO_FILES_FOUND' : implode("\n", array_slice($matches, 0, 100));
+            }
+
+            $files = glob($absPattern, GLOB_BRACE) ?: [];
+            $relative = array_map(fn (string $f): string => str_replace($base.'/', '', $f), $files);
+
+            sort($relative);
+
+            return $relative === [] ? 'NO_FILES_FOUND' : implode("\n", array_slice($relative, 0, 100));
+        });
     }
 
     private function readFileTool(): ToolInterface
@@ -179,7 +247,7 @@ class ToolExecutorAgent extends Agent
             name: 'run_pint',
             description: '執行 vendor/bin/pint --dirty，用於套用程式碼格式（若本次只有修改 Markdown 可能不會有實質變更）。',
             properties: [],
-        )->setMaxRuns(5)->setCallable(function (): string {
+        )->setMaxRuns(10)->setCallable(function (): string {
             $result = $this->runProcess('vendor/bin/pint --dirty', 600);
 
             return json_encode([
@@ -197,7 +265,7 @@ class ToolExecutorAgent extends Agent
             name: 'run_tests',
             description: '執行 php artisan test --compact，回傳結果。',
             properties: [],
-        )->setMaxRuns(5)->setCallable(function (): string {
+        )->setMaxRuns(10)->setCallable(function (): string {
             $result = $this->runProcess('php artisan test --compact', 900);
 
             return json_encode([

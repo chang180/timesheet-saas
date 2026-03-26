@@ -5,12 +5,9 @@ use App\Models\CompanySetting;
 use App\Models\User;
 use App\Models\WeeklyReport;
 use App\Models\WeeklyReportItem;
-use Illuminate\Foundation\Testing\RefreshDatabase;
 use Inertia\Testing\AssertableInertia;
 
 use function Pest\Laravel\actingAs;
-
-uses(RefreshDatabase::class);
 
 function createUserWithCompany(array $attributes = [], array $companyAttributes = []): User
 {

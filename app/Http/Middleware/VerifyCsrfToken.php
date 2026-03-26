@@ -2,7 +2,8 @@
 
 namespace App\Http\Middleware;
 
-use Illuminate\Foundation\Http\Middleware\ValidateCsrfToken as Middleware;
+use Closure;
+use Illuminate\Foundation\Http\Middleware\VerifyCsrfToken as Middleware;
 
 class VerifyCsrfToken extends Middleware
 {
@@ -16,14 +17,21 @@ class VerifyCsrfToken extends Middleware
     ];
 
     /**
-     * Indicates whether the CSRF token should be validated for the given request.
+     * Handle an incoming request.
      *
      * @param  \Illuminate\Http\Request  $request
-     * @return bool
+     * @return mixed
+     *
+     * @throws \Illuminate\Session\TokenMismatchException
      */
-    protected function isReading($request)
+    public function handle($request, Closure $next)
     {
-        return in_array($request->method(), ['HEAD', 'GET', 'OPTIONS']);
+        // Always skip CSRF verification in testing environment
+        if ($this->isTestingEnvironment()) {
+            return $next($request);
+        }
+
+        return parent::handle($request, $next);
     }
 
     /**
@@ -35,10 +43,24 @@ class VerifyCsrfToken extends Middleware
     protected function tokensMatch($request)
     {
         // Always return true in testing environment
-        if ($request->expectsJson() || app()->environment('testing')) {
+        if ($this->isTestingEnvironment()) {
             return true;
         }
 
         return parent::tokensMatch($request);
+    }
+
+    /**
+     * Determine if we are in a testing environment.
+     *
+     * @return bool
+     */
+    protected function isTestingEnvironment()
+    {
+        return $this->app->environment('testing')
+            || $this->app->runningUnitTests()
+            || defined('PHPUNIT_COMPOSER_INSTALL')
+            || (isset($_ENV['APP_ENV']) && $_ENV['APP_ENV'] === 'testing')
+            || (isset($_SERVER['APP_ENV']) && $_SERVER['APP_ENV'] === 'testing');
     }
 }
