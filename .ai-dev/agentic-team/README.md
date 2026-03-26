@@ -41,3 +41,7 @@
 
 - 僅 **Cursor 多角色對話**、無 Neuron PHP 執行時：報告中「執行觀測」填 **不適用**。
 - 已整合 Neuron Agent／Workflow 時：見 [governance/inspector.md](governance/inspector.md)；可執行管線見 [governance/neuron-pipeline-deferred.md](governance/neuron-pipeline-deferred.md)（後續迭代）。
+
+### 【最高警戒】開機路徑護欄提醒
+若本次在 repo 內**修改任何開機路徑檔案**（例如 `bootstrap/app.php`、`app/Http/Middleware/*.php` 等），請在 commit/push 前依
+[governance/acceptance-checklist.md](governance/acceptance-checklist.md) 做 HTTP healthcheck：`https://timesheet-saas.test/` 回傳 `200` 且不得出現 `Fatal error`／`ReflectionException` 等錯誤（僅靠測試可能偵測不到開機期問題）。
