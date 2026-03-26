@@ -5,10 +5,12 @@ on:
     branches:
       - develop
       - main
+      - agentic-team-develop
   pull_request:
     branches:
       - develop
       - main
+      - agentic-team-develop
 
 jobs:
   ci:
@@ -46,5 +48,8 @@ jobs:
       - name: Generate Application Key
         run: php artisan key:generate
 
+      - name: Run Migrations
+        run: php artisan migrate --force
+
       - name: Tests
-        run: ./vendor/bin/pest
+        run: php artisan test --compact
