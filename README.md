@@ -121,6 +121,10 @@ GOOGLE_REDIRECT_URI=https://yourdomain.com/auth/google/callback
   - Command 預先在本機執行測試並將結果嵌入 agent 初始訊息，大幅減少無效工具呼叫。
   - Neuron agent 語言指令強化：明確要求全程使用繁體中文，禁止輸出推理過程。
 - **ToolExecutorAgent 實戰驗證**：以上改動後，agent 成功完整跑通一次真實 epic（`EPIC-LIVE-V6`）——自動發現並修正 `WeeklyReportControllerTest` 中 `onboarded` → `onboarded_at` 的欄位名稱錯誤，通過 211 項測試後自動 commit 並推送（`b9473bc`）。
+- **CI workflow 修正**（`EPIC-04`）：ToolExecutorAgent 自動修正 `.github/workflows/tests.yml`，加入 `agentic-team-develop` 分支、migration 步驟，並統一測試指令為 `php artisan test --compact`（`3b35074`）。
+- **500 護欄：`http_healthcheck` 工具**：新增 `http_healthcheck` 工具，於 `run_tests` 通過後、`git_commit_push` 前對首頁發送 HTTP GET，確認回應 200 且含有效 HTML。防止修改開機路徑（`bootstrap/app.php`、middleware、ServiceProvider 等）導致測試通過但用戶看到 500 的事故；對應事故：EPIC-DEBUG-HOMEPAGE（`bootstrap/app.php` 的 `app()->environment()` 在 middleware callback 內過早呼叫，PHP tests 不察但 HTTP 啟動即爆）。
+- **前端自動建構：`npm_build` 工具**：新增 `npm_build` 工具，當 agent 修改前端檔案（`resources/js/**`、`*.ts`、`*.tsx`）後自動執行 `npm run build`，確保瀏覽器端資源與原始碼同步。
+- **首頁內容對齊**：修正 `global-landing.tsx` 與實際功能的落差——移除未完成的 Redmine/Jira 整合卡片與假統計數字，改為真實的功能描述（自動提醒通知、多層級組織、5 分鐘填報）；快速上手步驟明確說明 Google OAuth/2FA、邀請連結、拖曳排序與主管 Reopen 流程。
 
 ### 2026-02-02
 
