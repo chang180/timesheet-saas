@@ -5,11 +5,13 @@ use App\Http\Middleware\EnsureIpWhitelist;
 use App\Http\Middleware\EnsureTenantScope;
 use App\Http\Middleware\HandleAppearance;
 use App\Http\Middleware\HandleInertiaRequests;
+use App\Http\Middleware\VerifyCsrfToken;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
+use Illuminate\Foundation\Http\Middleware\ValidateCsrfToken;
 use Illuminate\Http\Middleware\AddLinkHeadersForPreloadedAssets;
-use \Inspector\Laravel\Middleware\WebRequestMonitoring;
+use Inspector\Laravel\Middleware\WebRequestMonitoring;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -23,20 +25,31 @@ return Application::configure(basePath: dirname(__DIR__))
             ->appendToGroup('api', WebRequestMonitoring::class);
         $middleware->encryptCookies(except: ['appearance', 'sidebar_state']);
 
+        // Replace framework's CSRF middleware with our custom one
+        $middleware->replace(ValidateCsrfToken::class, VerifyCsrfToken::class);
+
         $middleware->alias([
             'tenant' => EnsureTenantScope::class,
             'hq' => EnsureHqAdmin::class,
             'ip.whitelist' => EnsureIpWhitelist::class,
         ]);
 
-        $middleware->web(append: [
-            HandleAppearance::class,
-            HandleInertiaRequests::class,
-            AddLinkHeadersForPreloadedAssets::class,
-        ]);
+        $middleware->web(
+            append: [
+                HandleAppearance::class,
+                HandleInertiaRequests::class,
+                AddLinkHeadersForPreloadedAssets::class,
+            ],
+            remove: [
+                ValidateCsrfToken::class,
+            ],
+        );
 
-        // 配置 Sanctum SPA 認證
-        $middleware->statefulApi();
+        // 測試環境中禁用 statefulApi 來避免 CSRF 問題
+        if (! app()->environment('testing') && ! app()->runningUnitTests()) {
+            // 配置 Sanctum SPA 認證
+            $middleware->statefulApi();
+        }
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         //

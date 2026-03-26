@@ -110,6 +110,18 @@ GOOGLE_REDIRECT_URI=https://yourdomain.com/auth/google/callback
 
 ## 更新日誌
 
+### 2026-03-26
+
+- **Neuron ToolExecutorAgent 穩定化**：修復多項導致 apply→test→commit/push 流程失敗的問題。
+  - `maxTokens` 從 900 提升至 4096，避免 LLM 在工具呼叫時被截斷。
+  - 新增 `GuzzleHttpClient(timeout: 180s)`，解決 tool-calling 請求超時問題。
+  - `run_tests` / `run_pint` 最大呼叫次數從 5 提升至 10。
+  - 加入 `find_files` 工具，讓 agent 能以 glob 模式定位檔案，不再盲目掃描 repo。
+  - `runToolExecutorAgent` 加入完整 exception handling（`ToolRunsExceededException`、`HttpException`、通用 Throwable）與 retry 機制，錯誤不再造成 command crash。
+  - Command 預先在本機執行測試並將結果嵌入 agent 初始訊息，大幅減少無效工具呼叫。
+  - Neuron agent 語言指令強化：明確要求全程使用繁體中文，禁止輸出推理過程。
+- **ToolExecutorAgent 實戰驗證**：以上改動後，agent 成功完整跑通一次真實 epic（`EPIC-LIVE-V6`）——自動發現並修正 `WeeklyReportControllerTest` 中 `onboarded` → `onboarded_at` 的欄位名稱錯誤，通過 211 項測試後自動 commit 並推送（`b9473bc`）。
+
 ### 2026-02-02
 
 - **Phase 3 完成**：假期同步（HolidaySyncService、HolidayCacheService、holidays 表、API）、匯總報表 API、報表匯出（CSV/XLSX）、通知與提醒（WeeklyReportReminder、WeeklyReportSubmitted、WeeklySummaryDigest）、IP 白名單 middleware、審計日誌（含 IP 拒絕與匯出）、Rate limiting（api.tenant）、週報 Reopen 審計記錄與 IP 拒絕寫入 audit。

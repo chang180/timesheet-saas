@@ -1,6 +1,6 @@
 # Agentic Team（多角色開發流程）
 
-本目錄為 **週報通 Timesheet SaaS** 在 AI 協作下的**權威流程說明**：以 **Orchestrator** 為唯一工作入口，搭配四個專責 Agent；**專案負責人**決策，**Cursor 檢視助手**依驗收清單協助複查。  
+本目錄為 **週報通 Timesheet SaaS** 在 AI 協作下的**權威流程說明**：以 **Orchestrator** 為唯一工作入口，搭配五個專責 Agent（含 ToolExecutorAgent）；**專案負責人**決策，**Cursor 檢視助手**依驗收清單協助複查。  
 若與 Cursor Plan 或其他備忘衝突，**以本 repo 之 `.ai-dev` 為準**。
 
 ## 閱讀順序
@@ -23,6 +23,7 @@
 | `roles/feature-completeness-agent.md` | spec／phase 對照、落差標記 |
 | `roles/test-coverage-agent.md` | Pest、測試範圍、DoD |
 | `roles/ux-consistency-agent.md` | Inertia／React／Tailwind／UX |
+| `roles/tool-executor-agent.md` | 套用變更、跑測試、pass 才 commit/push |
 | `governance/` | 治理、驗收、Inspector、Neuron 後續說明 |
 | `templates/` | 待決策報告、任務包範本 |
 
