@@ -16,7 +16,7 @@ class AgenticTeamRunCommand extends Command
     /**
      * @var string
      */
-    protected $signature = 'agentic-team:run {epicId? : 史詩 ID（例如 EPIC-01-doc-alignment）} {--neuron : 執行最小 Neuron Agent 以產出短版決策報告（用 Inspector 追蹤時間軸）} {--toolexec : 在 --neuron 下改由 ToolExecutorAgent 嘗試套用變更→跑測試→pass 才 commit/push} {--offline : 搭配 --neuron（或 --toolexec）時跳過真實 LLM 呼叫，改用可預期 stub 供測試}';
+    protected $signature = 'agentic-team:run {epicId? : 史詩 ID（例如 EPIC-01-doc-alignment）} {--neuron : 執行最小 Neuron Agent 以產出短版決策報告（用 Inspector 追蹤時間軸）} {--toolexec : 在 --neuron 下改由 ToolExecutorAgent 嘗試套用變更→跑測試→pass 才 commit/push} {--task= : 傳遞給 ToolExecutorAgent 的具體任務描述（搭配 --toolexec 使用）} {--offline : 搭配 --neuron（或 --toolexec）時跳過真實 LLM 呼叫，改用可預期 stub 供測試}';
 
     /**
      * @var string
@@ -340,18 +340,36 @@ class AgenticTeamRunCommand extends Command
         $agent = ToolExecutorAgent::make();
         $agent->toolMaxRuns(30);
 
+        $customTask = trim((string) $this->option('task'));
+
         if ($preTestPassed) {
-            $userPrompt = implode("\n", [
-                '史詩 ID：'.$epicId,
-                '',
-                '【已知狀態】測試全部通過（以下為測試輸出）：',
-                '```',
-                $preTestOutput,
-                '```',
-                '',
-                '任務：若目前 repo 有未提交的變更（git diff --cached 或 working tree），呼叫 `git_commit_push` 提交。若無任何變更，直接輸出「所有測試通過，無需提交」。',
-                '不需要呼叫 run_tests（已知通過）、find_files、read_file 或 write_file。',
-            ]);
+            if ($customTask !== '') {
+                $userPrompt = implode("\n", [
+                    '史詩 ID：'.$epicId,
+                    '',
+                    '【已知狀態】測試全部通過（以下為測試輸出）：',
+                    '```',
+                    $preTestOutput,
+                    '```',
+                    '',
+                    '【具體任務】',
+                    $customTask,
+                    '',
+                    '完成後：執行 `run_pint`（若有 PHP 變更），再執行 `run_tests` 確認測試通過，最後呼叫 `git_commit_push` 提交。',
+                ]);
+            } else {
+                $userPrompt = implode("\n", [
+                    '史詩 ID：'.$epicId,
+                    '',
+                    '【已知狀態】測試全部通過（以下為測試輸出）：',
+                    '```',
+                    $preTestOutput,
+                    '```',
+                    '',
+                    '任務：若目前 repo 有未提交的變更，呼叫 `git_commit_push` 提交。若無任何變更，直接輸出「所有測試通過，無需提交」。',
+                    '不需要呼叫 run_tests（已知通過）、find_files、read_file 或 write_file。',
+                ]);
+            }
         } else {
             $userPrompt = implode("\n", [
                 '史詩 ID：'.$epicId,
@@ -361,8 +379,9 @@ class AgenticTeamRunCommand extends Command
                 $preTestOutput,
                 '```',
                 '',
-                '任務：根據上方失敗訊息，用 `find_files` 定位相關檔案（每次只搜尋一個具體目錄），再用 `read_file` 讀取，用 `write_file` 修正，跑 `run_pint`（若有 PHP 變更），再跑 `run_tests` 驗證。PASS 後呼叫 `git_commit_push`。',
-                '限制：只搜尋與失敗測試直接相關的目錄；不要讀取與修復無關的檔案。',
+                ($customTask !== '' ? "【具體任務】\n{$customTask}\n\n" : ''),
+                '修復步驟：用 `find_files` 定位相關檔案（每次只搜尋一個具體目錄），再用 `read_file` 讀取，用 `write_file` 修正，跑 `run_pint`（若有 PHP 變更），再跑 `run_tests` 驗證。PASS 後呼叫 `git_commit_push`。',
+                '限制：只搜尋與失敗測試直接相關的目錄；不要讀取無關檔案。',
             ]);
         }
 
