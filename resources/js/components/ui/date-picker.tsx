@@ -135,9 +135,7 @@ export function DatePicker({
                     disabled={disabledMatcher}
                     modifiers={modifiers}
                     modifiersClassNames={modifiersClassNames}
-                    month={currentMonth}
-                    fromMonth={currentMonth}
-                    toMonth={currentMonth}
+                    defaultMonth={currentMonth}
                     initialFocus
                 />
             </PopoverContent>

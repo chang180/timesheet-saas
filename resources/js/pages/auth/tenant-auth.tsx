@@ -60,7 +60,7 @@ export default function TenantAuth({
     return (
         <AuthSplitLayout
             title={`${company.name} 登入/註冊`}
-            description="使用此專屬網址登入或註冊，僅限 {company.name} 的成員使用。"
+            description={`使用此專屬網址登入或註冊，僅限 ${company.name} 的成員使用。`}
             aside={<AuthAside />}
         >
             <Head title={`${company.name} - 登入/註冊`} />
