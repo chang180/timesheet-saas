@@ -1,3 +1,4 @@
+import InputError from '@/components/input-error';
 import { Button } from '@/components/ui/button';
 import {
     Dialog,
@@ -9,7 +10,6 @@ import {
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import InputError from '@/components/input-error';
 import {
     Select,
     SelectContent,
@@ -17,15 +17,33 @@ import {
     SelectTrigger,
     SelectValue,
 } from '@/components/ui/select';
-import { useState } from 'react';
-import membersApi from '@/routes/api/v1/tenant/members';
-import { toast } from 'sonner';
 import { apiRequest, ensureCsrfCookie } from '@/lib/api-client';
+import membersApi from '@/routes/api/v1/tenant/members';
+import { useState } from 'react';
+import { toast } from 'sonner';
 
 type Organization = {
-    divisions: Array<{ id: number; name: string; slug: string; is_active: boolean }>;
-    departments: Array<{ id: number; division_id: number | null; name: string; slug: string; is_active: boolean }>;
-    teams: Array<{ id: number; division_id: number | null; department_id: number | null; name: string; slug: string; is_active: boolean }>;
+    divisions: Array<{
+        id: number;
+        name: string;
+        slug: string;
+        is_active: boolean;
+    }>;
+    departments: Array<{
+        id: number;
+        division_id: number | null;
+        name: string;
+        slug: string;
+        is_active: boolean;
+    }>;
+    teams: Array<{
+        id: number;
+        division_id: number | null;
+        department_id: number | null;
+        name: string;
+        slug: string;
+        is_active: boolean;
+    }>;
 };
 
 interface MemberInviteDialogProps {
@@ -105,7 +123,9 @@ export function MemberInviteDialog({
 
             if (!response.ok) {
                 if (response.status === 422) {
-                    setErrors(data.errors || { message: data.message || '驗證失敗' });
+                    setErrors(
+                        data.errors || { message: data.message || '驗證失敗' },
+                    );
                 } else {
                     setErrors({ message: data.message || '邀請失敗' });
                 }
@@ -133,14 +153,19 @@ export function MemberInviteDialog({
     };
 
     const availableDepartments = organization.departments.filter(
-        (d) => d.is_active && (!formData.division_id || d.division_id === Number(formData.division_id)),
+        (d) =>
+            d.is_active &&
+            (!formData.division_id ||
+                d.division_id === Number(formData.division_id)),
     );
 
     const availableTeams = organization.teams.filter(
         (t) =>
             t.is_active &&
-            (!formData.department_id || t.department_id === Number(formData.department_id)) &&
-            (!formData.division_id || t.division_id === Number(formData.division_id)),
+            (!formData.department_id ||
+                t.department_id === Number(formData.department_id)) &&
+            (!formData.division_id ||
+                t.division_id === Number(formData.division_id)),
     );
 
     const requiresDivision = formData.role === 'division_lead';
@@ -149,13 +174,13 @@ export function MemberInviteDialog({
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+            <DialogContent className="max-h-[90vh] max-w-2xl overflow-y-auto">
                 <DialogHeader>
                     <DialogTitle>邀請新成員</DialogTitle>
                     <DialogDescription>
                         邀請新成員加入團隊。邀請信將發送到指定的 Email 地址。
                         {currentUserCount >= userLimit && (
-                            <span className="block mt-2 text-amber-600 dark:text-amber-400">
+                            <span className="mt-2 block text-amber-600 dark:text-amber-400">
                                 成員數已達上限（{currentUserCount}/{userLimit}）
                             </span>
                         )}
@@ -170,7 +195,10 @@ export function MemberInviteDialog({
                             id="invite-name"
                             value={formData.name}
                             onChange={(e) =>
-                                setFormData({ ...formData, name: e.target.value })
+                                setFormData({
+                                    ...formData,
+                                    name: e.target.value,
+                                })
                             }
                             required
                             disabled={loading || currentUserCount >= userLimit}
@@ -187,7 +215,10 @@ export function MemberInviteDialog({
                             type="email"
                             value={formData.email}
                             onChange={(e) =>
-                                setFormData({ ...formData, email: e.target.value })
+                                setFormData({
+                                    ...formData,
+                                    email: e.target.value,
+                                })
                             }
                             required
                             disabled={loading || currentUserCount >= userLimit}
@@ -205,9 +236,20 @@ export function MemberInviteDialog({
                                 setFormData({
                                     ...formData,
                                     role: value,
-                                    division_id: requiresDivision && value !== 'division_lead' ? '' : formData.division_id,
-                                    department_id: requiresDepartment && value !== 'department_manager' ? '' : formData.department_id,
-                                    team_id: requiresTeam && value !== 'team_lead' ? '' : formData.team_id,
+                                    division_id:
+                                        requiresDivision &&
+                                        value !== 'division_lead'
+                                            ? ''
+                                            : formData.division_id,
+                                    department_id:
+                                        requiresDepartment &&
+                                        value !== 'department_manager'
+                                            ? ''
+                                            : formData.department_id,
+                                    team_id:
+                                        requiresTeam && value !== 'team_lead'
+                                            ? ''
+                                            : formData.team_id,
                                 });
                             }}
                             disabled={loading || currentUserCount >= userLimit}
@@ -239,12 +281,15 @@ export function MemberInviteDialog({
                                 onValueChange={(value) => {
                                     setFormData({
                                         ...formData,
-                                        division_id: value === 'none' ? '' : value,
+                                        division_id:
+                                            value === 'none' ? '' : value,
                                         department_id: '',
                                         team_id: '',
                                     });
                                 }}
-                                disabled={loading || currentUserCount >= userLimit}
+                                disabled={
+                                    loading || currentUserCount >= userLimit
+                                }
                                 required={requiresDivision}
                             >
                                 <SelectTrigger id="invite-division">
@@ -255,7 +300,10 @@ export function MemberInviteDialog({
                                     {organization.divisions
                                         .filter((d) => d.is_active)
                                         .map((division) => (
-                                            <SelectItem key={division.id} value={division.id.toString()}>
+                                            <SelectItem
+                                                key={division.id}
+                                                value={division.id.toString()}
+                                            >
                                                 {division.name}
                                             </SelectItem>
                                         ))}
@@ -278,11 +326,16 @@ export function MemberInviteDialog({
                                 onValueChange={(value) => {
                                     setFormData({
                                         ...formData,
-                                        department_id: value === 'none' ? '' : value,
+                                        department_id:
+                                            value === 'none' ? '' : value,
                                         team_id: '',
                                     });
                                 }}
-                                disabled={loading || currentUserCount >= userLimit || !formData.division_id}
+                                disabled={
+                                    loading ||
+                                    currentUserCount >= userLimit ||
+                                    !formData.division_id
+                                }
                                 required={requiresDepartment}
                             >
                                 <SelectTrigger id="invite-department">
@@ -291,7 +344,10 @@ export function MemberInviteDialog({
                                 <SelectContent>
                                     <SelectItem value="none">無</SelectItem>
                                     {availableDepartments.map((department) => (
-                                        <SelectItem key={department.id} value={department.id.toString()}>
+                                        <SelectItem
+                                            key={department.id}
+                                            value={department.id.toString()}
+                                        >
                                             {department.name}
                                         </SelectItem>
                                     ))}
@@ -312,9 +368,16 @@ export function MemberInviteDialog({
                             <Select
                                 value={formData.team_id || 'none'}
                                 onValueChange={(value) => {
-                                    setFormData({ ...formData, team_id: value === 'none' ? '' : value });
+                                    setFormData({
+                                        ...formData,
+                                        team_id: value === 'none' ? '' : value,
+                                    });
                                 }}
-                                disabled={loading || currentUserCount >= userLimit || !formData.department_id}
+                                disabled={
+                                    loading ||
+                                    currentUserCount >= userLimit ||
+                                    !formData.department_id
+                                }
                                 required={requiresTeam}
                             >
                                 <SelectTrigger id="invite-team">
@@ -323,7 +386,10 @@ export function MemberInviteDialog({
                                 <SelectContent>
                                     <SelectItem value="none">無</SelectItem>
                                     {availableTeams.map((team) => (
-                                        <SelectItem key={team.id} value={team.id.toString()}>
+                                        <SelectItem
+                                            key={team.id}
+                                            value={team.id.toString()}
+                                        >
                                             {team.name}
                                         </SelectItem>
                                     ))}
@@ -348,7 +414,10 @@ export function MemberInviteDialog({
                         >
                             取消
                         </Button>
-                        <Button type="submit" disabled={loading || currentUserCount >= userLimit}>
+                        <Button
+                            type="submit"
+                            disabled={loading || currentUserCount >= userLimit}
+                        >
                             {loading ? '發送中...' : '發送邀請'}
                         </Button>
                     </DialogFooter>

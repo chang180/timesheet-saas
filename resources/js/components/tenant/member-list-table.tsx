@@ -1,4 +1,6 @@
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Skeleton } from '@/components/ui/skeleton';
 import {
     Table,
     TableBody,
@@ -7,9 +9,7 @@ import {
     TableHeader,
     TableRow,
 } from '@/components/ui/table';
-import { Badge } from '@/components/ui/badge';
-import { Pencil, ChevronLeft, ChevronRight } from 'lucide-react';
-import { Skeleton } from '@/components/ui/skeleton';
+import { ChevronLeft, ChevronRight, Pencil } from 'lucide-react';
 
 type Member = {
     id: number;
@@ -95,32 +95,47 @@ export function MemberListTable({
                                 <TableCell>{member.email}</TableCell>
                                 <TableCell>
                                     <Badge variant="outline">
-                                        {ROLE_LABELS[member.role] || member.role}
+                                        {ROLE_LABELS[member.role] ||
+                                            member.role}
                                     </Badge>
                                 </TableCell>
                                 <TableCell>
-                                    <div className="text-sm space-y-1">
+                                    <div className="space-y-1 text-sm">
                                         {member.division && (
-                                            <div>事業群：{member.division.name}</div>
+                                            <div>
+                                                事業群：{member.division.name}
+                                            </div>
                                         )}
                                         {member.department && (
-                                            <div>部門：{member.department.name}</div>
+                                            <div>
+                                                部門：{member.department.name}
+                                            </div>
                                         )}
                                         {member.team && (
                                             <div>小組：{member.team.name}</div>
                                         )}
-                                        {!member.division && !member.department && !member.team && (
-                                            <span className="text-muted-foreground">未指派</span>
-                                        )}
+                                        {!member.division &&
+                                            !member.department &&
+                                            !member.team && (
+                                                <span className="text-muted-foreground">
+                                                    未指派
+                                                </span>
+                                            )}
                                     </div>
                                 </TableCell>
                                 <TableCell>
                                     {member.invitation_accepted_at ? (
-                                        <Badge variant="default" className="bg-emerald-500">
+                                        <Badge
+                                            variant="default"
+                                            className="bg-emerald-500"
+                                        >
                                             已啟用
                                         </Badge>
                                     ) : member.invitation_sent_at ? (
-                                        <Badge variant="outline" className="border-amber-500 text-amber-700 dark:text-amber-400">
+                                        <Badge
+                                            variant="outline"
+                                            className="border-amber-500 text-amber-700 dark:text-amber-400"
+                                        >
                                             待接受邀請
                                         </Badge>
                                     ) : (
@@ -145,14 +160,23 @@ export function MemberListTable({
             {pagination.last_page > 1 && (
                 <div className="flex items-center justify-between">
                     <div className="text-sm text-muted-foreground">
-                        顯示第 {((pagination.current_page - 1) * pagination.per_page) + 1} 到{' '}
-                        {Math.min(pagination.current_page * pagination.per_page, pagination.total)} 筆，共 {pagination.total} 筆
+                        顯示第{' '}
+                        {(pagination.current_page - 1) * pagination.per_page +
+                            1}{' '}
+                        到{' '}
+                        {Math.min(
+                            pagination.current_page * pagination.per_page,
+                            pagination.total,
+                        )}{' '}
+                        筆，共 {pagination.total} 筆
                     </div>
                     <div className="flex items-center gap-2">
                         <Button
                             variant="outline"
                             size="sm"
-                            onClick={() => onPageChange(pagination.current_page - 1)}
+                            onClick={() =>
+                                onPageChange(pagination.current_page - 1)
+                            }
                             disabled={pagination.current_page === 1}
                         >
                             <ChevronLeft className="h-4 w-4" />
@@ -161,8 +185,12 @@ export function MemberListTable({
                         <Button
                             variant="outline"
                             size="sm"
-                            onClick={() => onPageChange(pagination.current_page + 1)}
-                            disabled={pagination.current_page === pagination.last_page}
+                            onClick={() =>
+                                onPageChange(pagination.current_page + 1)
+                            }
+                            disabled={
+                                pagination.current_page === pagination.last_page
+                            }
                         >
                             下一頁
                             <ChevronRight className="h-4 w-4" />

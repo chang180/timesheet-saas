@@ -64,7 +64,7 @@ it('displays feature cards correctly', function () {
     $page = visit(route('landing.global'));
 
     $page->assertSee('週報管理')
-        ->assertSee('Redmine/Jira 整合')
+        ->assertSee('自動提醒通知')
         ->assertSee('層級管理')
         ->assertSee('IP 白名單')
         ->assertSee('統計報表')
@@ -76,9 +76,9 @@ it('shows quick start steps', function () {
     $page = visit(route('landing.global'));
 
     $page->assertSee('快速上手')
-        ->assertSee('建立用戶帳號')
-        ->assertSee('設定組織層級')
-        ->assertSee('開始填寫週報')
+        ->assertSee('建立公司帳號')
+        ->assertSee('設定組織與邀請成員')
+        ->assertSee('開始填寫與審核週報')
         ->assertNoJavascriptErrors();
 });
 

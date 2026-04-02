@@ -2,8 +2,10 @@
 
 use App\Models\Company;
 use App\Models\CompanySetting;
+use App\Models\Holiday;
 use App\Models\User;
 use App\Models\WeeklyReport;
+use Carbon\CarbonImmutable;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 
 uses(RefreshDatabase::class);
@@ -23,6 +25,60 @@ if (! function_exists('createUserWithCompany')) {
         ], $attributes));
     }
 }
+
+function seedMinimalHolidayCalendar(int $year): void
+{
+    Holiday::query()->updateOrCreate(
+        ['holiday_date' => "{$year}-01-01"],
+        [
+            'name' => '元旦',
+            'is_holiday' => true,
+            'category' => Holiday::CATEGORY_NATIONAL,
+            'note' => null,
+            'source' => Holiday::SOURCE_NTPC,
+            'is_workday_override' => false,
+            'iso_week' => CarbonImmutable::parse("{$year}-01-01")->isoWeek(),
+            'iso_week_year' => CarbonImmutable::parse("{$year}-01-01")->isoWeekYear(),
+        ],
+    );
+    Holiday::query()->updateOrCreate(
+        ['holiday_date' => "{$year}-02-28"],
+        [
+            'name' => '和平紀念日',
+            'is_holiday' => true,
+            'category' => Holiday::CATEGORY_NATIONAL,
+            'note' => null,
+            'source' => Holiday::SOURCE_NTPC,
+            'is_workday_override' => false,
+            'iso_week' => CarbonImmutable::parse("{$year}-02-28")->isoWeek(),
+            'iso_week_year' => CarbonImmutable::parse("{$year}-02-28")->isoWeekYear(),
+        ],
+    );
+    Holiday::query()->updateOrCreate(
+        ['holiday_date' => "{$year}-10-10"],
+        [
+            'name' => '國慶日',
+            'is_holiday' => true,
+            'category' => Holiday::CATEGORY_NATIONAL,
+            'note' => null,
+            'source' => Holiday::SOURCE_NTPC,
+            'is_workday_override' => false,
+            'iso_week' => CarbonImmutable::parse("{$year}-10-10")->isoWeek(),
+            'iso_week_year' => CarbonImmutable::parse("{$year}-10-10")->isoWeekYear(),
+        ],
+    );
+}
+
+beforeEach(function () {
+    $years = [
+        (int) now()->isoFormat('GGGG'),
+        (int) now()->addWeek()->isoFormat('GGGG'),
+    ];
+
+    foreach (array_unique($years) as $year) {
+        seedMinimalHolidayCalendar($year);
+    }
+});
 
 it('can login and navigate to create weekly report page', function () {
     $user = createUserWithCompany(['role' => 'member']);
@@ -139,7 +195,9 @@ it('shows hours statistics in form', function () {
 
     // 驗證工時統計區塊存在
     $page->assertSee('工時統計')
-        ->assertSee('本週完成總工時')
-        ->assertSee('下週預計總工時')
+        ->assertSee('本週實際總工時')
+        ->assertSee('本週應填總工時')
+        ->assertSee('下週目前已排工時')
+        ->assertSee('下週可排總工時')
         ->assertNoJavascriptErrors();
 });

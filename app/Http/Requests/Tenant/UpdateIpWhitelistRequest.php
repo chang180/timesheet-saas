@@ -16,5 +16,4 @@ class UpdateIpWhitelistRequest extends BaseRequest
             ? ($this->user()?->can('update', $company) ?? false)
             : ($this->user()?->can('update', $this->user()?->company) ?? false);
     }
-
 }

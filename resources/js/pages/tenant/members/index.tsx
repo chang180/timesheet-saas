@@ -1,15 +1,8 @@
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import AppLayout from '@/layouts/app-layout';
-import tenantRoutes from '@/routes/tenant';
-import membersApi from '@/routes/api/v1/tenant/members';
-import { type BreadcrumbItem, type SharedData } from '@/types';
-import { Head, usePage } from '@inertiajs/react';
-import { Plus, Search, Users } from 'lucide-react';
-import { useEffect, useState } from 'react';
 import { MemberInviteDialog } from '@/components/tenant/member-invite-dialog';
 import { MemberListTable } from '@/components/tenant/member-list-table';
 import { MemberRoleEditDialog } from '@/components/tenant/member-role-edit-dialog';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import {
     Select,
@@ -18,7 +11,14 @@ import {
     SelectTrigger,
     SelectValue,
 } from '@/components/ui/select';
+import AppLayout from '@/layouts/app-layout';
 import { apiRequest, ensureCsrfCookie } from '@/lib/api-client';
+import membersApi from '@/routes/api/v1/tenant/members';
+import tenantRoutes from '@/routes/tenant';
+import { type BreadcrumbItem, type SharedData } from '@/types';
+import { Head, usePage } from '@inertiajs/react';
+import { Plus, Search, Users } from 'lucide-react';
+import { useEffect, useState } from 'react';
 
 type Member = {
     id: number;
@@ -34,9 +34,27 @@ type Member = {
 };
 
 type Organization = {
-    divisions: Array<{ id: number; name: string; slug: string; is_active: boolean }>;
-    departments: Array<{ id: number; division_id: number | null; name: string; slug: string; is_active: boolean }>;
-    teams: Array<{ id: number; division_id: number | null; department_id: number | null; name: string; slug: string; is_active: boolean }>;
+    divisions: Array<{
+        id: number;
+        name: string;
+        slug: string;
+        is_active: boolean;
+    }>;
+    departments: Array<{
+        id: number;
+        division_id: number | null;
+        name: string;
+        slug: string;
+        is_active: boolean;
+    }>;
+    teams: Array<{
+        id: number;
+        division_id: number | null;
+        department_id: number | null;
+        name: string;
+        slug: string;
+        is_active: boolean;
+    }>;
 };
 
 interface PageProps {
@@ -55,7 +73,9 @@ interface PageProps {
 
 export default function MemberManagementPage(props: PageProps) {
     const { tenant } = usePage<SharedData>().props;
-    const companySlug = (tenant?.company as { slug?: string } | undefined)?.slug ?? props.company.slug;
+    const companySlug =
+        (tenant?.company as { slug?: string } | undefined)?.slug ??
+        props.company.slug;
 
     const [members, setMembers] = useState<Member[]>([]);
     const [loading, setLoading] = useState(true);
@@ -102,7 +122,10 @@ export default function MemberManagementPage(props: PageProps) {
                 params.append('keyword', filters.keyword.trim());
             }
 
-            const url = membersApi.index.url({ company: companySlug }) + '?' + params.toString();
+            const url =
+                membersApi.index.url({ company: companySlug }) +
+                '?' +
+                params.toString();
             const response = await apiRequest(url, {
                 method: 'GET',
             });
@@ -112,16 +135,18 @@ export default function MemberManagementPage(props: PageProps) {
             }
 
             const data = await response.json();
-            
+
             // 確保 members 是數組
-            const membersArray = Array.isArray(data.members) ? data.members : [];
+            const membersArray = Array.isArray(data.members)
+                ? data.members
+                : [];
             const paginationData = data.pagination || {
                 current_page: 1,
                 last_page: 1,
                 per_page: 15,
                 total: 0,
             };
-            
+
             setMembers(membersArray);
             setPagination(paginationData);
         } catch (error) {
@@ -134,7 +159,14 @@ export default function MemberManagementPage(props: PageProps) {
     useEffect(() => {
         fetchMembers(1);
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [filters.role, filters.division_id, filters.department_id, filters.team_id, filters.keyword, companySlug]);
+    }, [
+        filters.role,
+        filters.division_id,
+        filters.department_id,
+        filters.team_id,
+        filters.keyword,
+        companySlug,
+    ]);
 
     const handleInviteSuccess = () => {
         setInviteDialogOpen(false);
@@ -168,22 +200,27 @@ export default function MemberManagementPage(props: PageProps) {
                         <h1 className="text-3xl font-bold tracking-tight text-foreground">
                             成員管理
                         </h1>
-                        <p className="text-sm text-muted-foreground mt-1">
+                        <p className="mt-1 text-sm text-muted-foreground">
                             管理團隊成員、邀請新成員並調整角色與權限
                         </p>
                     </div>
                     <Button
                         onClick={() => setInviteDialogOpen(true)}
-                        disabled={props.company.current_user_count >= props.company.user_limit}
+                        disabled={
+                            props.company.current_user_count >=
+                            props.company.user_limit
+                        }
                     >
                         <Plus className="mr-2 h-4 w-4" />
                         邀請成員
                     </Button>
                 </div>
 
-                {props.company.current_user_count >= props.company.user_limit && (
+                {props.company.current_user_count >=
+                    props.company.user_limit && (
                     <div className="rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800 dark:border-amber-800 dark:bg-amber-500/10 dark:text-amber-400">
-                        成員數已達上限（{props.company.current_user_count}/{props.company.user_limit}），無法邀請新成員。
+                        成員數已達上限（{props.company.current_user_count}/
+                        {props.company.user_limit}），無法邀請新成員。
                     </div>
                 )}
 
@@ -199,12 +236,15 @@ export default function MemberManagementPage(props: PageProps) {
                             <div className="grid gap-4 md:grid-cols-5">
                                 <div className="md:col-span-2">
                                     <div className="relative">
-                                        <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                                        <Search className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                                         <Input
                                             placeholder="搜尋姓名或 Email..."
                                             value={filters.keyword}
                                             onChange={(e) =>
-                                                setFilters({ ...filters, keyword: e.target.value })
+                                                setFilters({
+                                                    ...filters,
+                                                    keyword: e.target.value,
+                                                })
                                             }
                                             className="pl-9"
                                         />
@@ -213,21 +253,33 @@ export default function MemberManagementPage(props: PageProps) {
                                 <Select
                                     value={filters.role || 'all'}
                                     onValueChange={(value) =>
-                                        setFilters({ ...filters, role: value === 'all' ? 'all' : value })
+                                        setFilters({
+                                            ...filters,
+                                            role:
+                                                value === 'all' ? 'all' : value,
+                                        })
                                     }
                                 >
                                     <SelectTrigger>
                                         <SelectValue placeholder="所有角色" />
                                     </SelectTrigger>
                                     <SelectContent>
-                                        <SelectItem value="all">所有角色</SelectItem>
+                                        <SelectItem value="all">
+                                            所有角色
+                                        </SelectItem>
                                         {props.roles.available.map((role) => (
                                             <SelectItem key={role} value={role}>
-                                                {role === 'company_admin' && '公司管理者'}
-                                                {role === 'division_lead' && '事業群主管'}
-                                                {role === 'department_manager' && '部門主管'}
-                                                {role === 'team_lead' && '小組主管'}
-                                                {role === 'member' && '一般成員'}
+                                                {role === 'company_admin' &&
+                                                    '公司管理者'}
+                                                {role === 'division_lead' &&
+                                                    '事業群主管'}
+                                                {role ===
+                                                    'department_manager' &&
+                                                    '部門主管'}
+                                                {role === 'team_lead' &&
+                                                    '小組主管'}
+                                                {role === 'member' &&
+                                                    '一般成員'}
                                             </SelectItem>
                                         ))}
                                     </SelectContent>
@@ -235,18 +287,29 @@ export default function MemberManagementPage(props: PageProps) {
                                 <Select
                                     value={filters.division_id || 'all'}
                                     onValueChange={(value) =>
-                                        setFilters({ ...filters, division_id: value === 'all' ? 'all' : value, department_id: 'all', team_id: 'all' })
+                                        setFilters({
+                                            ...filters,
+                                            division_id:
+                                                value === 'all' ? 'all' : value,
+                                            department_id: 'all',
+                                            team_id: 'all',
+                                        })
                                     }
                                 >
                                     <SelectTrigger>
                                         <SelectValue placeholder="所有事業群" />
                                     </SelectTrigger>
                                     <SelectContent>
-                                        <SelectItem value="all">所有事業群</SelectItem>
+                                        <SelectItem value="all">
+                                            所有事業群
+                                        </SelectItem>
                                         {props.organization.divisions
                                             .filter((d) => d.is_active)
                                             .map((division) => (
-                                                <SelectItem key={division.id} value={division.id.toString()}>
+                                                <SelectItem
+                                                    key={division.id}
+                                                    value={division.id.toString()}
+                                                >
                                                     {division.name}
                                                 </SelectItem>
                                             ))}
@@ -255,19 +318,40 @@ export default function MemberManagementPage(props: PageProps) {
                                 <Select
                                     value={filters.department_id || 'all'}
                                     onValueChange={(value) =>
-                                        setFilters({ ...filters, department_id: value === 'all' ? 'all' : value, team_id: 'all' })
+                                        setFilters({
+                                            ...filters,
+                                            department_id:
+                                                value === 'all' ? 'all' : value,
+                                            team_id: 'all',
+                                        })
                                     }
-                                    disabled={!filters.division_id || filters.division_id === 'all'}
+                                    disabled={
+                                        !filters.division_id ||
+                                        filters.division_id === 'all'
+                                    }
                                 >
                                     <SelectTrigger>
                                         <SelectValue placeholder="所有部門" />
                                     </SelectTrigger>
                                     <SelectContent>
-                                        <SelectItem value="all">所有部門</SelectItem>
+                                        <SelectItem value="all">
+                                            所有部門
+                                        </SelectItem>
                                         {props.organization.departments
-                                            .filter((d) => d.is_active && (!filters.division_id || d.division_id === Number(filters.division_id)))
+                                            .filter(
+                                                (d) =>
+                                                    d.is_active &&
+                                                    (!filters.division_id ||
+                                                        d.division_id ===
+                                                            Number(
+                                                                filters.division_id,
+                                                            )),
+                                            )
                                             .map((department) => (
-                                                <SelectItem key={department.id} value={department.id.toString()}>
+                                                <SelectItem
+                                                    key={department.id}
+                                                    value={department.id.toString()}
+                                                >
                                                     {department.name}
                                                 </SelectItem>
                                             ))}

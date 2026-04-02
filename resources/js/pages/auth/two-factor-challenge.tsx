@@ -25,16 +25,14 @@ export default function TwoFactorChallenge() {
         if (showRecoveryInput) {
             return {
                 title: '復原碼',
-                description:
-                    '請輸入您的緊急復原碼之一以確認存取您的帳號。',
+                description: '請輸入您的緊急復原碼之一以確認存取您的帳號。',
                 toggleText: '使用驗證碼登入',
             };
         }
 
         return {
             title: '驗證碼',
-            description:
-                '請輸入您的驗證器應用程式提供的驗證碼。',
+            description: '請輸入您的驗證器應用程式提供的驗證碼。',
             toggleText: '使用復原碼登入',
         };
     }, [showRecoveryInput]);

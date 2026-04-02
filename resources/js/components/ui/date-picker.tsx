@@ -29,6 +29,10 @@ interface DatePickerProps {
     className?: string;
     /** 輸入框 ID */
     id?: string;
+    /** 假日日期（YYYY-MM-DD） */
+    holidayDates?: string[];
+    /** 補班日日期（YYYY-MM-DD） */
+    workdayOverrideDates?: string[];
 }
 
 export function DatePicker({
@@ -41,6 +45,8 @@ export function DatePicker({
     disabled = false,
     className,
     id,
+    holidayDates = [],
+    workdayOverrideDates = [],
 }: DatePickerProps) {
     const [open, setOpen] = React.useState(false);
 
@@ -48,6 +54,8 @@ export function DatePicker({
     const selectedDate = value ? parseISO(value) : undefined;
     const minDateObj = minDate ? parseISO(minDate) : undefined;
     const maxDateObj = maxDate ? parseISO(maxDate) : undefined;
+    const holidayDateObjs = holidayDates.map((date) => parseISO(date));
+    const workdayOverrideDateObjs = workdayOverrideDates.map((date) => parseISO(date));
     
     // 計算當週所在的月份（用於顯示當週）
     const currentMonth = weekRange ? parseISO(weekRange.startDate) : (selectedDate || new Date());
@@ -96,6 +104,24 @@ export function DatePicker({
             '!bg-blue-100/90 !text-blue-900 hover:!bg-blue-200 !font-semibold',
             'dark:!bg-blue-900/60 dark:!text-blue-100 dark:hover:!bg-blue-800/70',
             '!ring-2 !ring-blue-400/40 dark:!ring-blue-500/50'
+        );
+    }
+
+    if (holidayDateObjs.length > 0) {
+        modifiers.holiday = holidayDateObjs;
+        modifiersClassNames.holiday = cn(
+            '!bg-rose-50 !text-rose-700 hover:!bg-rose-100 !font-semibold',
+            'dark:!bg-rose-950/40 dark:!text-rose-300 dark:hover:!bg-rose-900/50',
+            '!ring-1 !ring-rose-300/70 dark:!ring-rose-700/70',
+        );
+    }
+
+    if (workdayOverrideDateObjs.length > 0) {
+        modifiers.workdayOverride = workdayOverrideDateObjs;
+        modifiersClassNames.workdayOverride = cn(
+            '!bg-emerald-50 !text-emerald-700 hover:!bg-emerald-100 !font-semibold',
+            'dark:!bg-emerald-950/40 dark:!text-emerald-300 dark:hover:!bg-emerald-900/50',
+            '!ring-1 !ring-emerald-300/70 dark:!ring-emerald-700/70',
         );
     }
 

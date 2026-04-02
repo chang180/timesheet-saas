@@ -7,6 +7,8 @@ use App\Models\Company;
 use App\Models\WeeklyReport;
 use App\Models\WeeklyReportItem;
 use App\Services\AuditService;
+use App\Services\HolidayCacheService;
+use App\Services\HolidaySyncService;
 use Carbon\CarbonImmutable;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -15,6 +17,10 @@ use Inertia\Response;
 
 class WeeklyReportController extends Controller
 {
+    public function __construct(
+        private HolidayCacheService $holidayCacheService
+    ) {}
+
     public function index(Request $request, Company $company): Response|RedirectResponse
     {
         $user = $request->user();
@@ -170,6 +176,11 @@ class WeeklyReportController extends Controller
             ],
             'weekDateRange' => $weekDateRange,
             'nextWeekDateRange' => $nextWeekDateRange,
+            'holidayCalendar' => $this->buildHolidayCalendarProps(
+                $year,
+                $week,
+                $company->timezone ?? config('app.timezone'),
+            ),
             'prefill' => $prefill,
         ]);
     }
@@ -276,6 +287,11 @@ class WeeklyReportController extends Controller
             ],
             'weekDateRange' => $weekDateRange,
             'nextWeekDateRange' => $nextWeekDateRange,
+            'holidayCalendar' => $this->buildHolidayCalendarProps(
+                $weeklyReport->work_year,
+                $weeklyReport->work_week,
+                $company->timezone ?? config('app.timezone'),
+            ),
             'prefill' => [
                 'currentWeek' => [],
                 'nextWeek' => [],
@@ -422,6 +438,11 @@ class WeeklyReportController extends Controller
             ],
             'weekDateRange' => $weekDateRange,
             'nextWeekDateRange' => $nextWeekDateRange,
+            'holidayCalendar' => $this->buildHolidayCalendarProps(
+                $weeklyReport->work_year,
+                $weeklyReport->work_week,
+                $company->timezone ?? config('app.timezone'),
+            ),
         ]);
     }
 
@@ -611,6 +632,60 @@ class WeeklyReportController extends Controller
             'startDate' => $startDate,
             'endDate' => $endDate,
         ];
+    }
+
+    /**
+     * @return array{
+     *     currentWeek: array{year:int,week:int,holidays:array<int, array<string, mixed>>},
+     *     nextWeek: array{year:int,week:int,holidays:array<int, array<string, mixed>>},
+     *     source: array{name:string,dataset_url:string,api_url:string,provider:string}
+     * }
+     */
+    private function buildHolidayCalendarProps(int $year, int $week, string $timezone): array
+    {
+        $currentWeekDate = CarbonImmutable::now($timezone)->setISODate($year, $week);
+        $currentWeekYear = (int) $currentWeekDate->isoFormat('GGGG');
+        $currentWeekNumber = (int) $currentWeekDate->isoWeek();
+        $nextWeekDate = $currentWeekDate->addWeek();
+        $nextWeekYear = (int) $nextWeekDate->isoFormat('GGGG');
+        $nextWeekNumber = (int) $nextWeekDate->isoWeek();
+
+        return [
+            'currentWeek' => [
+                'year' => $currentWeekYear,
+                'week' => $currentWeekNumber,
+                'holidays' => $this->formatHolidayProps(
+                    $this->holidayCacheService->getHolidaysForWeek($currentWeekYear, $currentWeekNumber)->all()
+                ),
+            ],
+            'nextWeek' => [
+                'year' => $nextWeekYear,
+                'week' => $nextWeekNumber,
+                'holidays' => $this->formatHolidayProps(
+                    $this->holidayCacheService->getHolidaysForWeek($nextWeekYear, $nextWeekNumber)->all()
+                ),
+            ],
+            'source' => HolidaySyncService::sourceMetadata(),
+        ];
+    }
+
+    /**
+     * @param  array<int, array<string, mixed>>  $holidays
+     * @return array<int, array<string, mixed>>
+     */
+    private function formatHolidayProps(array $holidays): array
+    {
+        return collect($holidays)
+            ->map(fn (array $holiday) => [
+                'date' => CarbonImmutable::parse($holiday['holiday_date'])->format('Y-m-d'),
+                'name' => $holiday['name'],
+                'is_holiday' => (bool) $holiday['is_holiday'],
+                'category' => $holiday['category'],
+                'note' => $holiday['note'],
+                'is_workday_override' => (bool) $holiday['is_workday_override'],
+            ])
+            ->values()
+            ->all();
     }
 
     /**

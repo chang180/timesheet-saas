@@ -60,4 +60,3 @@ class WeeklyReportItemFactory extends Factory
         ]);
     }
 }
-

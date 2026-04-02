@@ -53,7 +53,9 @@ export default function TwoFactor({
                         <div className="flex flex-col items-start justify-start space-y-4">
                             <Badge variant="default">已啟用</Badge>
                             <p className="text-muted-foreground">
-                                啟用雙因素驗證後，登入時系統會要求您輸入一個安全、隨機的 PIN 碼，您可以從手機上支援 TOTP 的應用程式取得此 PIN 碼。
+                                啟用雙因素驗證後，登入時系統會要求您輸入一個安全、隨機的
+                                PIN 碼，您可以從手機上支援 TOTP 的應用程式取得此
+                                PIN 碼。
                             </p>
 
                             <TwoFactorRecoveryCodes
@@ -80,7 +82,9 @@ export default function TwoFactor({
                         <div className="flex flex-col items-start justify-start space-y-4">
                             <Badge variant="destructive">已停用</Badge>
                             <p className="text-muted-foreground">
-                                當您啟用雙因素驗證時，登入時系統會要求您輸入一個安全的 PIN 碼。此 PIN 碼可以從手機上支援 TOTP 的應用程式取得。
+                                當您啟用雙因素驗證時，登入時系統會要求您輸入一個安全的
+                                PIN 碼。此 PIN 碼可以從手機上支援 TOTP
+                                的應用程式取得。
                             </p>
 
                             <div>

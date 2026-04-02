@@ -1,4 +1,6 @@
+import InputError from '@/components/input-error';
 import { Button } from '@/components/ui/button';
+import { Checkbox } from '@/components/ui/checkbox';
 import {
     Dialog,
     DialogContent,
@@ -9,9 +11,6 @@ import {
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
-import InputError from '@/components/input-error';
-import { Checkbox } from '@/components/ui/checkbox';
 import {
     Select,
     SelectContent,
@@ -19,15 +18,34 @@ import {
     SelectTrigger,
     SelectValue,
 } from '@/components/ui/select';
-import { useEffect } from 'react';
-import { useForm } from '@inertiajs/react';
+import { Textarea } from '@/components/ui/textarea';
 import tenantRoutes from '@/routes/tenant';
+import { useForm } from '@inertiajs/react';
+import { useEffect } from 'react';
 import { toast } from 'sonner';
 
 type Organization = {
-    divisions: Array<{ id: number; name: string; slug: string; is_active: boolean }>;
-    departments: Array<{ id: number; division_id: number | null; name: string; slug: string; is_active: boolean }>;
-    teams: Array<{ id: number; division_id: number | null; department_id: number | null; name: string; slug: string; is_active: boolean }>;
+    divisions: Array<{
+        id: number;
+        name: string;
+        slug: string;
+        is_active: boolean;
+    }>;
+    departments: Array<{
+        id: number;
+        division_id: number | null;
+        name: string;
+        slug: string;
+        is_active: boolean;
+    }>;
+    teams: Array<{
+        id: number;
+        division_id: number | null;
+        department_id: number | null;
+        name: string;
+        slug: string;
+        is_active: boolean;
+    }>;
 };
 
 interface TeamFormDialogProps {
@@ -98,7 +116,11 @@ export function TeamFormDialog({
     }, [open, team, selectedDepartmentId, selectedDivisionId]);
 
     const availableDepartments = organization.departments.filter(
-        (d) => d.is_active && (form.data.division_id === 'none' || !form.data.division_id || d.division_id === Number(form.data.division_id)),
+        (d) =>
+            d.is_active &&
+            (form.data.division_id === 'none' ||
+                !form.data.division_id ||
+                d.division_id === Number(form.data.division_id)),
     );
 
     const handleSubmit = (e: React.FormEvent) => {
@@ -111,21 +133,33 @@ export function TeamFormDialog({
             description: form.data.description || undefined,
             sort_order: form.data.sort_order,
             is_active: form.data.is_active,
-            division_id: form.data.division_id && form.data.division_id !== 'none' ? Number(form.data.division_id) : undefined,
-            department_id: form.data.department_id && form.data.department_id !== 'none' ? Number(form.data.department_id) : undefined,
+            division_id:
+                form.data.division_id && form.data.division_id !== 'none'
+                    ? Number(form.data.division_id)
+                    : undefined,
+            department_id:
+                form.data.department_id && form.data.department_id !== 'none'
+                    ? Number(form.data.department_id)
+                    : undefined,
         };
 
         form.transform(() => submitData);
 
         if (team) {
-            form.patch(tenantRoutes.teams.update.url({ company: companySlug, team: team.id }), {
-                preserveScroll: true,
-                onSuccess: () => {
-                    toast.success('小組已更新');
-                    onOpenChange(false);
-                    // Inertia 會自動重新載入頁面，不需要手動調用 onSuccess
+            form.patch(
+                tenantRoutes.teams.update.url({
+                    company: companySlug,
+                    team: team.id,
+                }),
+                {
+                    preserveScroll: true,
+                    onSuccess: () => {
+                        toast.success('小組已更新');
+                        onOpenChange(false);
+                        // Inertia 會自動重新載入頁面，不需要手動調用 onSuccess
+                    },
                 },
-            });
+            );
         } else {
             form.post(tenantRoutes.teams.store.url({ company: companySlug }), {
                 preserveScroll: true,
@@ -169,7 +203,10 @@ export function TeamFormDialog({
                                     {organization.divisions
                                         .filter((d) => d.is_active)
                                         .map((division) => (
-                                            <SelectItem key={division.id} value={division.id.toString()}>
+                                            <SelectItem
+                                                key={division.id}
+                                                value={division.id.toString()}
+                                            >
                                                 {division.name}
                                             </SelectItem>
                                         ))}
@@ -184,8 +221,14 @@ export function TeamFormDialog({
                             <Label htmlFor="team-department">部門</Label>
                             <Select
                                 value={form.data.department_id}
-                                onValueChange={(value) => form.setData('department_id', value)}
-                                disabled={form.processing || !form.data.division_id || form.data.division_id === 'none'}
+                                onValueChange={(value) =>
+                                    form.setData('department_id', value)
+                                }
+                                disabled={
+                                    form.processing ||
+                                    !form.data.division_id ||
+                                    form.data.division_id === 'none'
+                                }
                             >
                                 <SelectTrigger id="team-department">
                                     <SelectValue placeholder="選擇部門" />
@@ -193,7 +236,10 @@ export function TeamFormDialog({
                                 <SelectContent>
                                     <SelectItem value="none">無</SelectItem>
                                     {availableDepartments.map((department) => (
-                                        <SelectItem key={department.id} value={department.id.toString()}>
+                                        <SelectItem
+                                            key={department.id}
+                                            value={department.id.toString()}
+                                        >
                                             {department.name}
                                         </SelectItem>
                                     ))}
@@ -210,7 +256,9 @@ export function TeamFormDialog({
                         <Input
                             id="team-name"
                             value={form.data.name}
-                            onChange={(e) => form.setData('name', e.target.value)}
+                            onChange={(e) =>
+                                form.setData('name', e.target.value)
+                            }
                             required
                             disabled={form.processing}
                         />
@@ -222,7 +270,9 @@ export function TeamFormDialog({
                         <Input
                             id="team-slug"
                             value={form.data.slug}
-                            onChange={(e) => form.setData('slug', e.target.value)}
+                            onChange={(e) =>
+                                form.setData('slug', e.target.value)
+                            }
                             disabled={form.processing || !!team}
                             placeholder="自動產生"
                         />
@@ -234,7 +284,9 @@ export function TeamFormDialog({
                         <Textarea
                             id="team-description"
                             value={form.data.description}
-                            onChange={(e) => form.setData('description', e.target.value)}
+                            onChange={(e) =>
+                                form.setData('description', e.target.value)
+                            }
                             disabled={form.processing}
                             rows={3}
                         />
@@ -248,7 +300,12 @@ export function TeamFormDialog({
                             type="number"
                             min="0"
                             value={form.data.sort_order}
-                            onChange={(e) => form.setData('sort_order', Number(e.target.value))}
+                            onChange={(e) =>
+                                form.setData(
+                                    'sort_order',
+                                    Number(e.target.value),
+                                )
+                            }
                             disabled={form.processing}
                         />
                         <InputError message={form.errors.sort_order} />
@@ -263,7 +320,10 @@ export function TeamFormDialog({
                             }
                             disabled={form.processing}
                         />
-                        <Label htmlFor="team-is-active" className="cursor-pointer">
+                        <Label
+                            htmlFor="team-is-active"
+                            className="cursor-pointer"
+                        >
                             啟用
                         </Label>
                     </div>

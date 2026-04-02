@@ -1,11 +1,11 @@
+import InputError from '@/components/input-error';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import InputError from '@/components/input-error';
-import { Palette, Image as ImageIcon } from 'lucide-react';
-import { useForm } from '@inertiajs/react';
 import settingsRoutes from '@/routes/tenant/settings';
+import { useForm } from '@inertiajs/react';
+import { Image as ImageIcon, Palette } from 'lucide-react';
 
 interface BrandingSettingsCardProps {
     companySlug: string;
@@ -55,9 +55,7 @@ export function BrandingSettingsCard({
                 <form onSubmit={handleSubmit} className="space-y-6">
                     <div className="grid gap-6 md:grid-cols-2">
                         <div className="space-y-2">
-                            <Label htmlFor="brand-color">
-                                品牌主色
-                            </Label>
+                            <Label htmlFor="brand-color">品牌主色</Label>
                             <div className="flex items-center gap-3">
                                 <Input
                                     id="brand-color"
@@ -94,12 +92,10 @@ export function BrandingSettingsCard({
                         </div>
 
                         <div className="space-y-2">
-                            <Label htmlFor="brand-logo">
-                                Logo URL
-                            </Label>
+                            <Label htmlFor="brand-logo">Logo URL</Label>
                             <div className="flex items-center gap-3">
                                 {data.branding.logo && (
-                                    <div className="h-12 w-12 rounded border border-border overflow-hidden bg-muted flex items-center justify-center">
+                                    <div className="flex h-12 w-12 items-center justify-center overflow-hidden rounded border border-border bg-muted">
                                         <ImageIcon className="h-6 w-6 text-muted-foreground" />
                                     </div>
                                 )}

@@ -2,9 +2,11 @@
 
 use App\Models\Company;
 use App\Models\CompanySetting;
+use App\Models\Holiday;
 use App\Models\User;
 use App\Models\WeeklyReport;
 use App\Models\WeeklyReportItem;
+use Carbon\CarbonImmutable;
 use Inertia\Testing\AssertableInertia;
 
 use function Pest\Laravel\actingAs;
@@ -17,6 +19,49 @@ function createUserWithCompany(array $attributes = [], array $companyAttributes 
     return User::factory()->create(array_merge([
         'company_id' => $company->id,
     ], $attributes));
+}
+
+function seedMinimalHolidayCalendar(int $year): void
+{
+    Holiday::query()->updateOrCreate(
+        ['holiday_date' => "{$year}-01-01"],
+        [
+            'name' => '元旦',
+            'is_holiday' => true,
+            'category' => Holiday::CATEGORY_NATIONAL,
+            'note' => null,
+            'source' => Holiday::SOURCE_NTPC,
+            'is_workday_override' => false,
+            'iso_week' => CarbonImmutable::parse("{$year}-01-01")->isoWeek(),
+            'iso_week_year' => CarbonImmutable::parse("{$year}-01-01")->isoWeekYear(),
+        ],
+    );
+    Holiday::query()->updateOrCreate(
+        ['holiday_date' => "{$year}-02-28"],
+        [
+            'name' => '和平紀念日',
+            'is_holiday' => true,
+            'category' => Holiday::CATEGORY_NATIONAL,
+            'note' => null,
+            'source' => Holiday::SOURCE_NTPC,
+            'is_workday_override' => false,
+            'iso_week' => CarbonImmutable::parse("{$year}-02-28")->isoWeek(),
+            'iso_week_year' => CarbonImmutable::parse("{$year}-02-28")->isoWeekYear(),
+        ],
+    );
+    Holiday::query()->updateOrCreate(
+        ['holiday_date' => "{$year}-10-10"],
+        [
+            'name' => '國慶日',
+            'is_holiday' => true,
+            'category' => Holiday::CATEGORY_NATIONAL,
+            'note' => null,
+            'source' => Holiday::SOURCE_NTPC,
+            'is_workday_override' => false,
+            'iso_week' => CarbonImmutable::parse("{$year}-10-10")->isoWeek(),
+            'iso_week_year' => CarbonImmutable::parse("{$year}-10-10")->isoWeekYear(),
+        ],
+    );
 }
 
 it('redirects manager to settings when company not onboarded', function () {
@@ -51,6 +96,7 @@ it('renders weekly report list with company data', function () {
 it('prefills create page with previous next week plans', function () {
     $user = createUserWithCompany(['role' => 'member'], ['onboarded_at' => now()]);
     $company = $user->company;
+    seedMinimalHolidayCalendar((int) now()->isoFormat('GGGG'));
 
     $response = actingAs($user)->get(route('tenant.weekly-reports.create', $company));
 
@@ -94,6 +140,34 @@ it('prefills create page with previous next week plans', function () {
             ->where('prefill.currentWeek.0.planned_hours', 5) // 預計工時從上週帶入
             ->where('prefill.currentWeek.0.started_at', fn (string $value) => str_starts_with($value, '2025-01-01'))
             ->where('prefill.currentWeek.0.ended_at', fn (string $value) => str_starts_with($value, '2025-01-05'))
+        );
+});
+
+it('loads holiday calendar data into the weekly form', function () {
+    $user = createUserWithCompany(['role' => 'member'], ['onboarded_at' => now()]);
+    $company = $user->company;
+
+    $currentWeekDate = CarbonImmutable::now()->setISODate((int) now()->isoFormat('GGGG'), (int) now()->isoWeek());
+    $currentWeekYear = (int) $currentWeekDate->isoFormat('GGGG');
+    $nextWeekYear = (int) $currentWeekDate->addWeek()->isoFormat('GGGG');
+
+    seedMinimalHolidayCalendar($currentWeekYear);
+    if ($nextWeekYear !== $currentWeekYear) {
+        seedMinimalHolidayCalendar($nextWeekYear);
+    }
+
+    Holiday::factory()->forDate($currentWeekDate->startOfWeek()->addDays(2))->create([
+        'name' => '測試假日',
+    ]);
+
+    $response = actingAs($user)->get(route('tenant.weekly-reports.create', $company));
+
+    $response->assertOk()
+        ->assertInertia(fn (AssertableInertia $page) => $page
+            ->component('weekly/form')
+            ->where('holidayCalendar.source.name', '政府行政機關辦公日曆表')
+            ->where('holidayCalendar.source.dataset_url', 'https://data.gov.tw/dataset/123662')
+            ->where('holidayCalendar.currentWeek.holidays.0.name', '測試假日')
         );
 });
 

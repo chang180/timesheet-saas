@@ -52,7 +52,10 @@ export function WelcomeShowcase() {
                                 <span className="text-sm font-medium text-gray-500 dark:text-gray-400">
                                     UX 工作坊
                                 </span>
-                                <Badge variant="outline" className="border-amber-500/60 text-amber-600">
+                                <Badge
+                                    variant="outline"
+                                    className="border-amber-500/60 text-amber-600"
+                                >
                                     進行中
                                 </Badge>
                             </div>
@@ -98,7 +101,8 @@ export function WelcomeShowcase() {
                                 </p>
                             </div>
                             <div className="rounded-lg bg-sky-500/10 p-3 text-xs text-sky-700 dark:bg-sky-500/20 dark:text-sky-100">
-                                Jira JIRA-1289 · 自動帶入預估工時 8h · 負責人：前端小組
+                                Jira JIRA-1289 · 自動帶入預估工時 8h ·
+                                負責人：前端小組
                             </div>
                         </CardContent>
                     </Card>
@@ -127,4 +131,3 @@ export function WelcomeShowcase() {
         </div>
     );
 }
-

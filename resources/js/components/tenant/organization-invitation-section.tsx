@@ -1,8 +1,14 @@
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import {
+    Card,
+    CardContent,
+    CardDescription,
+    CardHeader,
+    CardTitle,
+} from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
-import { Copy, Check, Link as LinkIcon, RefreshCw } from 'lucide-react';
+import { Check, Copy, Link as LinkIcon, RefreshCw } from 'lucide-react';
 import { useState } from 'react';
 import { toast } from 'sonner';
 
@@ -36,7 +42,8 @@ export function OrganizationInvitationSection({
         if (!token) {
             return null;
         }
-        const baseUrl = typeof window !== 'undefined' ? window.location.origin : '';
+        const baseUrl =
+            typeof window !== 'undefined' ? window.location.origin : '';
         return `${baseUrl}/app/${companySlug}/register/${token}/${organizationType}`;
     };
 
@@ -65,11 +72,14 @@ export function OrganizationInvitationSection({
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
-                        'Accept': 'application/json',
-                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
+                        Accept: 'application/json',
+                        'X-CSRF-TOKEN':
+                            document
+                                .querySelector('meta[name="csrf-token"]')
+                                ?.getAttribute('content') || '',
                     },
                     credentials: 'include',
-                }
+                },
             );
 
             if (!response.ok) {
@@ -83,7 +93,9 @@ export function OrganizationInvitationSection({
             toast.success('邀請連結已生成');
             onUpdate();
         } catch (error) {
-            toast.error(error instanceof Error ? error.message : '生成邀請連結失敗');
+            toast.error(
+                error instanceof Error ? error.message : '生成邀請連結失敗',
+            );
         } finally {
             setLoading(false);
         }
@@ -98,12 +110,15 @@ export function OrganizationInvitationSection({
                     method: 'PATCH',
                     headers: {
                         'Content-Type': 'application/json',
-                        'Accept': 'application/json',
-                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
+                        Accept: 'application/json',
+                        'X-CSRF-TOKEN':
+                            document
+                                .querySelector('meta[name="csrf-token"]')
+                                ?.getAttribute('content') || '',
                     },
                     credentials: 'include',
                     body: JSON.stringify({ enabled: checked }),
-                }
+                },
             );
 
             if (!response.ok) {
@@ -137,7 +152,8 @@ export function OrganizationInvitationSection({
                     邀請連結
                 </CardTitle>
                 <CardDescription>
-                    {organizationName} 的專屬邀請連結，使用此連結註冊的使用者將自動加入此層級
+                    {organizationName}{' '}
+                    的專屬邀請連結，使用此連結註冊的使用者將自動加入此層級
                 </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
@@ -163,22 +179,29 @@ export function OrganizationInvitationSection({
                 ) : (
                     <div className="space-y-4">
                         <div className="flex items-center justify-between">
-                            <Label htmlFor="invitation-enabled" className="text-sm font-medium">
+                            <Label
+                                htmlFor="invitation-enabled"
+                                className="text-sm font-medium"
+                            >
                                 啟用邀請連結
                             </Label>
                             <Checkbox
                                 id="invitation-enabled"
                                 checked={enabled}
-                                onCheckedChange={(checked) => handleToggle(checked === true)}
+                                onCheckedChange={(checked) =>
+                                    handleToggle(checked === true)
+                                }
                                 disabled={loading}
                             />
                         </div>
 
                         {enabled && invitationUrl && (
                             <div className="space-y-2">
-                                <Label className="text-sm font-medium">邀請連結 URL</Label>
+                                <Label className="text-sm font-medium">
+                                    邀請連結 URL
+                                </Label>
                                 <div className="flex items-center gap-2">
-                                    <div className="flex-1 rounded-md border bg-muted px-3 py-2 text-sm font-mono text-muted-foreground break-all">
+                                    <div className="flex-1 rounded-md border bg-muted px-3 py-2 font-mono text-sm break-all text-muted-foreground">
                                         {invitationUrl}
                                     </div>
                                     <Button
@@ -212,4 +235,3 @@ export function OrganizationInvitationSection({
         </Card>
     );
 }
-

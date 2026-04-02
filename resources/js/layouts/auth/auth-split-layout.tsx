@@ -1,5 +1,5 @@
-import AppearanceToggleDropdown from '@/components/appearance-dropdown';
 import AppLogoIcon from '@/components/app-logo-icon';
+import AppearanceToggleDropdown from '@/components/appearance-dropdown';
 import { home } from '@/routes';
 import { type SharedData } from '@/types';
 import { Link, usePage } from '@inertiajs/react';
@@ -25,7 +25,7 @@ export default function AuthSplitLayout({
             <p className="text-lg leading-7 text-white/90">
                 &ldquo;{quote.message}&rdquo;
             </p>
-            <footer className="text-xs uppercase tracking-wide text-neutral-300">
+            <footer className="text-xs tracking-wide text-neutral-300 uppercase">
                 {quote.author}
             </footer>
         </blockquote>
@@ -58,13 +58,9 @@ export default function AuthSplitLayout({
                         <AppearanceToggleDropdown />
                     </div>
                     {aside ? (
-                        <div className="mt-14 flex-1">
-                            {aside}
-                        </div>
+                        <div className="mt-14 flex-1">{aside}</div>
                     ) : (
-                        <div className="mt-auto">
-                            {defaultQuote}
-                        </div>
+                        <div className="mt-auto">{defaultQuote}</div>
                     )}
                 </div>
             </div>

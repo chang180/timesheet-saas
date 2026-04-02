@@ -18,8 +18,8 @@ import { Spinner } from '@/components/ui/spinner';
 // 使用簡單的按鈕切換，不使用 Tabs 組件
 import AuthSplitLayout from '@/layouts/auth/auth-split-layout';
 import { store as loginStore } from '@/routes/login';
-import { store as registerStore } from '@/routes/register';
 import { request } from '@/routes/password';
+import { store as registerStore } from '@/routes/register';
 import { Form, Head } from '@inertiajs/react';
 import {
     AlertCircle,
@@ -75,7 +75,8 @@ export default function TenantAuth({
                             </CardTitle>
                         </div>
                         <CardDescription className="text-amber-700 dark:text-amber-300">
-                            此公司的成員數已達上限（{currentUserCount}/{userLimit}），目前無法接受新成員註冊。
+                            此公司的成員數已達上限（{currentUserCount}/
+                            {userLimit}），目前無法接受新成員註冊。
                             請聯絡公司管理者以獲得邀請。
                         </CardDescription>
                     </CardHeader>
@@ -107,7 +108,7 @@ export default function TenantAuth({
                             type="button"
                             onClick={() => setActiveTab('register')}
                             disabled={!canRegister}
-                            className={`flex-1 rounded-md px-4 py-2 text-sm font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${
+                            className={`flex-1 rounded-md px-4 py-2 text-sm font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-50 ${
                                 activeTab === 'register'
                                     ? 'bg-background text-foreground shadow-sm'
                                     : 'text-muted-foreground hover:text-foreground'
@@ -119,136 +120,24 @@ export default function TenantAuth({
 
                     {activeTab === 'login' && (
                         <div className="mt-6">
-                        <Form
-                            {...loginStore.form()}
-                            resetOnSuccess={['password']}
-                            className="group"
-                        >
-                            {({ processing, errors }) => (
-                                <Card className="border border-border/70 bg-background/95 shadow-lg shadow-indigo-500/10 backdrop-blur transition group-hover:shadow-indigo-500/20 dark:border-border/40">
-                                    <CardHeader className="space-y-4">
-                                        <Badge className="w-fit gap-2 rounded-full bg-indigo-500/15 px-3 py-1 text-xs font-semibold text-indigo-500 dark:bg-indigo-500/20 dark:text-indigo-200">
-                                            <Sparkles className="size-3.5" />
-                                            {company.name} 成員登入
-                                        </Badge>
-                                        <CardTitle className="text-2xl font-semibold">
-                                            登入帳號
-                                        </CardTitle>
-                                        <CardDescription className="leading-relaxed">
-                                            僅限 {company.name} 的成員使用此頁面登入。其他公司的成員將無法登入。
-                                        </CardDescription>
-                                    </CardHeader>
-                                    <Separator className="mx-6" />
-                                    <CardContent className="space-y-5 pt-6">
-                                        <input
-                                            type="hidden"
-                                            name="company_slug"
-                                            value={company.slug}
-                                        />
-                                        <GoogleAuthButton
-                                            intent="login"
-                                            companySlug={company.slug}
-                                        />
-
-                                        <div className="relative">
-                                            <div className="absolute inset-0 flex items-center">
-                                                <Separator />
-                                            </div>
-                                            <div className="relative flex justify-center text-xs uppercase">
-                                                <span className="bg-background px-2 text-muted-foreground">
-                                                    或
-                                                </span>
-                                            </div>
-                                        </div>
-
-                                        <div className="space-y-4">
-                                            <div className="space-y-2">
-                                                <Label htmlFor="login-email">Email</Label>
-                                                <Input
-                                                    id="login-email"
-                                                    type="email"
-                                                    name="email"
-                                                    required
-                                                    autoFocus
-                                                    tabIndex={1}
-                                                    autoComplete="email"
-                                                    placeholder="name@company.com"
-                                                />
-                                                <InputError message={errors.email} />
-                                            </div>
-
-                                            <div className="space-y-2">
-                                                <div className="flex items-center">
-                                                    <Label htmlFor="login-password">密碼</Label>
-                                                    {canResetPassword && (
-                                                        <TextLink
-                                                            href={request()}
-                                                            className="ml-auto text-sm"
-                                                            tabIndex={5}
-                                                        >
-                                                            忘記密碼？
-                                                        </TextLink>
-                                                    )}
-                                                </div>
-                                                <Input
-                                                    id="login-password"
-                                                    type="password"
-                                                    name="password"
-                                                    required
-                                                    tabIndex={2}
-                                                    autoComplete="current-password"
-                                                    placeholder="輸入密碼"
-                                                />
-                                                <InputError message={errors.password} />
-                                            </div>
-
-                                            <div className="flex items-center gap-3">
-                                                <Checkbox
-                                                    id="remember"
-                                                    name="remember"
-                                                    tabIndex={3}
-                                                />
-                                                <Label htmlFor="remember">保持登入狀態</Label>
-                                            </div>
-                                        </div>
-
-                                        <Button
-                                            type="submit"
-                                            className="mt-2 w-full gap-2"
-                                            tabIndex={4}
-                                            disabled={processing}
-                                        >
-                                            {processing && <Spinner />}
-                                            {!processing && <LogIn className="size-4" />}
-                                            登入
-                                        </Button>
-                                    </CardContent>
-                                </Card>
-                            )}
-                        </Form>
-                        </div>
-                    )}
-
-                    {activeTab === 'register' && (
-                        <div className="mt-6">
-                        {canRegister ? (
                             <Form
-                                {...registerStore.form()}
-                                resetOnSuccess={['password', 'password_confirmation']}
+                                {...loginStore.form()}
+                                resetOnSuccess={['password']}
                                 className="group"
                             >
                                 {({ processing, errors }) => (
-                                    <Card className="border border-border/70 bg-background/95 shadow-lg shadow-purple-500/10 backdrop-blur transition group-hover:shadow-purple-500/20 dark:border-border/40">
+                                    <Card className="border border-border/70 bg-background/95 shadow-lg shadow-indigo-500/10 backdrop-blur transition group-hover:shadow-indigo-500/20 dark:border-border/40">
                                         <CardHeader className="space-y-4">
-                                            <Badge className="w-fit gap-2 rounded-full bg-purple-500/15 px-3 py-1 text-xs font-semibold text-purple-500 dark:bg-purple-500/20 dark:text-purple-200">
+                                            <Badge className="w-fit gap-2 rounded-full bg-indigo-500/15 px-3 py-1 text-xs font-semibold text-indigo-500 dark:bg-indigo-500/20 dark:text-indigo-200">
                                                 <Sparkles className="size-3.5" />
-                                                加入 {company.name}
+                                                {company.name} 成員登入
                                             </Badge>
                                             <CardTitle className="text-2xl font-semibold">
-                                                註冊帳號
+                                                登入帳號
                                             </CardTitle>
                                             <CardDescription className="leading-relaxed">
-                                                填寫以下資訊即可加入 {company.name} 團隊，開始使用週報系統。
+                                                僅限 {company.name}{' '}
+                                                的成員使用此頁面登入。其他公司的成員將無法登入。
                                             </CardDescription>
                                         </CardHeader>
                                         <Separator className="mx-6" />
@@ -259,7 +148,7 @@ export default function TenantAuth({
                                                 value={company.slug}
                                             />
                                             <GoogleAuthButton
-                                                intent="register"
+                                                intent="login"
                                                 companySlug={company.slug}
                                             />
 
@@ -276,112 +165,260 @@ export default function TenantAuth({
 
                                             <div className="space-y-4">
                                                 <div className="space-y-2">
-                                                    <Label htmlFor="register-name">姓名</Label>
+                                                    <Label htmlFor="login-email">
+                                                        Email
+                                                    </Label>
                                                     <Input
-                                                        id="register-name"
-                                                        type="text"
-                                                        required
-                                                        tabIndex={1}
-                                                        autoComplete="name"
-                                                        name="name"
-                                                        placeholder="請輸入姓名"
-                                                    />
-                                                    <InputError
-                                                        message={errors.name}
-                                                        className="mt-2"
-                                                    />
-                                                </div>
-
-                                                <div className="space-y-2">
-                                                    <Label htmlFor="register-email">Email</Label>
-                                                    <Input
-                                                        id="register-email"
+                                                        id="login-email"
                                                         type="email"
-                                                        required
-                                                        tabIndex={2}
-                                                        autoComplete="email"
                                                         name="email"
-                                                        placeholder="your@email.com"
+                                                        required
+                                                        autoFocus
+                                                        tabIndex={1}
+                                                        autoComplete="email"
+                                                        placeholder="name@company.com"
                                                     />
                                                     <InputError
                                                         message={errors.email}
-                                                        className="mt-2"
                                                     />
                                                 </div>
 
                                                 <div className="space-y-2">
-                                                    <Label htmlFor="register-password">密碼</Label>
+                                                    <div className="flex items-center">
+                                                        <Label htmlFor="login-password">
+                                                            密碼
+                                                        </Label>
+                                                        {canResetPassword && (
+                                                            <TextLink
+                                                                href={request()}
+                                                                className="ml-auto text-sm"
+                                                                tabIndex={5}
+                                                            >
+                                                                忘記密碼？
+                                                            </TextLink>
+                                                        )}
+                                                    </div>
                                                     <Input
-                                                        id="register-password"
+                                                        id="login-password"
                                                         type="password"
-                                                        required
-                                                        tabIndex={3}
-                                                        autoComplete="new-password"
                                                         name="password"
-                                                        placeholder="至少 8 個字元"
-                                                    />
-                                                    <InputError
-                                                        message={errors.password}
-                                                        className="mt-2"
-                                                    />
-                                                </div>
-
-                                                <div className="space-y-2">
-                                                    <Label htmlFor="register-password-confirmation">
-                                                        確認密碼
-                                                    </Label>
-                                                    <Input
-                                                        id="register-password-confirmation"
-                                                        type="password"
                                                         required
-                                                        tabIndex={4}
-                                                        autoComplete="new-password"
-                                                        name="password_confirmation"
-                                                        placeholder="再次輸入密碼"
+                                                        tabIndex={2}
+                                                        autoComplete="current-password"
+                                                        placeholder="輸入密碼"
                                                     />
                                                     <InputError
-                                                        message={errors.password_confirmation}
-                                                        className="mt-2"
+                                                        message={
+                                                            errors.password
+                                                        }
                                                     />
+                                                </div>
+
+                                                <div className="flex items-center gap-3">
+                                                    <Checkbox
+                                                        id="remember"
+                                                        name="remember"
+                                                        tabIndex={3}
+                                                    />
+                                                    <Label htmlFor="remember">
+                                                        保持登入狀態
+                                                    </Label>
                                                 </div>
                                             </div>
 
-                                            <Separator className="my-6" />
-
-                                            <div className="flex items-center justify-between">
-                                                <TextLink
-                                                    href="#"
-                                                    onClick={(e) => {
-                                                        e.preventDefault();
-                                                        setActiveTab('login');
-                                                    }}
-                                                >
-                                                    已有帳號？立即登入
-                                                </TextLink>
-
-                                                <Button
-                                                    type="submit"
-                                                    disabled={processing}
-                                                    className="group/button"
-                                                >
-                                                    {processing ? (
-                                                        <>
-                                                            <Spinner className="mr-2 h-4 w-4" />
-                                                            註冊中...
-                                                        </>
-                                                    ) : (
-                                                        <>
-                                                            註冊
-                                                            <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover/button:translate-x-1" />
-                                                        </>
-                                                    )}
-                                                </Button>
-                                            </div>
+                                            <Button
+                                                type="submit"
+                                                className="mt-2 w-full gap-2"
+                                                tabIndex={4}
+                                                disabled={processing}
+                                            >
+                                                {processing && <Spinner />}
+                                                {!processing && (
+                                                    <LogIn className="size-4" />
+                                                )}
+                                                登入
+                                            </Button>
                                         </CardContent>
                                     </Card>
                                 )}
                             </Form>
-                        ) : null}
+                        </div>
+                    )}
+
+                    {activeTab === 'register' && (
+                        <div className="mt-6">
+                            {canRegister ? (
+                                <Form
+                                    {...registerStore.form()}
+                                    resetOnSuccess={[
+                                        'password',
+                                        'password_confirmation',
+                                    ]}
+                                    className="group"
+                                >
+                                    {({ processing, errors }) => (
+                                        <Card className="border border-border/70 bg-background/95 shadow-lg shadow-purple-500/10 backdrop-blur transition group-hover:shadow-purple-500/20 dark:border-border/40">
+                                            <CardHeader className="space-y-4">
+                                                <Badge className="w-fit gap-2 rounded-full bg-purple-500/15 px-3 py-1 text-xs font-semibold text-purple-500 dark:bg-purple-500/20 dark:text-purple-200">
+                                                    <Sparkles className="size-3.5" />
+                                                    加入 {company.name}
+                                                </Badge>
+                                                <CardTitle className="text-2xl font-semibold">
+                                                    註冊帳號
+                                                </CardTitle>
+                                                <CardDescription className="leading-relaxed">
+                                                    填寫以下資訊即可加入{' '}
+                                                    {company.name}{' '}
+                                                    團隊，開始使用週報系統。
+                                                </CardDescription>
+                                            </CardHeader>
+                                            <Separator className="mx-6" />
+                                            <CardContent className="space-y-5 pt-6">
+                                                <input
+                                                    type="hidden"
+                                                    name="company_slug"
+                                                    value={company.slug}
+                                                />
+                                                <GoogleAuthButton
+                                                    intent="register"
+                                                    companySlug={company.slug}
+                                                />
+
+                                                <div className="relative">
+                                                    <div className="absolute inset-0 flex items-center">
+                                                        <Separator />
+                                                    </div>
+                                                    <div className="relative flex justify-center text-xs uppercase">
+                                                        <span className="bg-background px-2 text-muted-foreground">
+                                                            或
+                                                        </span>
+                                                    </div>
+                                                </div>
+
+                                                <div className="space-y-4">
+                                                    <div className="space-y-2">
+                                                        <Label htmlFor="register-name">
+                                                            姓名
+                                                        </Label>
+                                                        <Input
+                                                            id="register-name"
+                                                            type="text"
+                                                            required
+                                                            tabIndex={1}
+                                                            autoComplete="name"
+                                                            name="name"
+                                                            placeholder="請輸入姓名"
+                                                        />
+                                                        <InputError
+                                                            message={
+                                                                errors.name
+                                                            }
+                                                            className="mt-2"
+                                                        />
+                                                    </div>
+
+                                                    <div className="space-y-2">
+                                                        <Label htmlFor="register-email">
+                                                            Email
+                                                        </Label>
+                                                        <Input
+                                                            id="register-email"
+                                                            type="email"
+                                                            required
+                                                            tabIndex={2}
+                                                            autoComplete="email"
+                                                            name="email"
+                                                            placeholder="your@email.com"
+                                                        />
+                                                        <InputError
+                                                            message={
+                                                                errors.email
+                                                            }
+                                                            className="mt-2"
+                                                        />
+                                                    </div>
+
+                                                    <div className="space-y-2">
+                                                        <Label htmlFor="register-password">
+                                                            密碼
+                                                        </Label>
+                                                        <Input
+                                                            id="register-password"
+                                                            type="password"
+                                                            required
+                                                            tabIndex={3}
+                                                            autoComplete="new-password"
+                                                            name="password"
+                                                            placeholder="至少 8 個字元"
+                                                        />
+                                                        <InputError
+                                                            message={
+                                                                errors.password
+                                                            }
+                                                            className="mt-2"
+                                                        />
+                                                    </div>
+
+                                                    <div className="space-y-2">
+                                                        <Label htmlFor="register-password-confirmation">
+                                                            確認密碼
+                                                        </Label>
+                                                        <Input
+                                                            id="register-password-confirmation"
+                                                            type="password"
+                                                            required
+                                                            tabIndex={4}
+                                                            autoComplete="new-password"
+                                                            name="password_confirmation"
+                                                            placeholder="再次輸入密碼"
+                                                        />
+                                                        <InputError
+                                                            message={
+                                                                errors.password_confirmation
+                                                            }
+                                                            className="mt-2"
+                                                        />
+                                                    </div>
+                                                </div>
+
+                                                <Separator className="my-6" />
+
+                                                <div className="flex items-center justify-between">
+                                                    <TextLink
+                                                        href="#"
+                                                        onClick={(e) => {
+                                                            e.preventDefault();
+                                                            setActiveTab(
+                                                                'login',
+                                                            );
+                                                        }}
+                                                    >
+                                                        已有帳號？立即登入
+                                                    </TextLink>
+
+                                                    <Button
+                                                        type="submit"
+                                                        disabled={processing}
+                                                        className="group/button"
+                                                    >
+                                                        {processing ? (
+                                                            <>
+                                                                <Spinner className="mr-2 h-4 w-4" />
+                                                                註冊中...
+                                                            </>
+                                                        ) : (
+                                                            <>
+                                                                註冊
+                                                                <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover/button:translate-x-1" />
+                                                            </>
+                                                        )}
+                                                    </Button>
+                                                </div>
+                                            </CardContent>
+                                        </Card>
+                                    )}
+                                </Form>
+                            ) : null}
                         </div>
                     )}
                 </div>
@@ -403,8 +440,9 @@ function AuthAside() {
                 <h2 className="text-2xl font-bold tracking-tight">
                     為什麼選擇週報通？
                 </h2>
-                <p className="text-muted-foreground leading-relaxed">
-                    不論是 Jira 任務、幫忙教新人或臨時開會，都可以在這裡記錄。下次週會、主管想看某人的一週重點時，隨時叫得出來。
+                <p className="leading-relaxed text-muted-foreground">
+                    不論是 Jira
+                    任務、幫忙教新人或臨時開會，都可以在這裡記錄。下次週會、主管想看某人的一週重點時，隨時叫得出來。
                 </p>
             </div>
 

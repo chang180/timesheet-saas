@@ -108,7 +108,9 @@ export default function Login({
 
                                 <div className="space-y-2">
                                     <div className="flex items-center">
-                                        <Label htmlFor="password">Password</Label>
+                                        <Label htmlFor="password">
+                                            Password
+                                        </Label>
                                         {canResetPassword && (
                                             <TextLink
                                                 href={request()}
@@ -137,7 +139,9 @@ export default function Login({
                                         name="remember"
                                         tabIndex={3}
                                     />
-                                    <Label htmlFor="remember">保持登入狀態</Label>
+                                    <Label htmlFor="remember">
+                                        保持登入狀態
+                                    </Label>
                                 </div>
                             </div>
 
@@ -158,11 +162,16 @@ export default function Login({
                             <div className="grid gap-4 text-sm text-muted-foreground">
                                 <div className="flex items-center gap-3">
                                     <ShieldCheck className="size-4 text-emerald-500" />
-                                    <span>支援雙因素驗證與 IP 白名單，保障用戶資料安全。</span>
+                                    <span>
+                                        支援雙因素驗證與 IP
+                                        白名單，保障用戶資料安全。
+                                    </span>
                                 </div>
                                 <div className="flex items-center gap-3">
                                     <CalendarClock className="size-4 text-sky-500" />
-                                    <span>整合假日提醒與工時上限，避免提交錯誤。</span>
+                                    <span>
+                                        整合假日提醒與工時上限，避免提交錯誤。
+                                    </span>
                                 </div>
                             </div>
 
@@ -171,7 +180,10 @@ export default function Login({
                                     <p className="flex items-center gap-2">
                                         <Check className="size-4 text-indigo-500" />
                                         還不是成員？{' '}
-                                        <TextLink href={register()} tabIndex={5}>
+                                        <TextLink
+                                            href={register()}
+                                            tabIndex={5}
+                                        >
                                             建立週報帳號
                                         </TextLink>
                                     </p>
@@ -195,12 +207,12 @@ function LoginAside() {
     return (
         <div className="flex h-full flex-col justify-between space-y-12">
             <div className="space-y-8">
-                <div className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/5 px-4 py-1 text-xs font-semibold uppercase tracking-widest text白色/90 backdrop-blur">
+                <div className="text白色/90 inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/5 px-4 py-1 text-xs font-semibold tracking-widest uppercase backdrop-blur">
                     <ClipboardList className="size-3.5" />
                     週報一次搞定
                 </div>
                 <div className="space-y-3">
-                    <h2 className="text-3xl font-semibold leading-tight text-white">
+                    <h2 className="text-3xl leading-tight font-semibold text-white">
                         追蹤週報進度，就在這裡
                     </h2>
                     <p className="max-w-md text-sm leading-relaxed text-white/80">
@@ -208,39 +220,45 @@ function LoginAside() {
                     </p>
                 </div>
                 <dl className="grid gap-4 sm:grid-cols-3">
-                    <div className="rounded-2xl border border-white/15 bg白色/10 p-4 backdrop-blur">
-                        <dt className="text-xs uppercase tracking-wide text白色/60">
+                    <div className="bg白色/10 rounded-2xl border border-white/15 p-4 backdrop-blur">
+                        <dt className="text白色/60 text-xs tracking-wide uppercase">
                             待審週報
                         </dt>
-                        <dd className="mt-2 text-2xl font-semibold text白色">12</dd>
+                        <dd className="text白色 mt-2 text-2xl font-semibold">
+                            12
+                        </dd>
                     </div>
-                    <div className="rounded-2xl border border白色/15 bg白色/10 p-4 backdrop-blur">
-                        <dt className="text-xs uppercase tracking-wide text白色/60">
+                    <div className="border白色/15 bg白色/10 rounded-2xl border p-4 backdrop-blur">
+                        <dt className="text白色/60 text-xs tracking-wide uppercase">
                             拖延週數
                         </dt>
-                        <dd className="mt-2 text-2xl font-semibold text白色">-45%</dd>
+                        <dd className="text白色 mt-2 text-2xl font-semibold">
+                            -45%
+                        </dd>
                     </div>
-                    <div className="rounded-2xl border border白色/15 bg白色/10 p-4 backdrop-blur">
-                        <dt className="text-xs uppercase tracking-wide text白色/60">
+                    <div className="border白色/15 bg白色/10 rounded-2xl border p-4 backdrop-blur">
+                        <dt className="text白色/60 text-xs tracking-wide uppercase">
                             平均提交時間
                         </dt>
-                        <dd className="mt-2 text-2xl font-semibold text白色">2.8h</dd>
+                        <dd className="text白色 mt-2 text-2xl font-semibold">
+                            2.8h
+                        </dd>
                     </div>
                 </dl>
             </div>
 
-            <div className="space-y-5 rounded-3xl border border白色/15 bg黑色/30 p-6 backdrop-blur">
-                <h3 className="text-sm font-semibold uppercase tracking-wide text白色/80">
+            <div className="border白色/15 bg黑色/30 space-y-5 rounded-3xl border p-6 backdrop-blur">
+                <h3 className="text白色/80 text-sm font-semibold tracking-wide uppercase">
                     使用者最常做的事
                 </h3>
-                <ul className="space-y-4 text-sm text白色/75">
+                <ul className="text白色/75 space-y-4 text-sm">
                     <li className="flex gap-3">
                         <Briefcase className="mt-1 size-4 text-sky-300" />
                         <div>
-                            <p className="font-medium text白色">
+                            <p className="text白色 font-medium">
                                 管理跨團隊週報審核
                             </p>
-                            <p className="text-xs text白色/65">
+                            <p className="text白色/65 text-xs">
                                 一鍵篩選事業群、部門、小組狀態，掌握誰已提交與待補。
                             </p>
                         </div>
@@ -248,10 +266,10 @@ function LoginAside() {
                     <li className="flex gap-3">
                         <TimerReset className="mt-1 size-4 text-emerald-300" />
                         <div>
-                            <p className="font-medium text白色">
+                            <p className="text白色 font-medium">
                                 追蹤站會與工時提醒
                             </p>
-                            <p className="text-xs text白色/65">
+                            <p className="text白色/65 text-xs">
                                 自動同步公司行事曆，提醒成員補齊工時與假日調整。
                             </p>
                         </div>
@@ -259,11 +277,12 @@ function LoginAside() {
                     <li className="flex gap-3">
                         <BellRing className="mt-1 size-4 text-purple-300" />
                         <div>
-                            <p className="font-medium text白色">
+                            <p className="text白色 font-medium">
                                 收到審核／提醒通知
                             </p>
-                            <p className="text-xs text白色/65">
-                                Slack、Email、Webhook 即時更新，不再漏掉任何週報。
+                            <p className="text白色/65 text-xs">
+                                Slack、Email、Webhook
+                                即時更新，不再漏掉任何週報。
                             </p>
                         </div>
                     </li>

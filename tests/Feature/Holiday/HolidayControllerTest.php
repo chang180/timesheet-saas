@@ -4,6 +4,7 @@ use App\Models\Company;
 use App\Models\CompanySetting;
 use App\Models\Holiday;
 use App\Models\User;
+use App\Services\HolidayCacheService;
 use Carbon\Carbon;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Cache;
@@ -26,6 +27,14 @@ function createAuthenticatedUser(array $userAttributes = [], array $companyAttri
 
 beforeEach(function () {
     Cache::flush();
+
+    $service = \Mockery::mock(HolidayCacheService::class);
+    $service->shouldReceive('getHolidays')
+        ->andReturnUsing(fn (int $year) => Holiday::forYear($year)->map(fn ($holiday) => $holiday->toArray()));
+    $service->shouldReceive('getHolidaysForWeek')
+        ->andReturnUsing(fn (int $isoYear, int $isoWeek) => Holiday::forIsoWeek($isoYear, $isoWeek)->map(fn ($holiday) => $holiday->toArray()));
+
+    $this->app->instance(HolidayCacheService::class, $service);
 });
 
 it('returns holidays for a given year', function () {

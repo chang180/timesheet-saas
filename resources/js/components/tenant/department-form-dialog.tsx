@@ -1,4 +1,6 @@
+import InputError from '@/components/input-error';
 import { Button } from '@/components/ui/button';
+import { Checkbox } from '@/components/ui/checkbox';
 import {
     Dialog,
     DialogContent,
@@ -9,9 +11,6 @@ import {
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
-import InputError from '@/components/input-error';
-import { Checkbox } from '@/components/ui/checkbox';
 import {
     Select,
     SelectContent,
@@ -19,15 +18,34 @@ import {
     SelectTrigger,
     SelectValue,
 } from '@/components/ui/select';
-import { useEffect } from 'react';
-import { useForm } from '@inertiajs/react';
+import { Textarea } from '@/components/ui/textarea';
 import tenantRoutes from '@/routes/tenant';
+import { useForm } from '@inertiajs/react';
+import { useEffect } from 'react';
 import { toast } from 'sonner';
 
 type Organization = {
-    divisions: Array<{ id: number; name: string; slug: string; is_active: boolean }>;
-    departments: Array<{ id: number; division_id: number | null; name: string; slug: string; is_active: boolean }>;
-    teams: Array<{ id: number; division_id: number | null; department_id: number | null; name: string; slug: string; is_active: boolean }>;
+    divisions: Array<{
+        id: number;
+        name: string;
+        slug: string;
+        is_active: boolean;
+    }>;
+    departments: Array<{
+        id: number;
+        division_id: number | null;
+        name: string;
+        slug: string;
+        is_active: boolean;
+    }>;
+    teams: Array<{
+        id: number;
+        division_id: number | null;
+        department_id: number | null;
+        name: string;
+        slug: string;
+        is_active: boolean;
+    }>;
 };
 
 interface DepartmentFormDialogProps {
@@ -101,29 +119,41 @@ export function DepartmentFormDialog({
             description: form.data.description || undefined,
             sort_order: form.data.sort_order,
             is_active: form.data.is_active,
-            division_id: form.data.division_id && form.data.division_id !== 'none' ? Number(form.data.division_id) : undefined,
+            division_id:
+                form.data.division_id && form.data.division_id !== 'none'
+                    ? Number(form.data.division_id)
+                    : undefined,
         };
 
         form.transform(() => submitData);
 
         if (department) {
-            form.patch(tenantRoutes.departments.update.url({ company: companySlug, department: department.id }), {
-                preserveScroll: true,
-                onSuccess: () => {
-                    toast.success('部門已更新');
-                    onOpenChange(false);
-                    // Inertia 會自動重新載入頁面，不需要手動調用 onSuccess
+            form.patch(
+                tenantRoutes.departments.update.url({
+                    company: companySlug,
+                    department: department.id,
+                }),
+                {
+                    preserveScroll: true,
+                    onSuccess: () => {
+                        toast.success('部門已更新');
+                        onOpenChange(false);
+                        // Inertia 會自動重新載入頁面，不需要手動調用 onSuccess
+                    },
                 },
-            });
+            );
         } else {
-            form.post(tenantRoutes.departments.store.url({ company: companySlug }), {
-                preserveScroll: true,
-                onSuccess: () => {
-                    toast.success('部門已建立');
-                    onOpenChange(false);
-                    // Inertia 會自動重新載入頁面，不需要手動調用 onSuccess
+            form.post(
+                tenantRoutes.departments.store.url({ company: companySlug }),
+                {
+                    preserveScroll: true,
+                    onSuccess: () => {
+                        toast.success('部門已建立');
+                        onOpenChange(false);
+                        // Inertia 會自動重新載入頁面，不需要手動調用 onSuccess
+                    },
                 },
-            });
+            );
         }
     };
 
@@ -131,7 +161,9 @@ export function DepartmentFormDialog({
         <Dialog open={open} onOpenChange={onOpenChange}>
             <DialogContent>
                 <DialogHeader>
-                    <DialogTitle>{department ? '編輯部門' : '新增部門'}</DialogTitle>
+                    <DialogTitle>
+                        {department ? '編輯部門' : '新增部門'}
+                    </DialogTitle>
                     <DialogDescription>
                         {department ? '修改部門資訊' : '建立新的部門'}
                     </DialogDescription>
@@ -142,7 +174,9 @@ export function DepartmentFormDialog({
                             <Label htmlFor="department-division">事業群</Label>
                             <Select
                                 value={form.data.division_id}
-                                onValueChange={(value) => form.setData('division_id', value)}
+                                onValueChange={(value) =>
+                                    form.setData('division_id', value)
+                                }
                                 disabled={form.processing}
                             >
                                 <SelectTrigger id="department-division">
@@ -153,7 +187,10 @@ export function DepartmentFormDialog({
                                     {organization.divisions
                                         .filter((d) => d.is_active)
                                         .map((division) => (
-                                            <SelectItem key={division.id} value={division.id.toString()}>
+                                            <SelectItem
+                                                key={division.id}
+                                                value={division.id.toString()}
+                                            >
                                                 {division.name}
                                             </SelectItem>
                                         ))}
@@ -170,7 +207,9 @@ export function DepartmentFormDialog({
                         <Input
                             id="department-name"
                             value={form.data.name}
-                            onChange={(e) => form.setData('name', e.target.value)}
+                            onChange={(e) =>
+                                form.setData('name', e.target.value)
+                            }
                             required
                             disabled={form.processing}
                         />
@@ -182,7 +221,9 @@ export function DepartmentFormDialog({
                         <Input
                             id="department-slug"
                             value={form.data.slug}
-                            onChange={(e) => form.setData('slug', e.target.value)}
+                            onChange={(e) =>
+                                form.setData('slug', e.target.value)
+                            }
                             disabled={form.processing || !!department}
                             placeholder="自動產生"
                         />
@@ -194,7 +235,9 @@ export function DepartmentFormDialog({
                         <Textarea
                             id="department-description"
                             value={form.data.description}
-                            onChange={(e) => form.setData('description', e.target.value)}
+                            onChange={(e) =>
+                                form.setData('description', e.target.value)
+                            }
                             disabled={form.processing}
                             rows={3}
                         />
@@ -208,7 +251,12 @@ export function DepartmentFormDialog({
                             type="number"
                             min="0"
                             value={form.data.sort_order}
-                            onChange={(e) => form.setData('sort_order', Number(e.target.value))}
+                            onChange={(e) =>
+                                form.setData(
+                                    'sort_order',
+                                    Number(e.target.value),
+                                )
+                            }
                             disabled={form.processing}
                         />
                         <InputError message={form.errors.sort_order} />
@@ -223,7 +271,10 @@ export function DepartmentFormDialog({
                             }
                             disabled={form.processing}
                         />
-                        <Label htmlFor="department-is-active" className="cursor-pointer">
+                        <Label
+                            htmlFor="department-is-active"
+                            className="cursor-pointer"
+                        >
                             啟用
                         </Label>
                     </div>

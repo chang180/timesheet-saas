@@ -1,3 +1,4 @@
+import InputError from '@/components/input-error';
 import { Button } from '@/components/ui/button';
 import {
     Dialog,
@@ -8,7 +9,6 @@ import {
     DialogTitle,
 } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
-import InputError from '@/components/input-error';
 import {
     Select,
     SelectContent,
@@ -16,10 +16,10 @@ import {
     SelectTrigger,
     SelectValue,
 } from '@/components/ui/select';
-import { useState, useEffect } from 'react';
-import membersApi from '@/routes/api/v1/tenant/members';
-import { toast } from 'sonner';
 import { apiRequest, ensureCsrfCookie } from '@/lib/api-client';
+import membersApi from '@/routes/api/v1/tenant/members';
+import { useEffect, useState } from 'react';
+import { toast } from 'sonner';
 
 type Member = {
     id: number;
@@ -32,9 +32,27 @@ type Member = {
 };
 
 type Organization = {
-    divisions: Array<{ id: number; name: string; slug: string; is_active: boolean }>;
-    departments: Array<{ id: number; division_id: number | null; name: string; slug: string; is_active: boolean }>;
-    teams: Array<{ id: number; division_id: number | null; department_id: number | null; name: string; slug: string; is_active: boolean }>;
+    divisions: Array<{
+        id: number;
+        name: string;
+        slug: string;
+        is_active: boolean;
+    }>;
+    departments: Array<{
+        id: number;
+        division_id: number | null;
+        name: string;
+        slug: string;
+        is_active: boolean;
+    }>;
+    teams: Array<{
+        id: number;
+        division_id: number | null;
+        department_id: number | null;
+        name: string;
+        slug: string;
+        is_active: boolean;
+    }>;
 };
 
 interface MemberRoleEditDialogProps {
@@ -113,7 +131,10 @@ export function MemberRoleEditDialog({
 
             await ensureCsrfCookie();
 
-            const url = membersApi.roles.update.url({ company: companySlug, member: member.id });
+            const url = membersApi.roles.update.url({
+                company: companySlug,
+                member: member.id,
+            });
             const response = await apiRequest(url, {
                 method: 'PATCH',
                 headers: {
@@ -126,7 +147,9 @@ export function MemberRoleEditDialog({
 
             if (!response.ok) {
                 if (response.status === 422) {
-                    setErrors(data.errors || { message: data.message || '驗證失敗' });
+                    setErrors(
+                        data.errors || { message: data.message || '驗證失敗' },
+                    );
                 } else {
                     setErrors({ message: data.message || '更新失敗' });
                 }
@@ -146,14 +169,19 @@ export function MemberRoleEditDialog({
     };
 
     const availableDepartments = organization.departments.filter(
-        (d) => d.is_active && (!formData.division_id || d.division_id === Number(formData.division_id)),
+        (d) =>
+            d.is_active &&
+            (!formData.division_id ||
+                d.division_id === Number(formData.division_id)),
     );
 
     const availableTeams = organization.teams.filter(
         (t) =>
             t.is_active &&
-            (!formData.department_id || t.department_id === Number(formData.department_id)) &&
-            (!formData.division_id || t.division_id === Number(formData.division_id)),
+            (!formData.department_id ||
+                t.department_id === Number(formData.department_id)) &&
+            (!formData.division_id ||
+                t.division_id === Number(formData.division_id)),
     );
 
     const requiresDivision = formData.role === 'division_lead';
@@ -180,9 +208,20 @@ export function MemberRoleEditDialog({
                                 setFormData({
                                     ...formData,
                                     role: value,
-                                    division_id: requiresDivision && value !== 'division_lead' ? '' : formData.division_id,
-                                    department_id: requiresDepartment && value !== 'department_manager' ? '' : formData.department_id,
-                                    team_id: requiresTeam && value !== 'team_lead' ? '' : formData.team_id,
+                                    division_id:
+                                        requiresDivision &&
+                                        value !== 'division_lead'
+                                            ? ''
+                                            : formData.division_id,
+                                    department_id:
+                                        requiresDepartment &&
+                                        value !== 'department_manager'
+                                            ? ''
+                                            : formData.department_id,
+                                    team_id:
+                                        requiresTeam && value !== 'team_lead'
+                                            ? ''
+                                            : formData.team_id,
                                 });
                             }}
                             disabled={loading}
@@ -214,7 +253,8 @@ export function MemberRoleEditDialog({
                                 onValueChange={(value) => {
                                     setFormData({
                                         ...formData,
-                                        division_id: value === 'none' ? '' : value,
+                                        division_id:
+                                            value === 'none' ? '' : value,
                                         department_id: '',
                                         team_id: '',
                                     });
@@ -230,7 +270,10 @@ export function MemberRoleEditDialog({
                                     {organization.divisions
                                         .filter((d) => d.is_active)
                                         .map((division) => (
-                                            <SelectItem key={division.id} value={division.id.toString()}>
+                                            <SelectItem
+                                                key={division.id}
+                                                value={division.id.toString()}
+                                            >
                                                 {division.name}
                                             </SelectItem>
                                         ))}
@@ -253,7 +296,8 @@ export function MemberRoleEditDialog({
                                 onValueChange={(value) => {
                                     setFormData({
                                         ...formData,
-                                        department_id: value === 'none' ? '' : value,
+                                        department_id:
+                                            value === 'none' ? '' : value,
                                         team_id: '',
                                     });
                                 }}
@@ -266,7 +310,10 @@ export function MemberRoleEditDialog({
                                 <SelectContent>
                                     <SelectItem value="none">無</SelectItem>
                                     {availableDepartments.map((department) => (
-                                        <SelectItem key={department.id} value={department.id.toString()}>
+                                        <SelectItem
+                                            key={department.id}
+                                            value={department.id.toString()}
+                                        >
                                             {department.name}
                                         </SelectItem>
                                     ))}
@@ -287,7 +334,10 @@ export function MemberRoleEditDialog({
                             <Select
                                 value={formData.team_id || 'none'}
                                 onValueChange={(value) => {
-                                    setFormData({ ...formData, team_id: value === 'none' ? '' : value });
+                                    setFormData({
+                                        ...formData,
+                                        team_id: value === 'none' ? '' : value,
+                                    });
                                 }}
                                 disabled={loading || !formData.department_id}
                                 required={requiresTeam}
@@ -298,7 +348,10 @@ export function MemberRoleEditDialog({
                                 <SelectContent>
                                     <SelectItem value="none">無</SelectItem>
                                     {availableTeams.map((team) => (
-                                        <SelectItem key={team.id} value={team.id.toString()}>
+                                        <SelectItem
+                                            key={team.id}
+                                            value={team.id.toString()}
+                                        >
                                             {team.name}
                                         </SelectItem>
                                     ))}

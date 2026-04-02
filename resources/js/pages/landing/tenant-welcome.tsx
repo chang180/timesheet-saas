@@ -86,7 +86,7 @@ export default function TenantWelcomePage({
     const quickStartConfig =
         welcomeConfig.quickStartSteps?.enabled === false
             ? null
-            : welcomeConfig.quickStartSteps ?? {
+            : (welcomeConfig.quickStartSteps ?? {
                   enabled: true,
                   steps: [
                       {
@@ -102,7 +102,7 @@ export default function TenantWelcomePage({
                           description: '匯入任務、拖曳排序並提交審核。',
                       },
                   ],
-              };
+              });
 
     const announcementsConfig =
         welcomeConfig.announcements?.enabled === false
@@ -138,10 +138,11 @@ export default function TenantWelcomePage({
               };
 
     const pageStyle = useMemo<React.CSSProperties>(
-        () => ({
-            '--tenant-brand-color': brandColor || '#2563eb',
-        } as React.CSSProperties),
-        [brandColor]
+        () =>
+            ({
+                '--tenant-brand-color': brandColor || '#2563eb',
+            }) as React.CSSProperties,
+        [brandColor],
     );
 
     return (
@@ -170,27 +171,27 @@ export default function TenantWelcomePage({
 
             {/* Quick Start Steps Module */}
             {quickStartConfig && quickStartConfig.steps && (
-                    <QuickStartStepsModule
-                        steps={quickStartConfig.steps}
-                        brandColor={brandColor}
-                    />
-                )}
+                <QuickStartStepsModule
+                    steps={quickStartConfig.steps}
+                    brandColor={brandColor}
+                />
+            )}
 
             {/* Announcements Module */}
             {announcementsConfig && announcementsConfig.enabled && (
-                    <AnnouncementsModule
-                        announcements={announcementsConfig.items}
-                        brandColor={brandColor}
-                    />
-                )}
+                <AnnouncementsModule
+                    announcements={announcementsConfig.items}
+                    brandColor={brandColor}
+                />
+            )}
 
             {/* Support Contacts Module */}
             {supportContactsConfig && supportContactsConfig.enabled && (
-                    <SupportContactsModule
-                        contacts={supportContactsConfig.contacts}
-                        brandColor={brandColor}
-                    />
-                )}
+                <SupportContactsModule
+                    contacts={supportContactsConfig.contacts}
+                    brandColor={brandColor}
+                />
+            )}
         </div>
     );
 }

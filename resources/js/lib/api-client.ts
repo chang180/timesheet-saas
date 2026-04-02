@@ -29,7 +29,7 @@ export async function apiRequest(
     const { skipCsrf = false, headers = {}, ...restOptions } = options;
 
     const requestHeaders: Record<string, string> = {
-        'Accept': 'application/json',
+        Accept: 'application/json',
         'X-Requested-With': 'XMLHttpRequest',
         ...(headers as Record<string, string>),
     };

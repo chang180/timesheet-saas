@@ -19,6 +19,7 @@ import { login } from '@/routes';
 import { store } from '@/routes/register';
 import { Form, Head, router } from '@inertiajs/react';
 import {
+    AlertCircle,
     ArrowRight,
     BellRing,
     CalendarClock,
@@ -26,7 +27,6 @@ import {
     Shield,
     Sparkles,
     Users,
-    AlertCircle,
 } from 'lucide-react';
 
 interface TenantRegisterProps {
@@ -65,7 +65,8 @@ export default function TenantRegister({
                             </CardTitle>
                         </div>
                         <CardDescription className="text-amber-700 dark:text-amber-300">
-                            此公司的成員數已達上限（{currentUserCount}/{userLimit}），目前無法接受新成員註冊。
+                            此公司的成員數已達上限（{currentUserCount}/
+                            {userLimit}），目前無法接受新成員註冊。
                             請聯絡公司管理者以獲得邀請。
                         </CardDescription>
                     </CardHeader>
@@ -96,7 +97,8 @@ export default function TenantRegister({
                                     註冊帳號
                                 </CardTitle>
                                 <CardDescription className="leading-relaxed">
-                                    填寫以下資訊即可加入 {company.name} 團隊，開始使用週報系統。
+                                    填寫以下資訊即可加入 {company.name}{' '}
+                                    團隊，開始使用週報系統。
                                 </CardDescription>
                             </CardHeader>
                             <Separator className="mx-6" />
@@ -189,7 +191,9 @@ export default function TenantRegister({
                                             placeholder="再次輸入密碼"
                                         />
                                         <InputError
-                                            message={errors.password_confirmation}
+                                            message={
+                                                errors.password_confirmation
+                                            }
                                             className="mt-2"
                                         />
                                     </div>
@@ -236,8 +240,9 @@ function RegisterAside() {
                 <h2 className="text-2xl font-bold tracking-tight">
                     為什麼選擇週報通？
                 </h2>
-                <p className="text-muted-foreground leading-relaxed">
-                    不論是 Jira 任務、幫忙教新人或臨時開會，都可以在這裡記錄。下次週會、主管想看某人的一週重點時，隨時叫得出來。
+                <p className="leading-relaxed text-muted-foreground">
+                    不論是 Jira
+                    任務、幫忙教新人或臨時開會，都可以在這裡記錄。下次週會、主管想看某人的一週重點時，隨時叫得出來。
                 </p>
             </div>
 

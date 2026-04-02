@@ -36,10 +36,13 @@ const defaultTasks = [
 ];
 
 const statusStyles: Record<
-    typeof defaultTasks[number]['status'],
+    (typeof defaultTasks)[number]['status'],
     { label: string; className: string }
 > = {
-    submitted: { label: '已提交', className: 'bg-emerald-500/15 text-emerald-600' },
+    submitted: {
+        label: '已提交',
+        className: 'bg-emerald-500/15 text-emerald-600',
+    },
     reviewing: { label: '審核中', className: 'bg-amber-500/15 text-amber-600' },
     draft: { label: '草稿', className: 'bg-slate-500/15 text-slate-600' },
 };
@@ -74,7 +77,8 @@ export function WeeklyReportDemoModule({
                             週報填寫，不再只是代辦事項
                         </h2>
                         <p className="text-base leading-7 text-gray-600 dark:text-gray-300">
-                            透過視覺化提示與即時驗證，讓成員在 5 分鐘內完成週報，主管也能快速掌握風險與人力配置。
+                            透過視覺化提示與即時驗證，讓成員在 5
+                            分鐘內完成週報，主管也能快速掌握風險與人力配置。
                         </p>
                         <ul className="space-y-3">
                             {bulletPoints.map((item, index) => (
@@ -121,7 +125,7 @@ export function WeeklyReportDemoModule({
                                                 <span
                                                     className={cn(
                                                         'rounded-full px-3 py-1 text-xs font-medium',
-                                                        status.className
+                                                        status.className,
                                                     )}
                                                 >
                                                     {status.label}
@@ -160,4 +164,3 @@ export function WeeklyReportDemoModule({
         </section>
     );
 }
-

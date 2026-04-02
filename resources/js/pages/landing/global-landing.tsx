@@ -1,5 +1,5 @@
-import { WelcomeShowcase } from '@/components/landing/welcome-showcase';
 import AppearanceToggleDropdown from '@/components/appearance-dropdown';
+import { WelcomeShowcase } from '@/components/landing/welcome-showcase';
 import { Button } from '@/components/ui/button';
 import {
     Card,
@@ -7,6 +7,7 @@ import {
     CardHeader,
     CardTitle,
 } from '@/components/ui/card';
+import { login, register } from '@/routes';
 import { Head, Link, usePage } from '@inertiajs/react';
 import {
     ArrowRight,
@@ -17,7 +18,6 @@ import {
     TrendingUp,
     Users,
 } from 'lucide-react';
-import { login, register } from '@/routes';
 
 interface PageProps {
     demoTenant: {
@@ -37,9 +37,9 @@ export default function GlobalLandingPage() {
         <div className="min-h-screen bg-linear-to-b from-gray-50 via-white to-gray-100 dark:from-gray-950 dark:via-gray-900 dark:to-gray-800">
             <Head title="週報通 Timesheet SaaS" />
             {/* Hero Section */}
-            <section className="relative overflow-hidden pb-20 pt-24">
+            <section className="relative overflow-hidden pt-24 pb-20">
                 <div className="absolute inset-0 -z-10 bg-[radial-gradient(circle_at_top,#c7d2fe_0%,transparent_55%),radial-gradient(circle_at_bottom,#fce7f3_0%,transparent_60%)] opacity-80 dark:opacity-20" />
-                <div className="absolute right-4 top-4 flex items-center gap-3 lg:right-8 lg:top-6">
+                <div className="absolute top-4 right-4 flex items-center gap-3 lg:top-6 lg:right-8">
                     <AppearanceToggleDropdown />
                 </div>
                 <div className="relative mx-auto flex max-w-7xl flex-col gap-12 px-6 md:gap-16 lg:flex-row lg:items-start lg:px-8">
@@ -48,7 +48,7 @@ export default function GlobalLandingPage() {
                             <Sparkles className="size-4" />
                             多用戶週報最佳實務
                         </span>
-                        <h1 className="text-4xl font-semibold leading-tight tracking-tight text-gray-900 sm:text-5xl dark:text-white">
+                        <h1 className="text-4xl leading-tight font-semibold tracking-tight text-gray-900 sm:text-5xl dark:text-white">
                             <span className="block text-balance">
                                 週報通 Timesheet SaaS
                             </span>
@@ -73,20 +73,22 @@ export default function GlobalLandingPage() {
                                 variant="outline"
                                 className="border-indigo-200 bg-white/80 text-indigo-600 backdrop-blur hover:bg-indigo-50 dark:border-indigo-500/40 dark:bg-indigo-500/10 dark:text-indigo-200 dark:hover:bg-indigo-500/20"
                             >
-                                <Link href={login.url()}>已有帳號？直接登入</Link>
+                                <Link href={login.url()}>
+                                    已有帳號？直接登入
+                                </Link>
                             </Button>
                         </div>
                         <dl className="grid gap-4 pt-4 text-center sm:grid-cols-3 md:gap-6 lg:text-left">
                             <div className="rounded-2xl border border-indigo-100/70 bg-white/80 p-4 shadow-sm dark:border-indigo-500/30 dark:bg-indigo-500/10">
-                                <dt className="text-xs uppercase tracking-wide text-indigo-500 dark:text-indigo-200">
+                                <dt className="text-xs tracking-wide text-indigo-500 uppercase dark:text-indigo-200">
                                     多層級組織
                                 </dt>
-                                <dd className="mt-2 text-sm font-semibold leading-snug text-gray-900 dark:text-white">
+                                <dd className="mt-2 text-sm leading-snug font-semibold text-gray-900 dark:text-white">
                                     公司 → 單位 → 部門 → 小組
                                 </dd>
                             </div>
                             <div className="rounded-2xl border border-emerald-100/70 bg-white/80 p-4 shadow-sm dark:border-emerald-500/30 dark:bg-emerald-500/10">
-                                <dt className="text-xs uppercase tracking-wide text-emerald-500 dark:text-emerald-200">
+                                <dt className="text-xs tracking-wide text-emerald-500 uppercase dark:text-emerald-200">
                                     快速完成
                                 </dt>
                                 <dd className="mt-2 text-2xl font-semibold text-gray-900 dark:text-white">
@@ -94,10 +96,10 @@ export default function GlobalLandingPage() {
                                 </dd>
                             </div>
                             <div className="rounded-2xl border border-sky-100/70 bg-white/80 p-4 shadow-sm dark:border-sky-500/30 dark:bg-sky-500/10">
-                                <dt className="text-xs uppercase tracking-wide text-sky-500 dark:text-sky-200">
+                                <dt className="text-xs tracking-wide text-sky-500 uppercase dark:text-sky-200">
                                     自動化提醒
                                 </dt>
-                                <dd className="mt-2 text-sm font-semibold leading-snug text-gray-900 dark:text-white">
+                                <dd className="mt-2 text-sm leading-snug font-semibold text-gray-900 dark:text-white">
                                     週五填報 + 週一摘要
                                 </dd>
                             </div>
@@ -222,7 +224,12 @@ export default function GlobalLandingPage() {
                                         建立公司帳號
                                     </h3>
                                     <p className="mt-2 text-gray-600 dark:text-gray-300">
-                                        填寫公司名稱取得專屬網址（<code className="rounded bg-gray-100 px-1 text-sm dark:bg-gray-700">/app/your-company</code>），支援 Google OAuth 或帳密登入，可開啟雙因素認證（2FA）
+                                        填寫公司名稱取得專屬網址（
+                                        <code className="rounded bg-gray-100 px-1 text-sm dark:bg-gray-700">
+                                            /app/your-company
+                                        </code>
+                                        ），支援 Google OAuth
+                                        或帳密登入，可開啟雙因素認證（2FA）
                                     </p>
                                 </div>
                             </li>

@@ -1,4 +1,6 @@
+import InputError from '@/components/input-error';
 import { Button } from '@/components/ui/button';
+import { Checkbox } from '@/components/ui/checkbox';
 import {
     Dialog,
     DialogContent,
@@ -10,11 +12,9 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import InputError from '@/components/input-error';
-import { Checkbox } from '@/components/ui/checkbox';
-import { useEffect } from 'react';
-import { useForm } from '@inertiajs/react';
 import tenantRoutes from '@/routes/tenant';
+import { useForm } from '@inertiajs/react';
+import { useEffect } from 'react';
 import { toast } from 'sonner';
 
 interface DivisionFormDialogProps {
@@ -74,23 +74,32 @@ export function DivisionFormDialog({
         e.preventDefault();
 
         if (division) {
-            form.patch(tenantRoutes.divisions.update.url({ company: companySlug, division: division.id }), {
-                preserveScroll: true,
-                onSuccess: () => {
-                    toast.success('事業群已更新');
-                    onOpenChange(false);
-                    // Inertia 會自動重新載入頁面，不需要手動調用 onSuccess
+            form.patch(
+                tenantRoutes.divisions.update.url({
+                    company: companySlug,
+                    division: division.id,
+                }),
+                {
+                    preserveScroll: true,
+                    onSuccess: () => {
+                        toast.success('事業群已更新');
+                        onOpenChange(false);
+                        // Inertia 會自動重新載入頁面，不需要手動調用 onSuccess
+                    },
                 },
-            });
+            );
         } else {
-            form.post(tenantRoutes.divisions.store.url({ company: companySlug }), {
-                preserveScroll: true,
-                onSuccess: () => {
-                    toast.success('事業群已建立');
-                    onOpenChange(false);
-                    // Inertia 會自動重新載入頁面，不需要手動調用 onSuccess
+            form.post(
+                tenantRoutes.divisions.store.url({ company: companySlug }),
+                {
+                    preserveScroll: true,
+                    onSuccess: () => {
+                        toast.success('事業群已建立');
+                        onOpenChange(false);
+                        // Inertia 會自動重新載入頁面，不需要手動調用 onSuccess
+                    },
                 },
-            });
+            );
         }
     };
 
@@ -98,7 +107,9 @@ export function DivisionFormDialog({
         <Dialog open={open} onOpenChange={onOpenChange}>
             <DialogContent>
                 <DialogHeader>
-                    <DialogTitle>{division ? '編輯事業群' : '新增事業群'}</DialogTitle>
+                    <DialogTitle>
+                        {division ? '編輯事業群' : '新增事業群'}
+                    </DialogTitle>
                     <DialogDescription>
                         {division ? '修改事業群資訊' : '建立新的事業群'}
                     </DialogDescription>
@@ -111,7 +122,9 @@ export function DivisionFormDialog({
                         <Input
                             id="division-name"
                             value={form.data.name}
-                            onChange={(e) => form.setData('name', e.target.value)}
+                            onChange={(e) =>
+                                form.setData('name', e.target.value)
+                            }
                             required
                             disabled={form.processing}
                         />
@@ -123,7 +136,9 @@ export function DivisionFormDialog({
                         <Input
                             id="division-slug"
                             value={form.data.slug}
-                            onChange={(e) => form.setData('slug', e.target.value)}
+                            onChange={(e) =>
+                                form.setData('slug', e.target.value)
+                            }
                             disabled={form.processing || !!division}
                             placeholder="自動產生"
                         />
@@ -135,7 +150,9 @@ export function DivisionFormDialog({
                         <Textarea
                             id="division-description"
                             value={form.data.description}
-                            onChange={(e) => form.setData('description', e.target.value)}
+                            onChange={(e) =>
+                                form.setData('description', e.target.value)
+                            }
                             disabled={form.processing}
                             rows={3}
                         />
@@ -149,7 +166,12 @@ export function DivisionFormDialog({
                             type="number"
                             min="0"
                             value={form.data.sort_order}
-                            onChange={(e) => form.setData('sort_order', Number(e.target.value))}
+                            onChange={(e) =>
+                                form.setData(
+                                    'sort_order',
+                                    Number(e.target.value),
+                                )
+                            }
                             disabled={form.processing}
                         />
                         <InputError message={form.errors.sort_order} />
@@ -164,7 +186,10 @@ export function DivisionFormDialog({
                             }
                             disabled={form.processing}
                         />
-                        <Label htmlFor="division-is-active" className="cursor-pointer">
+                        <Label
+                            htmlFor="division-is-active"
+                            className="cursor-pointer"
+                        >
                             啟用
                         </Label>
                     </div>

@@ -8,4 +8,3 @@ return [
         'description' => env('LANDING_DEMO_TENANT_DESCRIPTION'),
     ],
 ];
-

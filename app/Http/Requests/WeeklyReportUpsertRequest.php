@@ -3,7 +3,6 @@
 namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
-use Illuminate\Validation\Rule;
 
 class WeeklyReportUpsertRequest extends FormRequest
 {
@@ -150,4 +149,3 @@ class WeeklyReportUpsertRequest extends FormRequest
             ->all();
     }
 }
-

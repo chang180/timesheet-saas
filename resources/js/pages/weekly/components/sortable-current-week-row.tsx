@@ -5,10 +5,28 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { isWeekend } from '@/lib/date-utils';
+import {
+    calculateWorkRangeStats,
+    getHolidayDateStatus,
+} from '@/lib/holiday-utils';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { ChevronUp, ChevronDown, Clock, GripVertical, Trash2 } from 'lucide-react';
-import type { DateRange, GetErrorFn, MoveItemFn, RemoveItemFn, UpdateItemFn, WeeklyReportItemInput } from './types';
+import {
+    ChevronDown,
+    ChevronUp,
+    Clock,
+    GripVertical,
+    Trash2,
+} from 'lucide-react';
+import type {
+    DateRange,
+    GetErrorFn,
+    HolidayEntry,
+    MoveItemFn,
+    RemoveItemFn,
+    UpdateItemFn,
+    WeeklyReportItemInput,
+} from './types';
 
 type SortableCurrentWeekRowProps = {
     item: WeeklyReportItemInput;
@@ -19,6 +37,27 @@ type SortableCurrentWeekRowProps = {
     moveItem: MoveItemFn;
     getError: GetErrorFn;
     weekDateRange?: DateRange;
+    holidayMap: ReadonlyMap<string, HolidayEntry>;
+    holidayDates: string[];
+    workdayOverrideDates: string[];
+};
+
+const holidayHintToneClass: Record<
+    'holiday' | 'makeup_workday' | 'weekend',
+    string
+> = {
+    holiday: 'text-rose-600 dark:text-rose-400',
+    makeup_workday: 'text-emerald-600 dark:text-emerald-400',
+    weekend: 'text-yellow-600 dark:text-yellow-400',
+};
+
+const holidayHintPrefix: Record<
+    'holiday' | 'makeup_workday' | 'weekend',
+    string
+> = {
+    holiday: '⚠️',
+    makeup_workday: 'ℹ️',
+    weekend: '⚠️',
 };
 
 export function SortableCurrentWeekRow({
@@ -30,16 +69,43 @@ export function SortableCurrentWeekRow({
     moveItem,
     getError,
     weekDateRange,
+    holidayMap,
+    holidayDates,
+    workdayOverrideDates,
 }: SortableCurrentWeekRowProps) {
     const startedAtIsWeekend = isWeekend(item.started_at);
     const endedAtIsWeekend = isWeekend(item.ended_at);
-    const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
+    const startedAtHolidayStatus = getHolidayDateStatus(
+        item.started_at,
+        holidayMap,
+    );
+    const endedAtHolidayStatus = getHolidayDateStatus(
+        item.ended_at,
+        holidayMap,
+    );
+    const rangeStats = calculateWorkRangeStats(
+        item.started_at,
+        item.ended_at,
+        holidayMap,
+    );
+    const exceedsAvailableHours =
+        rangeStats !== null && item.hours_spent > rangeStats.availableHours;
+    const {
+        attributes,
+        listeners,
+        setNodeRef,
+        transform,
+        transition,
+        isDragging,
+    } = useSortable({
         id: item.localKey,
     });
 
     const style = {
         transform: CSS.Transform.toString(transform),
-        transition: transition || 'transform 350ms cubic-bezier(0.34, 1.56, 0.64, 1), opacity 200ms ease',
+        transition:
+            transition ||
+            'transform 350ms cubic-bezier(0.34, 1.56, 0.64, 1), opacity 200ms ease',
         opacity: isDragging ? 0.5 : 1,
         zIndex: isDragging ? 999 : 'auto',
     };
@@ -51,7 +117,7 @@ export function SortableCurrentWeekRow({
         <div
             ref={setNodeRef}
             style={style}
-            className="group relative mb-4 rounded-xl border border-border/60 bg-card shadow-sm transition-all duration-300 hover:border-border hover:shadow-md will-change-transform"
+            className="group relative mb-4 rounded-xl border border-border/60 bg-card shadow-sm transition-all duration-300 will-change-transform hover:border-border hover:shadow-md"
         >
             {/* 卡片頭部 */}
             <div className="flex items-start gap-3 border-b border-border/40 bg-gradient-to-r from-primary/5 via-primary/3 to-transparent px-4 py-3 md:px-5">
@@ -60,7 +126,7 @@ export function SortableCurrentWeekRow({
                     <div
                         {...attributes}
                         {...listeners}
-                        className="flex cursor-move items-center gap-1 rounded px-1.5 py-1 text-muted-foreground transition-colors hover:bg-primary/10 hover:text-primary touch-none"
+                        className="flex cursor-move touch-none items-center gap-1 rounded px-1.5 py-1 text-muted-foreground transition-colors hover:bg-primary/10 hover:text-primary"
                         title="拖曳調整順序"
                     >
                         <GripVertical className="size-5" />
@@ -75,10 +141,20 @@ export function SortableCurrentWeekRow({
                     <Input
                         value={item.title}
                         placeholder="輸入任務名稱..."
-                        className="border-0 bg-transparent px-0 text-lg font-bold text-foreground shadow-none focus-visible:ring-0 focus-visible:ring-offset-0 placeholder:text-muted-foreground/50"
-                        onChange={(event) => updateItem('current_week', index, 'title', event.target.value)}
+                        className="border-0 bg-transparent px-0 text-lg font-bold text-foreground shadow-none placeholder:text-muted-foreground/50 focus-visible:ring-0 focus-visible:ring-offset-0"
+                        onChange={(event) =>
+                            updateItem(
+                                'current_week',
+                                index,
+                                'title',
+                                event.target.value,
+                            )
+                        }
                     />
-                    <InputError message={getError(`current_week.${index}.title`)} className="mt-1" />
+                    <InputError
+                        message={getError(`current_week.${index}.title`)}
+                        className="mt-1"
+                    />
                 </div>
 
                 {/* 操作按鈕 */}
@@ -123,7 +199,10 @@ export function SortableCurrentWeekRow({
             <div className="space-y-4 p-4 md:p-5">
                 {/* 詳細說明 */}
                 <div>
-                    <Label htmlFor={`card-content-${item.localKey}`} className="mb-1.5 flex items-center gap-1.5 text-sm font-semibold text-foreground">
+                    <Label
+                        htmlFor={`card-content-${item.localKey}`}
+                        className="mb-1.5 flex items-center gap-1.5 text-sm font-semibold text-foreground"
+                    >
                         <span className="inline-block size-2 rounded-full bg-blue-500" />
                         詳細說明
                     </Label>
@@ -133,54 +212,141 @@ export function SortableCurrentWeekRow({
                         value={item.content ?? ''}
                         placeholder="描述任務的具體內容、完成狀況或遇到的問題..."
                         className="resize-none transition-colors focus:border-blue-500/50"
-                        onChange={(event) => updateItem('current_week', index, 'content', event.target.value)}
+                        onChange={(event) =>
+                            updateItem(
+                                'current_week',
+                                index,
+                                'content',
+                                event.target.value,
+                            )
+                        }
                     />
-                    <InputError message={getError(`current_week.${index}.content`)} className="mt-1" />
+                    <InputError
+                        message={getError(`current_week.${index}.content`)}
+                        className="mt-1"
+                    />
                 </div>
 
                 {/* 日期和工時區塊 */}
                 <div className="rounded-lg border border-primary/20 bg-gradient-to-br from-primary/5 via-primary/3 to-transparent p-3.5">
-                    <div className="mb-3 flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-primary">
+                    <div className="mb-3 flex items-center gap-1.5 text-xs font-bold tracking-wider text-primary uppercase">
                         <Clock className="size-3.5" />
                         時間與工時
                     </div>
                     <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
                         <div>
-                            <Label htmlFor={`card-started-${item.localKey}`} className="mb-1.5 text-xs font-medium text-muted-foreground">
+                            <Label
+                                htmlFor={`card-started-${item.localKey}`}
+                                className="mb-1.5 text-xs font-medium text-muted-foreground"
+                            >
                                 開始日期
                             </Label>
                             <DatePicker
                                 id={`card-started-${item.localKey}`}
                                 value={item.started_at ?? null}
-                                onChange={(date) => updateItem('current_week', index, 'started_at', date)}
+                                onChange={(date) =>
+                                    updateItem(
+                                        'current_week',
+                                        index,
+                                        'started_at',
+                                        date,
+                                    )
+                                }
                                 minDate={weekDateRange?.startDate}
-                                maxDate={item.ended_at ?? weekDateRange?.endDate}
+                                maxDate={
+                                    item.ended_at ?? weekDateRange?.endDate
+                                }
                                 weekRange={weekDateRange}
+                                holidayDates={holidayDates}
+                                workdayOverrideDates={workdayOverrideDates}
                                 placeholder="開始日"
                                 className={`w-full transition-colors ${startedAtIsWeekend ? 'border-yellow-400 bg-yellow-50 dark:border-yellow-600 dark:bg-yellow-950/20' : ''}`}
                             />
-                            {startedAtIsWeekend && <p className="mt-1 text-xs font-medium text-yellow-600 dark:text-yellow-400">⚠️ 週末</p>}
-                            <InputError message={getError(`current_week.${index}.started_at`)} className="mt-1" />
+                            {startedAtIsWeekend &&
+                                startedAtHolidayStatus === null && (
+                                    <p className="mt-1 text-xs font-medium text-yellow-600 dark:text-yellow-400">
+                                        ⚠️ 週末
+                                    </p>
+                                )}
+                            {startedAtHolidayStatus && (
+                                <p
+                                    className={`mt-1 text-xs font-medium ${holidayHintToneClass[startedAtHolidayStatus.tone]}`}
+                                >
+                                    {
+                                        holidayHintPrefix[
+                                            startedAtHolidayStatus.tone
+                                        ]
+                                    }{' '}
+                                    {startedAtHolidayStatus.label}．
+                                    {startedAtHolidayStatus.detail}
+                                </p>
+                            )}
+                            <InputError
+                                message={getError(
+                                    `current_week.${index}.started_at`,
+                                )}
+                                className="mt-1"
+                            />
                         </div>
                         <div>
-                            <Label htmlFor={`card-ended-${item.localKey}`} className="mb-1.5 text-xs font-medium text-muted-foreground">
+                            <Label
+                                htmlFor={`card-ended-${item.localKey}`}
+                                className="mb-1.5 text-xs font-medium text-muted-foreground"
+                            >
                                 結束日期
                             </Label>
                             <DatePicker
                                 id={`card-ended-${item.localKey}`}
                                 value={item.ended_at ?? null}
-                                onChange={(date) => updateItem('current_week', index, 'ended_at', date)}
-                                minDate={item.started_at ?? weekDateRange?.startDate}
+                                onChange={(date) =>
+                                    updateItem(
+                                        'current_week',
+                                        index,
+                                        'ended_at',
+                                        date,
+                                    )
+                                }
+                                minDate={
+                                    item.started_at ?? weekDateRange?.startDate
+                                }
                                 maxDate={weekDateRange?.endDate}
                                 weekRange={weekDateRange}
+                                holidayDates={holidayDates}
+                                workdayOverrideDates={workdayOverrideDates}
                                 placeholder="結束日"
                                 className={`w-full transition-colors ${endedAtIsWeekend ? 'border-yellow-400 bg-yellow-50 dark:border-yellow-600 dark:bg-yellow-950/20' : ''}`}
                             />
-                            {endedAtIsWeekend && <p className="mt-1 text-xs font-medium text-yellow-600 dark:text-yellow-400">⚠️ 週末</p>}
-                            <InputError message={getError(`current_week.${index}.ended_at`)} className="mt-1" />
+                            {endedAtIsWeekend &&
+                                endedAtHolidayStatus === null && (
+                                    <p className="mt-1 text-xs font-medium text-yellow-600 dark:text-yellow-400">
+                                        ⚠️ 週末
+                                    </p>
+                                )}
+                            {endedAtHolidayStatus && (
+                                <p
+                                    className={`mt-1 text-xs font-medium ${holidayHintToneClass[endedAtHolidayStatus.tone]}`}
+                                >
+                                    {
+                                        holidayHintPrefix[
+                                            endedAtHolidayStatus.tone
+                                        ]
+                                    }{' '}
+                                    {endedAtHolidayStatus.label}．
+                                    {endedAtHolidayStatus.detail}
+                                </p>
+                            )}
+                            <InputError
+                                message={getError(
+                                    `current_week.${index}.ended_at`,
+                                )}
+                                className="mt-1"
+                            />
                         </div>
                         <div>
-                            <Label htmlFor={`card-planned-${item.localKey}`} className="mb-1.5 text-xs font-medium text-muted-foreground">
+                            <Label
+                                htmlFor={`card-planned-${item.localKey}`}
+                                className="mb-1.5 text-xs font-medium text-muted-foreground"
+                            >
                                 預計工時
                             </Label>
                             <Input
@@ -196,15 +362,26 @@ export function SortableCurrentWeekRow({
                                         'current_week',
                                         index,
                                         'planned_hours',
-                                        event.target.value === '' ? null : Number(event.target.value),
+                                        event.target.value === ''
+                                            ? null
+                                            : Number(event.target.value),
                                     )
                                 }
                             />
-                            <InputError message={getError(`current_week.${index}.planned_hours`)} className="mt-1" />
+                            <InputError
+                                message={getError(
+                                    `current_week.${index}.planned_hours`,
+                                )}
+                                className="mt-1"
+                            />
                         </div>
                         <div>
-                            <Label htmlFor={`card-hours-${item.localKey}`} className="mb-1.5 text-xs font-semibold text-muted-foreground">
-                                實際工時 <span className="text-destructive">*</span>
+                            <Label
+                                htmlFor={`card-hours-${item.localKey}`}
+                                className="mb-1.5 text-xs font-semibold text-muted-foreground"
+                            >
+                                實際工時{' '}
+                                <span className="text-destructive">*</span>
                             </Label>
                             <Input
                                 id={`card-hours-${item.localKey}`}
@@ -219,19 +396,53 @@ export function SortableCurrentWeekRow({
                                         'current_week',
                                         index,
                                         'hours_spent',
-                                        event.target.value === '' ? 0 : Number(event.target.value),
+                                        event.target.value === ''
+                                            ? 0
+                                            : Number(event.target.value),
                                     )
                                 }
                             />
-                            <InputError message={getError(`current_week.${index}.hours_spent`)} className="mt-1" />
+                            <InputError
+                                message={getError(
+                                    `current_week.${index}.hours_spent`,
+                                )}
+                                className="mt-1"
+                            />
                         </div>
                     </div>
+                    {rangeStats && (
+                        <div className="mt-3 rounded-md border border-border/60 bg-background/70 p-3 text-xs text-muted-foreground">
+                            <p className="font-semibold text-foreground">
+                                期間可用工時{' '}
+                                {rangeStats.availableHours.toFixed(1)} 小時
+                            </p>
+                            <p className="mt-1">
+                                工作日 {rangeStats.workingDays} 天，扣除假日{' '}
+                                {rangeStats.holidayDays} 天
+                                {rangeStats.makeupWorkdays > 0 &&
+                                    `，含補班日 ${rangeStats.makeupWorkdays} 天`}
+                                {rangeStats.holidayNames.length > 0 &&
+                                    `（${rangeStats.holidayNames.join('、')}）`}
+                            </p>
+                            {exceedsAvailableHours && (
+                                <p className="mt-2 font-semibold text-amber-700 dark:text-amber-300">
+                                    目前填寫 {item.hours_spent.toFixed(1)}{' '}
+                                    小時，高於區間可用工時{' '}
+                                    {rangeStats.availableHours.toFixed(1)}{' '}
+                                    小時。
+                                </p>
+                            )}
+                        </div>
+                    )}
                 </div>
 
                 {/* Issue 和標籤 */}
                 <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
                     <div>
-                        <Label htmlFor={`card-issue-${item.localKey}`} className="mb-1.5 flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
+                        <Label
+                            htmlFor={`card-issue-${item.localKey}`}
+                            className="mb-1.5 flex items-center gap-1.5 text-xs font-medium text-muted-foreground"
+                        >
                             <span className="inline-block size-1.5 rounded-full bg-purple-500" />
                             Issue 編號
                         </Label>
@@ -240,12 +451,27 @@ export function SortableCurrentWeekRow({
                             value={item.issue_reference ?? ''}
                             placeholder="例如：JIRA-1234"
                             className="font-mono text-sm transition-colors"
-                            onChange={(event) => updateItem('current_week', index, 'issue_reference', event.target.value)}
+                            onChange={(event) =>
+                                updateItem(
+                                    'current_week',
+                                    index,
+                                    'issue_reference',
+                                    event.target.value,
+                                )
+                            }
                         />
-                        <InputError message={getError(`current_week.${index}.issue_reference`)} className="mt-1" />
+                        <InputError
+                            message={getError(
+                                `current_week.${index}.issue_reference`,
+                            )}
+                            className="mt-1"
+                        />
                     </div>
                     <div>
-                        <Label htmlFor={`card-tags-${item.localKey}`} className="mb-1.5 flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
+                        <Label
+                            htmlFor={`card-tags-${item.localKey}`}
+                            className="mb-1.5 flex items-center gap-1.5 text-xs font-medium text-muted-foreground"
+                        >
                             <span className="inline-block size-1.5 rounded-full bg-green-500" />
                             標籤
                         </Label>
@@ -254,9 +480,19 @@ export function SortableCurrentWeekRow({
                             value={item.tagsText ?? ''}
                             placeholder="前端, 緊急, 重要..."
                             className="transition-colors"
-                            onChange={(event) => updateItem('current_week', index, 'tagsText', event.target.value)}
+                            onChange={(event) =>
+                                updateItem(
+                                    'current_week',
+                                    index,
+                                    'tagsText',
+                                    event.target.value,
+                                )
+                            }
                         />
-                        <InputError message={getError(`current_week.${index}.tags`)} className="mt-1" />
+                        <InputError
+                            message={getError(`current_week.${index}.tags`)}
+                            className="mt-1"
+                        />
                     </div>
                 </div>
             </div>

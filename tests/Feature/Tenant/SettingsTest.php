@@ -7,8 +7,9 @@ use App\Models\Division;
 use App\Models\Team;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Laravel\Sanctum\Sanctum;
 use Inertia\Testing\AssertableInertia as Assert;
+use Laravel\Sanctum\Sanctum;
+
 test('tenant settings page renders welcome configuration', function () {
     $company = Company::factory()->has(
         CompanySetting::factory()->state([
@@ -45,12 +46,12 @@ test('tenant settings page renders welcome configuration', function () {
 
     $response->assertStatus(200)
         ->assertInertia(fn (Assert $page) => $page
-        ->component('tenant/settings/index')
-        ->where('settings.companyName', 'Acme Corp')
-        ->where('settings.brandColor', '#123456')
-        ->where('settings.welcomePage.hero.title', '歡迎 {company}')
-        ->where('settings.ipWhitelist', [])
-    );
+            ->component('tenant/settings/index')
+            ->where('settings.companyName', 'Acme Corp')
+            ->where('settings.brandColor', '#123456')
+            ->where('settings.welcomePage.hero.title', '歡迎 {company}')
+            ->where('settings.ipWhitelist', [])
+        );
 });
 
 uses(RefreshDatabase::class);
@@ -198,17 +199,17 @@ it('updates welcome page configuration', function () {
 it('validates IP whitelist entries', function () {
     Sanctum::actingAs($this->admin, guard: 'web');
 
-$invalid = $this->putJson(
-    route('api.v1.tenant.settings.ip-whitelist.update', ['company' => $this->company->slug]),
-    ['ipAddresses' => ['not-an-ip']]
-);
+    $invalid = $this->putJson(
+        route('api.v1.tenant.settings.ip-whitelist.update', ['company' => $this->company->slug]),
+        ['ipAddresses' => ['not-an-ip']]
+    );
 
     $invalid->assertStatus(422);
 
-$valid = $this->putJson(
-    route('api.v1.tenant.settings.ip-whitelist.update', ['company' => $this->company->slug]),
-    ['ipAddresses' => ['127.0.0.1', '10.0.0.0/8']]
-);
+    $valid = $this->putJson(
+        route('api.v1.tenant.settings.ip-whitelist.update', ['company' => $this->company->slug]),
+        ['ipAddresses' => ['127.0.0.1', '10.0.0.0/8']]
+    );
 
     $valid->assertOk()
         ->assertJsonPath('login_ip_whitelist.1', '10.0.0.0/8');

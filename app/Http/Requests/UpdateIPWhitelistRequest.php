@@ -16,7 +16,7 @@ class UpdateIPWhitelistRequest extends FormRequest
     {
         return [
             'ipAddresses' => ['nullable', 'array', 'max:5'],
-            'ipAddresses.*' => ['string', new IpAddressOrCidr()],
+            'ipAddresses.*' => ['string', new IpAddressOrCidr],
         ];
     }
 

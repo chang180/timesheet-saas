@@ -35,5 +35,9 @@ export function AppShell({ children, variant = 'header' }: AppShellProps) {
     // 在行動裝置和平板上預設收合 sidebar
     const shouldDefaultOpen = isOpen && !isMobile && !isTablet;
 
-    return <SidebarProvider defaultOpen={shouldDefaultOpen}>{children}</SidebarProvider>;
+    return (
+        <SidebarProvider defaultOpen={shouldDefaultOpen}>
+            {children}
+        </SidebarProvider>
+    );
 }

@@ -27,6 +27,7 @@ yarn-error.log
 /.fleet
 /.idea
 /.nova
+/.superset
 /.vscode
 /.zed
 

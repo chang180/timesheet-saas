@@ -22,17 +22,20 @@ export function AppSidebar() {
     const canManageTenant = ['owner', 'admin', 'company_admin'].includes(
         userRole ?? '',
     );
-    
+
     // 優先使用 tenant context 的 company，否則使用 auth.user.company，最後從 URL 解析
     const companyFromTenant = tenant?.company as { slug?: string } | undefined;
-    const companyFromUser = auth?.user?.company as { slug?: string } | undefined;
-    
+    const companyFromUser = auth?.user?.company as
+        | { slug?: string }
+        | undefined;
+
     // 從 URL 解析 company slug（備用方案）
     // URL 格式: /app/{companySlug}/...
     const urlMatch = page.url.match(/^\/app\/([^/]+)/);
     const companySlugFromUrl = urlMatch ? urlMatch[1] : null;
-    
-    const companySlug = companyFromTenant?.slug ?? companyFromUser?.slug ?? companySlugFromUrl;
+
+    const companySlug =
+        companyFromTenant?.slug ?? companyFromUser?.slug ?? companySlugFromUrl;
 
     const mainNavItems: NavItem[] = [];
 
@@ -71,7 +74,9 @@ export function AppSidebar() {
                             <Link
                                 href={
                                     companySlug
-                                        ? tenantRoutes.weeklyReports.url({ company: companySlug })
+                                        ? tenantRoutes.weeklyReports.url({
+                                              company: companySlug,
+                                          })
                                         : '/'
                                 }
                                 prefetch

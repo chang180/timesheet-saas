@@ -1,13 +1,19 @@
 import GoogleAuthButton from '@/components/auth/google-auth-button';
+import InputError from '@/components/input-error';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import {
+    Card,
+    CardContent,
+    CardDescription,
+    CardHeader,
+    CardTitle,
+} from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
-import InputError from '@/components/input-error';
+import authApi from '@/routes/api/v1/tenant/auth';
 import { Head, useForm } from '@inertiajs/react';
 import { CheckCircle2, Mail } from 'lucide-react';
-import authApi from '@/routes/api/v1/tenant/auth';
 
 interface InvitationAcceptProps {
     company: {
@@ -44,7 +50,7 @@ export default function InvitationAcceptPage({
     };
 
     return (
-        <div className="flex min-h-screen items-center justify-center bg-gray-50 px-4 py-12 dark:bg-gray-900 sm:px-6 lg:px-8">
+        <div className="flex min-h-screen items-center justify-center bg-gray-50 px-4 py-12 sm:px-6 lg:px-8 dark:bg-gray-900">
             <Head title="接受邀請" />
             <Card className="w-full max-w-md">
                 <CardHeader className="space-y-1 text-center">
@@ -91,7 +97,8 @@ export default function InvitationAcceptPage({
                     <form onSubmit={handleSubmit} className="space-y-4">
                         <div className="space-y-2">
                             <Label htmlFor="password">
-                                設定密碼 <span className="text-destructive">*</span>
+                                設定密碼{' '}
+                                <span className="text-destructive">*</span>
                             </Label>
                             <Input
                                 id="password"
@@ -109,19 +116,25 @@ export default function InvitationAcceptPage({
 
                         <div className="space-y-2">
                             <Label htmlFor="password_confirmation">
-                                確認密碼 <span className="text-destructive">*</span>
+                                確認密碼{' '}
+                                <span className="text-destructive">*</span>
                             </Label>
                             <Input
                                 id="password_confirmation"
                                 type="password"
                                 value={form.data.password_confirmation}
                                 onChange={(e) =>
-                                    form.setData('password_confirmation', e.target.value)
+                                    form.setData(
+                                        'password_confirmation',
+                                        e.target.value,
+                                    )
                                 }
                                 required
                                 disabled={form.processing}
                             />
-                            <InputError message={form.errors.password_confirmation} />
+                            <InputError
+                                message={form.errors.password_confirmation}
+                            />
                         </div>
 
                         {form.errors.token && (

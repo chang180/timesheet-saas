@@ -67,9 +67,6 @@ class WeeklyReportFactory extends Factory
 
     /**
      * Attach report to existing company/user.
-     *
-     * @param  Company  $company
-     * @param  User|null  $user
      */
     public function forCompany(Company $company, ?User $user = null): self
     {
@@ -96,4 +93,3 @@ class WeeklyReportFactory extends Factory
         ]);
     }
 }
-

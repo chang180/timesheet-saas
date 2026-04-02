@@ -11,9 +11,28 @@ use Illuminate\Support\Facades\Storage;
 
 class HolidaySyncService
 {
-    private const API_BASE_URL = 'https://data.ntpc.gov.tw/api/datasets/308dcd75-6434-45bc-a95f-584da4fed251/csv';
+    public const DATASET_NAME = '政府行政機關辦公日曆表';
+
+    public const DATASET_URL = 'https://data.gov.tw/dataset/123662';
+
+    private const API_BASE_URL = 'https://data.ntpc.gov.tw/api/datasets/308dcd75-6434-45bc-a95f-584da4fed251/json';
 
     private const PAGE_SIZE = 400;
+
+    /**
+     * 假日資料來源說明
+     *
+     * @return array{name: string, dataset_url: string, api_url: string, provider: string}
+     */
+    public static function sourceMetadata(): array
+    {
+        return [
+            'name' => self::DATASET_NAME,
+            'dataset_url' => self::DATASET_URL,
+            'api_url' => self::API_BASE_URL,
+            'provider' => '新北市政府人事處',
+        ];
+    }
 
     /**
      * 從新北市開放資料同步假期資料
@@ -40,14 +59,18 @@ class HolidaySyncService
                     break;
                 }
 
-                $csv = $response->body();
-                $parsed = $this->parseCsv($csv);
+                $payload = $response->json();
 
-                if ($parsed->isEmpty()) {
+                if (! is_array($payload) || count($payload) === 0) {
                     $hasMore = false;
 
                     continue;
                 }
+
+                $parsed = collect($payload)
+                    ->map(fn ($row) => is_array($row) ? $row : [])
+                    ->filter(fn ($row) => ! empty($row['date']));
+                $pageCount = $parsed->count();
 
                 if ($year !== null) {
                     $parsed = $parsed->filter(fn ($row) => $row['year'] == $year);
@@ -55,7 +78,7 @@ class HolidaySyncService
 
                 $holidays = $holidays->merge($parsed);
 
-                if ($parsed->count() < self::PAGE_SIZE) {
+                if ($pageCount < self::PAGE_SIZE) {
                     $hasMore = false;
                 }
 
@@ -106,39 +129,6 @@ class HolidaySyncService
     }
 
     /**
-     * 解析 CSV 字串
-     *
-     * @return Collection<int, array<string, string>>
-     */
-    private function parseCsv(string $csv): Collection
-    {
-        $lines = explode("\n", trim($csv));
-
-        if (count($lines) < 2) {
-            return collect();
-        }
-
-        $headers = str_getcsv(array_shift($lines));
-        $headerMap = array_flip($headers);
-
-        return collect($lines)
-            ->filter(fn ($line) => ! empty(trim($line)))
-            ->map(function ($line) use ($headerMap) {
-                $values = str_getcsv($line);
-
-                return [
-                    'date' => $values[$headerMap['date'] ?? 0] ?? '',
-                    'year' => $values[$headerMap['year'] ?? 1] ?? '',
-                    'name' => $values[$headerMap['name'] ?? 2] ?? '',
-                    'isholiday' => $values[$headerMap['isholiday'] ?? 3] ?? '',
-                    'holidaycategory' => $values[$headerMap['holidaycategory'] ?? 4] ?? '',
-                    'description' => $values[$headerMap['description'] ?? 5] ?? '',
-                ];
-            })
-            ->filter(fn ($row) => ! empty($row['date']));
-    }
-
-    /**
      * 轉換 API 資料為模型格式
      *
      * @param  Collection<int, array<string, string>>  $data
@@ -162,7 +152,7 @@ class HolidaySyncService
                 'name' => $row['name'] ?: null,
                 'is_holiday' => $isHoliday,
                 'category' => $category,
-                'note' => $row['description'] ?: null,
+                'note' => $row['description'] ?: ($row['holidaycategory'] ?: null),
                 'source' => Holiday::SOURCE_NTPC,
                 'is_workday_override' => $isWorkdayOverride,
                 'iso_week' => (int) $date->isoWeek(),
@@ -178,6 +168,10 @@ class HolidaySyncService
     {
         if (str_contains($apiCategory, '補行上班')) {
             return Holiday::CATEGORY_MAKEUP_WORKDAY;
+        }
+
+        if (str_contains($apiCategory, '補假')) {
+            return Holiday::CATEGORY_WEEKDAY_OFF;
         }
 
         if (str_contains($apiCategory, '國定假日') || str_contains($apiCategory, '放假')) {

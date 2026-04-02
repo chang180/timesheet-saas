@@ -1,9 +1,9 @@
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Building2, Users, Link as LinkIcon, Copy, Check } from 'lucide-react';
-import { useState } from 'react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import tenantRoutes from '@/routes/tenant';
+import { Building2, Check, Copy, Link as LinkIcon, Users } from 'lucide-react';
+import { useState } from 'react';
 
 interface CompanyInfoCardProps {
     companyName: string;
@@ -18,17 +18,19 @@ export function CompanyInfoCard({
     maxUserLimit,
     currentUserCount,
 }: CompanyInfoCardProps) {
-    const usagePercentage = (currentUserCount / maxUserLimit) * 100;
+    const usagePercentage =
+        maxUserLimit > 0 ? (currentUserCount / maxUserLimit) * 100 : 0;
     const isNearLimit = usagePercentage >= 80;
     const [copied, setCopied] = useState(false);
-    
+
     // 安全地獲取登入/註冊 URL
-    const authUrl = tenantRoutes?.auth?.url 
+    const authUrl = tenantRoutes?.auth?.url
         ? tenantRoutes.auth.url({ company: companySlug })
         : `/app/${companySlug}/auth`;
-    const fullAuthUrl = typeof window !== 'undefined' 
-        ? `${window.location.origin}${authUrl}`
-        : authUrl;
+    const fullAuthUrl =
+        typeof window !== 'undefined'
+            ? `${window.location.origin}${authUrl}`
+            : authUrl;
 
     const handleCopy = async () => {
         try {
@@ -54,7 +56,9 @@ export function CompanyInfoCard({
                         <div className="text-sm font-medium text-muted-foreground">
                             公司名稱
                         </div>
-                        <div className="text-lg font-semibold">{companyName}</div>
+                        <div className="text-lg font-semibold">
+                            {companyName}
+                        </div>
                     </div>
 
                     <div className="space-y-2">
@@ -62,15 +66,15 @@ export function CompanyInfoCard({
                             公司專屬登入/註冊網址
                         </div>
                         <div className="flex items-center gap-2">
-                            <LinkIcon className="h-4 w-4 text-muted-foreground shrink-0" />
-                            <code className="text-sm font-mono bg-muted px-2 py-1 rounded flex-1 truncate">
+                            <LinkIcon className="h-4 w-4 shrink-0 text-muted-foreground" />
+                            <code className="flex-1 truncate rounded bg-muted px-2 py-1 font-mono text-sm">
                                 {fullAuthUrl}
                             </code>
                             <Button
                                 type="button"
                                 variant="ghost"
                                 size="sm"
-                                className="h-8 w-8 p-0 shrink-0"
+                                className="h-8 w-8 shrink-0 p-0"
                                 onClick={handleCopy}
                                 title="複製網址"
                             >
@@ -82,7 +86,8 @@ export function CompanyInfoCard({
                             </Button>
                         </div>
                         <p className="text-xs text-muted-foreground">
-                            分享此網址給團隊成員，僅限 {companyName} 的成員可使用此網址登入或註冊
+                            分享此網址給團隊成員，僅限 {companyName}{' '}
+                            的成員可使用此網址登入或註冊
                         </p>
                     </div>
 
@@ -92,7 +97,10 @@ export function CompanyInfoCard({
                                 成員數
                             </div>
                             {isNearLimit && (
-                                <Badge variant="outline" className="text-xs border-amber-500 text-amber-700 dark:text-amber-400">
+                                <Badge
+                                    variant="outline"
+                                    className="border-amber-500 text-xs text-amber-700 dark:text-amber-400"
+                                >
                                     接近上限
                                 </Badge>
                             )}
@@ -104,14 +112,16 @@ export function CompanyInfoCard({
                                     {currentUserCount} / {maxUserLimit}
                                 </span>
                             </div>
-                            <div className="w-full bg-muted rounded-full h-2">
+                            <div className="h-2 w-full rounded-full bg-muted">
                                 <div
                                     className={`h-2 rounded-full transition-all ${
                                         isNearLimit
                                             ? 'bg-amber-500'
                                             : 'bg-primary'
                                     }`}
-                                    style={{ width: `${Math.min(usagePercentage, 100)}%` }}
+                                    style={{
+                                        width: `${Math.min(usagePercentage, 100)}%`,
+                                    }}
                                 />
                             </div>
                             <div className="text-xs text-muted-foreground">

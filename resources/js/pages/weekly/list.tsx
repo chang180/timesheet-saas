@@ -20,7 +20,20 @@ import tenantRoutes from '@/routes/tenant';
 import * as weeklyRoutes from '@/routes/tenant/weekly-reports';
 import { type BreadcrumbItem, type SharedData } from '@/types';
 import { Head, Link, router, usePage } from '@inertiajs/react';
-import { ArrowRight, ClipboardList, PenSquare, SquarePen, CheckCircle2, Clock, Lock, Eye, type LucideIcon, CalendarPlus, Filter, X } from 'lucide-react';
+import {
+    ArrowRight,
+    CalendarPlus,
+    CheckCircle2,
+    ClipboardList,
+    Clock,
+    Eye,
+    Filter,
+    Lock,
+    PenSquare,
+    SquarePen,
+    X,
+    type LucideIcon,
+} from 'lucide-react';
 import { useState } from 'react';
 
 type WeeklyReportSummary = {
@@ -63,31 +76,39 @@ interface WeeklyReportListProps {
     availableYears?: number[];
 }
 
-const STATUS_CONFIG: Record<string, { text: string; icon: LucideIcon; className: string }> = {
+const STATUS_CONFIG: Record<
+    string,
+    { text: string; icon: LucideIcon; className: string }
+> = {
     draft: {
         text: '草稿',
         icon: Clock,
-        className: 'bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-500/10 dark:text-amber-400 dark:border-amber-500/20',
+        className:
+            'bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-500/10 dark:text-amber-400 dark:border-amber-500/20',
     },
     submitted: {
         text: '已送出',
         icon: CheckCircle2,
-        className: 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-500/10 dark:text-emerald-400 dark:border-emerald-500/20',
+        className:
+            'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-500/10 dark:text-emerald-400 dark:border-emerald-500/20',
     },
     locked: {
         text: '已鎖定',
         icon: Lock,
-        className: 'bg-slate-50 text-slate-700 border-slate-200 dark:bg-slate-500/10 dark:text-slate-400 dark:border-slate-500/20',
+        className:
+            'bg-slate-50 text-slate-700 border-slate-200 dark:bg-slate-500/10 dark:text-slate-400 dark:border-slate-500/20',
     },
 };
 
 export default function WeeklyReportList(props: WeeklyReportListProps) {
-    const {
-        tenant,
-        flash,
-    } = usePage<SharedData & { flash: { success?: string; info?: string; warning?: string } }>().props;
+    const { tenant, flash } = usePage<
+        SharedData & {
+            flash: { success?: string; info?: string; warning?: string };
+        }
+    >().props;
 
-    const sharedCompanySlug = (tenant?.company as { slug?: string } | undefined)?.slug;
+    const sharedCompanySlug = (tenant?.company as { slug?: string } | undefined)
+        ?.slug;
     const companySlug = props.company?.slug ?? sharedCompanySlug ?? '';
     const reports = props.reports ?? [];
     const defaults = props.defaults;
@@ -98,7 +119,9 @@ export default function WeeklyReportList(props: WeeklyReportListProps) {
 
     // 篩選狀態
     const [filterYear, setFilterYear] = useState(props.filters?.year ?? 'all');
-    const [filterStatus, setFilterStatus] = useState(props.filters?.status ?? 'all');
+    const [filterStatus, setFilterStatus] = useState(
+        props.filters?.status ?? 'all',
+    );
 
     // 是否有啟用篩選
     const hasActiveFilters = filterYear !== 'all' || filterStatus !== 'all';
@@ -141,7 +164,9 @@ export default function WeeklyReportList(props: WeeklyReportListProps) {
 
     // 檢查是否有本週週報
     const currentWeekReport = reports.find(
-        (report) => report.workYear === defaults.year && report.workWeek === defaults.week,
+        (report) =>
+            report.workYear === defaults.year &&
+            report.workWeek === defaults.week,
     );
 
     const breadcrumbs: BreadcrumbItem[] = [
@@ -155,9 +180,13 @@ export default function WeeklyReportList(props: WeeklyReportListProps) {
     const createHref = canCreate
         ? weeklyRoutes.create.url({ company: companySlug })
         : '#';
-    const editCurrentWeekHref = currentWeekReport && canCreate
-        ? weeklyRoutes.edit.url({ company: companySlug, weeklyReport: currentWeekReport.id })
-        : '#';
+    const editCurrentWeekHref =
+        currentWeekReport && canCreate
+            ? weeklyRoutes.edit.url({
+                  company: companySlug,
+                  weeklyReport: currentWeekReport.id,
+              })
+            : '#';
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
@@ -170,7 +199,7 @@ export default function WeeklyReportList(props: WeeklyReportListProps) {
                             ? `${props.company.name} 的週報工作簿`
                             : tenant?.company?.name
                               ? `${tenant.company.name} 的週報工作簿`
-                            : '週報工作簿'}
+                              : '週報工作簿'}
                     </h1>
                     <p className="text-sm leading-relaxed text-muted-foreground sm:text-base">
                         記錄本週每一項任務、支援與會議重點，週會或主管提報時可以立即找到摘要。
@@ -207,13 +236,15 @@ export default function WeeklyReportList(props: WeeklyReportListProps) {
                 )}
 
                 <section className="grid gap-6 sm:grid-cols-2">
-                    <Card className="group flex flex-col border-2 border-border/60 bg-card shadow-sm transition-all duration-300 hover:shadow-lg hover:border-primary/40 hover:-translate-y-1">
+                    <Card className="group flex flex-col border-2 border-border/60 bg-card shadow-sm transition-all duration-300 hover:-translate-y-1 hover:border-primary/40 hover:shadow-lg">
                         <CardContent className="flex flex-1 flex-col gap-5 p-6">
                             <div className="flex size-16 items-center justify-center rounded-2xl bg-linear-to-br from-indigo-100 via-indigo-50 to-indigo-100/50 text-indigo-600 shadow-md transition-all duration-300 group-hover:scale-110 group-hover:shadow-lg dark:from-indigo-500/20 dark:via-indigo-500/10 dark:to-indigo-500/5 dark:text-indigo-400">
                                 <PenSquare className="size-8" />
                             </div>
                             <div className="space-y-2">
-                                <h2 className="text-xl font-semibold text-foreground">填寫本週週報</h2>
+                                <h2 className="text-xl font-semibold text-foreground">
+                                    填寫本週週報
+                                </h2>
                                 <p className="text-sm leading-relaxed text-muted-foreground">
                                     快速記錄本週任務、臨時支援與會議重點。若已建立草稿，系統會自動帶你到該筆週報。
                                 </p>
@@ -224,28 +255,43 @@ export default function WeeklyReportList(props: WeeklyReportListProps) {
                                     className="mt-auto w-full gap-2 sm:w-auto"
                                 >
                                     <Link
-                                        href={currentWeekReport ? editCurrentWeekHref : createHref}
-                                        data-testid={currentWeekReport ? 'goto-weekly-report-edit' : 'goto-weekly-report-create'}
+                                        href={
+                                            currentWeekReport
+                                                ? editCurrentWeekHref
+                                                : createHref
+                                        }
+                                        data-testid={
+                                            currentWeekReport
+                                                ? 'goto-weekly-report-edit'
+                                                : 'goto-weekly-report-create'
+                                        }
                                     >
-                                        {currentWeekReport ? '前往編輯' : '前往填寫'}
+                                        {currentWeekReport
+                                            ? '前往編輯'
+                                            : '前往填寫'}
                                         <ArrowRight className="size-4" />
                                     </Link>
                                 </Button>
                             ) : (
-                                <Button disabled className="mt-auto w-full gap-2 sm:w-auto">
+                                <Button
+                                    disabled
+                                    className="mt-auto w-full gap-2 sm:w-auto"
+                                >
                                     前往填寫
                                 </Button>
                             )}
                         </CardContent>
                     </Card>
 
-                    <Card className="group flex flex-col border-2 border-border/60 bg-card shadow-sm transition-all duration-300 hover:shadow-lg hover:border-primary/40 hover:-translate-y-1">
+                    <Card className="group flex flex-col border-2 border-border/60 bg-card shadow-sm transition-all duration-300 hover:-translate-y-1 hover:border-primary/40 hover:shadow-lg">
                         <CardContent className="flex flex-1 flex-col gap-5 p-6">
                             <div className="flex size-16 items-center justify-center rounded-2xl bg-linear-to-br from-emerald-100 via-emerald-50 to-emerald-100/50 text-emerald-600 shadow-md transition-all duration-300 group-hover:scale-110 group-hover:shadow-lg dark:from-emerald-500/20 dark:via-emerald-500/10 dark:to-emerald-500/5 dark:text-emerald-400">
                                 <CalendarPlus className="size-8" />
                             </div>
                             <div className="space-y-2">
-                                <h2 className="text-xl font-semibold text-foreground">補填週報</h2>
+                                <h2 className="text-xl font-semibold text-foreground">
+                                    補填週報
+                                </h2>
                                 <p className="text-sm leading-relaxed text-muted-foreground">
                                     補填之前略過或忘記填寫的週報，讓工作記錄更完整。
                                 </p>
@@ -256,7 +302,10 @@ export default function WeeklyReportList(props: WeeklyReportListProps) {
                                 )}
                             </div>
                             {canCreate && missingWeeks.length > 0 ? (
-                                <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+                                <Dialog
+                                    open={isDialogOpen}
+                                    onOpenChange={setIsDialogOpen}
+                                >
                                     <DialogTrigger asChild>
                                         <Button
                                             variant="outline"
@@ -269,30 +318,53 @@ export default function WeeklyReportList(props: WeeklyReportListProps) {
                                     </DialogTrigger>
                                     <DialogContent className="max-w-lg">
                                         <DialogHeader>
-                                            <DialogTitle>選擇要補填的週報</DialogTitle>
+                                            <DialogTitle>
+                                                選擇要補填的週報
+                                            </DialogTitle>
                                             <DialogDescription>
                                                 選擇一個缺失的週報開始補填，系統會自動帶你到該週的建立頁面。
                                             </DialogDescription>
                                         </DialogHeader>
                                         <div className="max-h-[60vh] space-y-2 overflow-y-auto">
                                             {missingWeeks.map((missingWeek) => {
-                                                const createHrefWithWeek = weeklyRoutes.create.url({
-                                                    company: companySlug,
-                                                }) + `?year=${missingWeek.year}&week=${missingWeek.week}`;
+                                                const createHrefWithWeek =
+                                                    weeklyRoutes.create.url({
+                                                        company: companySlug,
+                                                    }) +
+                                                    `?year=${missingWeek.year}&week=${missingWeek.week}`;
 
                                                 return (
                                                     <Link
                                                         key={`${missingWeek.year}-${missingWeek.week}`}
-                                                        href={createHrefWithWeek}
+                                                        href={
+                                                            createHrefWithWeek
+                                                        }
                                                         className="flex items-center justify-between rounded-lg border-2 border-border/60 bg-card p-4 transition-all hover:border-primary/40 hover:bg-muted/50"
-                                                        onClick={() => setIsDialogOpen(false)}
+                                                        onClick={() =>
+                                                            setIsDialogOpen(
+                                                                false,
+                                                            )
+                                                        }
                                                     >
                                                         <div className="flex flex-col gap-1">
                                                             <span className="font-semibold text-foreground">
-                                                                {missingWeek.year} 年第 {missingWeek.week} 週
+                                                                {
+                                                                    missingWeek.year
+                                                                }{' '}
+                                                                年第{' '}
+                                                                {
+                                                                    missingWeek.week
+                                                                }{' '}
+                                                                週
                                                             </span>
                                                             <span className="text-xs text-muted-foreground">
-                                                                {missingWeek.startDate} ~ {missingWeek.endDate}
+                                                                {
+                                                                    missingWeek.startDate
+                                                                }{' '}
+                                                                ~{' '}
+                                                                {
+                                                                    missingWeek.endDate
+                                                                }
                                                             </span>
                                                         </div>
                                                         <ArrowRight className="size-4 text-muted-foreground" />
@@ -336,11 +408,14 @@ export default function WeeklyReportList(props: WeeklyReportListProps) {
                     <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                         <div>
                             <h2 className="text-xl font-bold text-foreground sm:text-2xl">
-                                {hasActiveFilters ? '篩選結果' : `最近週報 · 第 ${defaults.year} 年第 ${defaults.week} 週`}
+                                {hasActiveFilters
+                                    ? '篩選結果'
+                                    : `最近週報 · 第 ${defaults.year} 年第 ${defaults.week} 週`}
                             </h2>
                             {!hasActiveFilters && props.weekDateRange && (
                                 <p className="mt-2 text-sm text-muted-foreground sm:text-base">
-                                    {props.weekDateRange.startDate} ~ {props.weekDateRange.endDate}
+                                    {props.weekDateRange.startDate} ~{' '}
+                                    {props.weekDateRange.endDate}
                                 </p>
                             )}
                         </div>
@@ -361,15 +436,28 @@ export default function WeeklyReportList(props: WeeklyReportListProps) {
                                 </div>
                                 <div className="flex flex-wrap items-center gap-3">
                                     <div className="flex items-center gap-2">
-                                        <span className="text-sm text-muted-foreground">年度</span>
-                                        <Select value={filterYear} onValueChange={handleYearChange}>
-                                            <SelectTrigger className="w-[120px]" data-testid="filter-year">
+                                        <span className="text-sm text-muted-foreground">
+                                            年度
+                                        </span>
+                                        <Select
+                                            value={filterYear}
+                                            onValueChange={handleYearChange}
+                                        >
+                                            <SelectTrigger
+                                                className="w-[120px]"
+                                                data-testid="filter-year"
+                                            >
                                                 <SelectValue placeholder="全部年度" />
                                             </SelectTrigger>
                                             <SelectContent>
-                                                <SelectItem value="all">全部年度</SelectItem>
+                                                <SelectItem value="all">
+                                                    全部年度
+                                                </SelectItem>
                                                 {availableYears.map((year) => (
-                                                    <SelectItem key={year} value={year.toString()}>
+                                                    <SelectItem
+                                                        key={year}
+                                                        value={year.toString()}
+                                                    >
                                                         {year} 年
                                                     </SelectItem>
                                                 ))}
@@ -377,16 +465,32 @@ export default function WeeklyReportList(props: WeeklyReportListProps) {
                                         </Select>
                                     </div>
                                     <div className="flex items-center gap-2">
-                                        <span className="text-sm text-muted-foreground">狀態</span>
-                                        <Select value={filterStatus} onValueChange={handleStatusChange}>
-                                            <SelectTrigger className="w-[120px]" data-testid="filter-status">
+                                        <span className="text-sm text-muted-foreground">
+                                            狀態
+                                        </span>
+                                        <Select
+                                            value={filterStatus}
+                                            onValueChange={handleStatusChange}
+                                        >
+                                            <SelectTrigger
+                                                className="w-[120px]"
+                                                data-testid="filter-status"
+                                            >
                                                 <SelectValue placeholder="全部狀態" />
                                             </SelectTrigger>
                                             <SelectContent>
-                                                <SelectItem value="all">全部狀態</SelectItem>
-                                                <SelectItem value="draft">草稿</SelectItem>
-                                                <SelectItem value="submitted">已送出</SelectItem>
-                                                <SelectItem value="locked">已鎖定</SelectItem>
+                                                <SelectItem value="all">
+                                                    全部狀態
+                                                </SelectItem>
+                                                <SelectItem value="draft">
+                                                    草稿
+                                                </SelectItem>
+                                                <SelectItem value="submitted">
+                                                    已送出
+                                                </SelectItem>
+                                                <SelectItem value="locked">
+                                                    已鎖定
+                                                </SelectItem>
                                             </SelectContent>
                                         </Select>
                                     </div>
@@ -413,7 +517,9 @@ export default function WeeklyReportList(props: WeeklyReportListProps) {
                                 <div className="mb-6 flex size-20 items-center justify-center rounded-2xl bg-linear-to-br from-muted to-muted/50 shadow-sm">
                                     <ClipboardList className="size-10 text-muted-foreground" />
                                 </div>
-                                <h3 className="mb-3 text-xl font-semibold text-foreground">尚未建立任何週報</h3>
+                                <h3 className="mb-3 text-xl font-semibold text-foreground">
+                                    尚未建立任何週報
+                                </h3>
                                 <p className="mb-8 max-w-sm text-sm leading-relaxed text-muted-foreground">
                                     點選「填寫本週週報」開始紀錄你的第一份週報，讓工作更有條理。
                                 </p>
@@ -433,22 +539,22 @@ export default function WeeklyReportList(props: WeeklyReportListProps) {
                                 <table className="min-w-full divide-y divide-border/50">
                                     <thead className="bg-linear-to-r from-muted/60 to-muted/40">
                                         <tr>
-                                            <th className="px-6 py-4 text-left text-xs font-bold uppercase tracking-wider text-foreground first:pl-6 last:pr-6">
+                                            <th className="px-6 py-4 text-left text-xs font-bold tracking-wider text-foreground uppercase first:pl-6 last:pr-6">
                                                 週次
                                             </th>
-                                            <th className="px-6 py-4 text-left text-xs font-bold uppercase tracking-wider text-foreground">
+                                            <th className="px-6 py-4 text-left text-xs font-bold tracking-wider text-foreground uppercase">
                                                 狀態
                                             </th>
-                                            <th className="px-6 py-4 text-left text-xs font-bold uppercase tracking-wider text-foreground">
+                                            <th className="px-6 py-4 text-left text-xs font-bold tracking-wider text-foreground uppercase">
                                                 總工時
                                             </th>
-                                            <th className="px-6 py-4 text-left text-xs font-bold uppercase tracking-wider text-foreground">
+                                            <th className="px-6 py-4 text-left text-xs font-bold tracking-wider text-foreground uppercase">
                                                 摘要
                                             </th>
-                                            <th className="px-6 py-4 text-left text-xs font-bold uppercase tracking-wider text-foreground">
+                                            <th className="px-6 py-4 text-left text-xs font-bold tracking-wider text-foreground uppercase">
                                                 更新時間
                                             </th>
-                                            <th className="px-6 py-4 text-right text-xs font-bold uppercase tracking-wider text-foreground last:pr-6">
+                                            <th className="px-6 py-4 text-right text-xs font-bold tracking-wider text-foreground uppercase last:pr-6">
                                                 操作
                                             </th>
                                         </tr>
@@ -457,45 +563,83 @@ export default function WeeklyReportList(props: WeeklyReportListProps) {
                                         {reports.map((report) => {
                                             // 計算 ISO 週的日期範圍
                                             // ISO 週從週一開始，週日結束
-                                            const getISOWeeks = (year: number): Date[] => {
-                                                const jan4 = new Date(year, 0, 4);
-                                                const jan4Day = jan4.getDay() || 7;
-                                                const week1Start = new Date(jan4);
-                                                week1Start.setDate(jan4.getDate() - jan4Day + 1);
+                                            const getISOWeeks = (
+                                                year: number,
+                                            ): Date[] => {
+                                                const jan4 = new Date(
+                                                    year,
+                                                    0,
+                                                    4,
+                                                );
+                                                const jan4Day =
+                                                    jan4.getDay() || 7;
+                                                const week1Start = new Date(
+                                                    jan4,
+                                                );
+                                                week1Start.setDate(
+                                                    jan4.getDate() -
+                                                        jan4Day +
+                                                        1,
+                                                );
                                                 return [week1Start];
                                             };
 
-                                            const week1Start = getISOWeeks(report.workYear)[0];
-                                            const weekStart = new Date(week1Start);
-                                            weekStart.setDate(week1Start.getDate() + (report.workWeek - 1) * 7);
+                                            const week1Start = getISOWeeks(
+                                                report.workYear,
+                                            )[0];
+                                            const weekStart = new Date(
+                                                week1Start,
+                                            );
+                                            weekStart.setDate(
+                                                week1Start.getDate() +
+                                                    (report.workWeek - 1) * 7,
+                                            );
                                             const weekEnd = new Date(weekStart);
-                                            weekEnd.setDate(weekStart.getDate() + 6);
-                                            const startDateStr = weekStart.toISOString().split('T')[0];
-                                            const endDateStr = weekEnd.toISOString().split('T')[0];
+                                            weekEnd.setDate(
+                                                weekStart.getDate() + 6,
+                                            );
+                                            const startDateStr = weekStart
+                                                .toISOString()
+                                                .split('T')[0];
+                                            const endDateStr = weekEnd
+                                                .toISOString()
+                                                .split('T')[0];
 
-                                            const statusConfig = STATUS_CONFIG[report.status] ?? {
+                                            const statusConfig = STATUS_CONFIG[
+                                                report.status
+                                            ] ?? {
                                                 text: report.status,
                                                 icon: Clock,
-                                                className: 'bg-muted text-muted-foreground border-border',
+                                                className:
+                                                    'bg-muted text-muted-foreground border-border',
                                             };
-                                            const StatusIcon = statusConfig.icon;
+                                            const StatusIcon =
+                                                statusConfig.icon;
 
                                             return (
                                                 <tr
                                                     key={report.id}
                                                     className="transition-all duration-200 hover:bg-muted/40 hover:shadow-sm"
                                                 >
-                                                    <td className="whitespace-nowrap px-6 py-5 first:pl-6">
+                                                    <td className="px-6 py-5 whitespace-nowrap first:pl-6">
                                                         <div className="flex flex-col gap-1">
                                                             <span className="font-semibold text-foreground">
-                                                                {report.workYear} 年第 {report.workWeek} 週
+                                                                {
+                                                                    report.workYear
+                                                                }{' '}
+                                                                年第{' '}
+                                                                {
+                                                                    report.workWeek
+                                                                }{' '}
+                                                                週
                                                             </span>
                                                             <span className="text-xs text-muted-foreground">
-                                                                {startDateStr} ~ {endDateStr}
+                                                                {startDateStr} ~{' '}
+                                                                {endDateStr}
                                                             </span>
                                                         </div>
                                                     </td>
-                                                    <td className="whitespace-nowrap px-6 py-5">
+                                                    <td className="px-6 py-5 whitespace-nowrap">
                                                         <span
                                                             className={`inline-flex items-center gap-1.5 rounded-full border-2 px-3.5 py-1.5 text-xs font-semibold shadow-sm ${statusConfig.className}`}
                                                         >
@@ -503,30 +647,42 @@ export default function WeeklyReportList(props: WeeklyReportListProps) {
                                                             {statusConfig.text}
                                                         </span>
                                                     </td>
-                                                    <td className="whitespace-nowrap px-6 py-5">
+                                                    <td className="px-6 py-5 whitespace-nowrap">
                                                         <span className="font-semibold text-foreground">
-                                                            {report.totalHours.toFixed(1)} <span className="text-sm font-normal text-muted-foreground">小時</span>
+                                                            {report.totalHours.toFixed(
+                                                                1,
+                                                            )}{' '}
+                                                            <span className="text-sm font-normal text-muted-foreground">
+                                                                小時
+                                                            </span>
                                                         </span>
                                                     </td>
                                                     <td className="px-6 py-5">
                                                         <p className="max-w-xs truncate text-sm leading-relaxed text-muted-foreground">
                                                             {report.summary ?? (
-                                                                <span className="italic text-muted-foreground/60">—</span>
+                                                                <span className="text-muted-foreground/60 italic">
+                                                                    —
+                                                                </span>
                                                             )}
                                                         </p>
                                                     </td>
-                                                    <td className="whitespace-nowrap px-6 py-5 text-sm leading-relaxed text-muted-foreground">
+                                                    <td className="px-6 py-5 text-sm leading-relaxed whitespace-nowrap text-muted-foreground">
                                                         {report.updatedAt
-                                                            ? new Date(report.updatedAt).toLocaleString('zh-TW', {
-                                                                  year: 'numeric',
-                                                                  month: '2-digit',
-                                                                  day: '2-digit',
-                                                                  hour: '2-digit',
-                                                                  minute: '2-digit',
-                                                              })
+                                                            ? new Date(
+                                                                  report.updatedAt,
+                                                              ).toLocaleString(
+                                                                  'zh-TW',
+                                                                  {
+                                                                      year: 'numeric',
+                                                                      month: '2-digit',
+                                                                      day: '2-digit',
+                                                                      hour: '2-digit',
+                                                                      minute: '2-digit',
+                                                                  },
+                                                              )
                                                             : '—'}
                                                     </td>
-                                                    <td className="whitespace-nowrap px-6 py-5 text-right last:pr-6">
+                                                    <td className="px-6 py-5 text-right whitespace-nowrap last:pr-6">
                                                         <div className="flex items-center justify-end gap-2">
                                                             <Button
                                                                 asChild
@@ -536,10 +692,14 @@ export default function WeeklyReportList(props: WeeklyReportListProps) {
                                                                 data-testid={`view-report-${report.id}`}
                                                             >
                                                                 <Link
-                                                                    href={weeklyRoutes.preview.url({
-                                                                        company: companySlug,
-                                                                        weeklyReport: report.id,
-                                                                    })}
+                                                                    href={weeklyRoutes.preview.url(
+                                                                        {
+                                                                            company:
+                                                                                companySlug,
+                                                                            weeklyReport:
+                                                                                report.id,
+                                                                        },
+                                                                    )}
                                                                 >
                                                                     <Eye className="size-4" />
                                                                     查看
@@ -553,10 +713,14 @@ export default function WeeklyReportList(props: WeeklyReportListProps) {
                                                                 data-testid={`edit-report-${report.id}`}
                                                             >
                                                                 <Link
-                                                                    href={weeklyRoutes.edit.url({
-                                                                        company: companySlug,
-                                                                        weeklyReport: report.id,
-                                                                    })}
+                                                                    href={weeklyRoutes.edit.url(
+                                                                        {
+                                                                            company:
+                                                                                companySlug,
+                                                                            weeklyReport:
+                                                                                report.id,
+                                                                        },
+                                                                    )}
                                                                 >
                                                                     編輯
                                                                     <ArrowRight className="size-4" />
@@ -577,4 +741,3 @@ export default function WeeklyReportList(props: WeeklyReportListProps) {
         </AppLayout>
     );
 }
-

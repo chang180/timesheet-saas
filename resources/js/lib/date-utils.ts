@@ -1,4 +1,10 @@
-import { format, getISOWeek, getISOWeekYear, parseISO, startOfISOWeek } from 'date-fns';
+import {
+    format,
+    getISOWeek,
+    getISOWeekYear,
+    parseISO,
+    startOfISOWeek,
+} from 'date-fns';
 import { zhTW } from 'date-fns/locale';
 
 /**
@@ -7,7 +13,10 @@ import { zhTW } from 'date-fns/locale';
  * @param week ISO 週數
  * @returns { startDate: string, endDate: string } - YYYY-MM-DD 格式
  */
-export function getISOWeekRange(year: number, week: number): { startDate: string; endDate: string } {
+export function getISOWeekRange(
+    year: number,
+    week: number,
+): { startDate: string; endDate: string } {
     // 找到該年第一個 ISO 週的週一
     const jan4 = new Date(year, 0, 4);
     const jan4Day = jan4.getDay() || 7; // 週日為 7
@@ -49,7 +58,10 @@ export function isWeekend(date: Date | string | null | undefined): boolean {
  * @param formatStr 格式字串，預設 'yyyy-MM-dd'
  * @returns 格式化後的日期字串
  */
-export function formatDate(date: Date | string | null | undefined, formatStr = 'yyyy-MM-dd'): string {
+export function formatDate(
+    date: Date | string | null | undefined,
+    formatStr = 'yyyy-MM-dd',
+): string {
     if (!date) {
         return '';
     }
@@ -63,7 +75,10 @@ export function formatDate(date: Date | string | null | undefined, formatStr = '
  * @param date Date 物件或 YYYY-MM-DD 字串
  * @returns { year: number, week: number }
  */
-export function getWeekNumber(date: Date | string): { year: number; week: number } {
+export function getWeekNumber(date: Date | string): {
+    year: number;
+    week: number;
+} {
     const dateObj = typeof date === 'string' ? parseISO(date) : date;
     return {
         year: getISOWeekYear(dateObj),

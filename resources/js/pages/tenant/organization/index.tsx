@@ -1,18 +1,18 @@
+import { DepartmentFormDialog } from '@/components/tenant/department-form-dialog';
+import { DivisionFormDialog } from '@/components/tenant/division-form-dialog';
+import { OrganizationTree } from '@/components/tenant/organization-tree';
+import { TeamFormDialog } from '@/components/tenant/team-form-dialog';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import AppLayout from '@/layouts/app-layout';
-import tenantRoutes from '@/routes/tenant';
-import divisionsApi from '@/routes/api/v1/tenant/divisions';
 import departmentsApi from '@/routes/api/v1/tenant/departments';
+import divisionsApi from '@/routes/api/v1/tenant/divisions';
 import teamsApi from '@/routes/api/v1/tenant/teams';
+import tenantRoutes from '@/routes/tenant';
 import { type BreadcrumbItem, type SharedData } from '@/types';
 import { Head, usePage } from '@inertiajs/react';
 import { Building2, Plus } from 'lucide-react';
 import { useState } from 'react';
-import { OrganizationTree } from '@/components/tenant/organization-tree';
-import { DivisionFormDialog } from '@/components/tenant/division-form-dialog';
-import { DepartmentFormDialog } from '@/components/tenant/department-form-dialog';
-import { TeamFormDialog } from '@/components/tenant/team-form-dialog';
 import { toast } from 'sonner';
 
 type Organization = {
@@ -23,8 +23,6 @@ type Organization = {
         description: string | null;
         sort_order: number;
         is_active: boolean;
-        invitation_token: string | null;
-        invitation_enabled: boolean;
     }>;
     departments: Array<{
         id: number;
@@ -34,8 +32,6 @@ type Organization = {
         description: string | null;
         sort_order: number;
         is_active: boolean;
-        invitation_token: string | null;
-        invitation_enabled: boolean;
     }>;
     teams: Array<{
         id: number;
@@ -46,8 +42,6 @@ type Organization = {
         description: string | null;
         sort_order: number;
         is_active: boolean;
-        invitation_token: string | null;
-        invitation_enabled: boolean;
     }>;
 };
 
@@ -62,41 +56,52 @@ interface PageProps {
 
 export default function OrganizationManagementPage(props: PageProps) {
     const { tenant } = usePage<SharedData>().props;
-    const companySlug = (tenant?.company as { slug?: string } | undefined)?.slug ?? props.company.slug;
-
-    // 直接使用 props.organization，Inertia 會在頁面更新時自動重新渲染
-    const organization = props.organization;
+    const companySlug =
+        (tenant?.company as { slug?: string } | undefined)?.slug ??
+        props.company.slug;
+    const [organization, setOrganization] = useState(props.organization);
     const [divisionDialogOpen, setDivisionDialogOpen] = useState(false);
     const [departmentDialogOpen, setDepartmentDialogOpen] = useState(false);
     const [teamDialogOpen, setTeamDialogOpen] = useState(false);
-    const [editingDivision, setEditingDivision] = useState<typeof organization.divisions[0] | null>(null);
-    const [editingDepartment, setEditingDepartment] = useState<typeof organization.departments[0] | null>(null);
-    const [editingTeam, setEditingTeam] = useState<typeof organization.teams[0] | null>(null);
-    const [selectedDivisionId, setSelectedDivisionId] = useState<number | null>(null);
-    const [selectedDepartmentId, setSelectedDepartmentId] = useState<number | null>(null);
+    const [editingDivision, setEditingDivision] = useState<
+        (typeof organization.divisions)[0] | null
+    >(null);
+    const [editingDepartment, setEditingDepartment] = useState<
+        (typeof organization.departments)[0] | null
+    >(null);
+    const [editingTeam, setEditingTeam] = useState<
+        (typeof organization.teams)[0] | null
+    >(null);
+    const [selectedDivisionId, setSelectedDivisionId] = useState<number | null>(
+        null,
+    );
+    const [selectedDepartmentId, setSelectedDepartmentId] = useState<
+        number | null
+    >(null);
 
     const fetchOrganization = async () => {
         try {
             const [divisionsRes, departmentsRes, teamsRes] = await Promise.all([
                 fetch(divisionsApi.index.url({ company: companySlug }), {
                     credentials: 'include',
-                    headers: { 'Accept': 'application/json' },
+                    headers: { Accept: 'application/json' },
                 }),
                 fetch(departmentsApi.index.url({ company: companySlug }), {
                     credentials: 'include',
-                    headers: { 'Accept': 'application/json' },
+                    headers: { Accept: 'application/json' },
                 }),
                 fetch(teamsApi.index.url({ company: companySlug }), {
                     credentials: 'include',
-                    headers: { 'Accept': 'application/json' },
+                    headers: { Accept: 'application/json' },
                 }),
             ]);
 
-            const [divisionsData, departmentsData, teamsData] = await Promise.all([
-                divisionsRes.json(),
-                departmentsRes.json(),
-                teamsRes.json(),
-            ]);
+            const [divisionsData, departmentsData, teamsData] =
+                await Promise.all([
+                    divisionsRes.json(),
+                    departmentsRes.json(),
+                    teamsRes.json(),
+                ]);
 
             setOrganization({
                 divisions: divisionsData.divisions,
@@ -114,22 +119,32 @@ export default function OrganizationManagementPage(props: PageProps) {
         setDivisionDialogOpen(true);
     };
 
-    const handleEditDivision = (division: typeof organization.divisions[0]) => {
+    const handleEditDivision = (
+        division: (typeof organization.divisions)[0],
+    ) => {
         setEditingDivision(division);
         setDivisionDialogOpen(true);
     };
 
-    const handleDeleteDivision = async (division: typeof organization.divisions[0]) => {
+    const handleDeleteDivision = async (
+        division: (typeof organization.divisions)[0],
+    ) => {
         if (!confirm(`確定要刪除「${division.name}」嗎？此操作無法復原。`)) {
             return;
         }
 
         try {
-            const url = divisionsApi.destroy.url({ company: companySlug, division: division.id });
+            const url = divisionsApi.destroy.url({
+                company: companySlug,
+                division: division.id,
+            });
             const response = await fetch(url, {
                 method: 'DELETE',
                 credentials: 'include',
-                headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
+                headers: {
+                    Accept: 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest',
+                },
             });
 
             if (!response.ok) {
@@ -152,23 +167,33 @@ export default function OrganizationManagementPage(props: PageProps) {
         setDepartmentDialogOpen(true);
     };
 
-    const handleEditDepartment = (department: typeof organization.departments[0]) => {
+    const handleEditDepartment = (
+        department: (typeof organization.departments)[0],
+    ) => {
         setEditingDepartment(department);
         setSelectedDivisionId(department.division_id);
         setDepartmentDialogOpen(true);
     };
 
-    const handleDeleteDepartment = async (department: typeof organization.departments[0]) => {
+    const handleDeleteDepartment = async (
+        department: (typeof organization.departments)[0],
+    ) => {
         if (!confirm(`確定要刪除「${department.name}」嗎？此操作無法復原。`)) {
             return;
         }
 
         try {
-            const url = departmentsApi.destroy.url({ company: companySlug, department: department.id });
+            const url = departmentsApi.destroy.url({
+                company: companySlug,
+                department: department.id,
+            });
             const response = await fetch(url, {
                 method: 'DELETE',
                 credentials: 'include',
-                headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
+                headers: {
+                    Accept: 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest',
+                },
             });
 
             if (!response.ok) {
@@ -192,24 +217,30 @@ export default function OrganizationManagementPage(props: PageProps) {
         setTeamDialogOpen(true);
     };
 
-    const handleEditTeam = (team: typeof organization.teams[0]) => {
+    const handleEditTeam = (team: (typeof organization.teams)[0]) => {
         setEditingTeam(team);
         setSelectedDepartmentId(team.department_id);
         setSelectedDivisionId(team.division_id);
         setTeamDialogOpen(true);
     };
 
-    const handleDeleteTeam = async (team: typeof organization.teams[0]) => {
+    const handleDeleteTeam = async (team: (typeof organization.teams)[0]) => {
         if (!confirm(`確定要刪除「${team.name}」嗎？此操作無法復原。`)) {
             return;
         }
 
         try {
-            const url = teamsApi.destroy.url({ company: companySlug, team: team.id });
+            const url = teamsApi.destroy.url({
+                company: companySlug,
+                team: team.id,
+            });
             const response = await fetch(url, {
                 method: 'DELETE',
                 credentials: 'include',
-                headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
+                headers: {
+                    Accept: 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest',
+                },
             });
 
             if (!response.ok) {
@@ -226,25 +257,22 @@ export default function OrganizationManagementPage(props: PageProps) {
         }
     };
 
-    const handleMoveUp = async (type: 'division' | 'department' | 'team', id: number, currentOrder: number) => {
+    const handleMoveUp = async (
+        type: 'division' | 'department' | 'team',
+        id: number,
+        currentOrder: number,
+    ) => {
         if (currentOrder <= 0) {
             return;
         }
 
         try {
-            const apiMap = {
-                division: divisionsApi,
-                department: departmentsApi,
-                team: teamsApi,
-            };
-            const api = apiMap[type];
-
-            const url = api.update.url({ company: companySlug, [type]: id });
+            const url = getUpdateUrl(type, id);
             const response = await fetch(url, {
                 method: 'PATCH',
                 headers: {
                     'Content-Type': 'application/json',
-                    'Accept': 'application/json',
+                    Accept: 'application/json',
                     'X-Requested-With': 'XMLHttpRequest',
                 },
                 credentials: 'include',
@@ -263,25 +291,23 @@ export default function OrganizationManagementPage(props: PageProps) {
         }
     };
 
-    const handleMoveDown = async (type: 'division' | 'department' | 'team', id: number, currentOrder: number, maxOrder: number) => {
+    const handleMoveDown = async (
+        type: 'division' | 'department' | 'team',
+        id: number,
+        currentOrder: number,
+        maxOrder: number,
+    ) => {
         if (currentOrder >= maxOrder) {
             return;
         }
 
         try {
-            const apiMap = {
-                division: divisionsApi,
-                department: departmentsApi,
-                team: teamsApi,
-            };
-            const api = apiMap[type];
-
-            const url = api.update.url({ company: companySlug, [type]: id });
+            const url = getUpdateUrl(type, id);
             const response = await fetch(url, {
                 method: 'PATCH',
                 headers: {
                     'Content-Type': 'application/json',
-                    'Accept': 'application/json',
+                    Accept: 'application/json',
                     'X-Requested-With': 'XMLHttpRequest',
                 },
                 credentials: 'include',
@@ -297,6 +323,26 @@ export default function OrganizationManagementPage(props: PageProps) {
         } catch (error) {
             console.error('Error moving down:', error);
             toast.error('移動失敗');
+        }
+    };
+
+    const getUpdateUrl = (
+        type: 'division' | 'department' | 'team',
+        id: number,
+    ) => {
+        switch (type) {
+            case 'division':
+                return divisionsApi.update.url({
+                    company: companySlug,
+                    division: id,
+                });
+            case 'department':
+                return departmentsApi.update.url({
+                    company: companySlug,
+                    department: id,
+                });
+            case 'team':
+                return teamsApi.update.url({ company: companySlug, team: id });
         }
     };
 
@@ -316,7 +362,7 @@ export default function OrganizationManagementPage(props: PageProps) {
                         <h1 className="text-3xl font-bold tracking-tight text-foreground">
                             組織管理
                         </h1>
-                        <p className="text-sm text-muted-foreground mt-1">
+                        <p className="mt-1 text-sm text-muted-foreground">
                             管理事業群、部門與小組的層級結構
                         </p>
                     </div>

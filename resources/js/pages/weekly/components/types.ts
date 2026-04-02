@@ -13,6 +13,15 @@ export type WeeklyReportItemInput = {
     ended_at?: string | null;
 };
 
+export type HolidayEntry = {
+    date: string;
+    name: string | null;
+    is_holiday: boolean;
+    category: string;
+    note: string | null;
+    is_workday_override: boolean;
+};
+
 export type DateRange = {
     startDate: string;
     endDate: string;
@@ -25,8 +34,15 @@ export type UpdateItemFn = (
     value: unknown,
 ) => void;
 
-export type RemoveItemFn = (type: 'current_week' | 'next_week', index: number) => void;
+export type RemoveItemFn = (
+    type: 'current_week' | 'next_week',
+    index: number,
+) => void;
 
-export type MoveItemFn = (type: 'current_week' | 'next_week', index: number, direction: 'up' | 'down') => void;
+export type MoveItemFn = (
+    type: 'current_week' | 'next_week',
+    index: number,
+    direction: 'up' | 'down',
+) => void;
 
 export type GetErrorFn = (path: string) => string | undefined;

@@ -1,10 +1,14 @@
 import InputError from '@/components/input-error';
+import { BrandingSettingsCard } from '@/components/tenant/branding-settings-card';
+import { CompanyInfoCard } from '@/components/tenant/company-info-card';
+import { OrganizationLevelsCard } from '@/components/tenant/organization-levels-card';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import AppLayout from '@/layouts/app-layout';
+import { cn } from '@/lib/utils';
 import tenantRoutes from '@/routes/tenant';
 import settingsRoutes from '@/routes/tenant/settings';
 import { AnnouncementsModule } from '@/tenant/welcome-modules/announcements-module';
@@ -12,10 +16,6 @@ import { HeroModule } from '@/tenant/welcome-modules/hero-module';
 import { QuickStartStepsModule } from '@/tenant/welcome-modules/quick-start-steps-module';
 import { SupportContactsModule } from '@/tenant/welcome-modules/support-contacts-module';
 import { WeeklyReportDemoModule } from '@/tenant/welcome-modules/weekly-report-demo-module';
-import { CompanyInfoCard } from '@/components/tenant/company-info-card';
-import { BrandingSettingsCard } from '@/components/tenant/branding-settings-card';
-import { OrganizationLevelsCard } from '@/components/tenant/organization-levels-card';
-import { cn } from '@/lib/utils';
 import { Head, useForm } from '@inertiajs/react';
 import { Fragment, useMemo } from 'react';
 
@@ -43,7 +43,11 @@ type WelcomeFormData = {
         enabled: boolean;
         contacts: Array<{ name: string; email?: string; phone?: string }>;
     };
-    ctas: Array<{ text: string; url: string; variant?: 'primary' | 'secondary' }>;
+    ctas: Array<{
+        text: string;
+        url: string;
+        variant?: 'primary' | 'secondary';
+    }>;
 };
 
 type TenantSettingsPayload = {
@@ -78,7 +82,9 @@ export default function TenantSettingsPage({ settings }: PageProps) {
             breadcrumbs={[
                 {
                     title: '租戶設定',
-                    href: tenantRoutes.settings.url({ company: settings.companySlug }),
+                    href: tenantRoutes.settings.url({
+                        company: settings.companySlug,
+                    }),
                 },
             ]}
         >
@@ -88,7 +94,7 @@ export default function TenantSettingsPage({ settings }: PageProps) {
                     <h1 className="text-3xl font-bold tracking-tight text-foreground">
                         租戶設定
                     </h1>
-                    <p className="text-sm text-muted-foreground mt-1">
+                    <p className="mt-1 text-sm text-muted-foreground">
                         管理公司基本資訊、品牌設定、歡迎頁與安全設定
                     </p>
                 </div>
@@ -96,8 +102,8 @@ export default function TenantSettingsPage({ settings }: PageProps) {
                 <CompanyInfoCard
                     companyName={settings.companyName}
                     companySlug={settings.companySlug}
-                    maxUserLimit={settings.maxUserLimit}
-                    currentUserCount={settings.currentUserCount}
+                    maxUserLimit={settings.maxUserLimit ?? 0}
+                    currentUserCount={settings.currentUserCount ?? 0}
                 />
 
                 <BrandingSettingsCard
@@ -146,9 +152,7 @@ function TenantWelcomeConfigurator({
     const form = useForm<WelcomeFormData>({
         hero: {
             enabled: initialConfig.hero?.enabled ?? true,
-            title:
-                initialConfig.hero?.title ??
-                `歡迎 ${companyName} 團隊`,
+            title: initialConfig.hero?.title ?? `歡迎 ${companyName} 團隊`,
             subtitle:
                 initialConfig.hero?.subtitle ??
                 '快速建立週報流程，掌握團隊進度。',
@@ -168,27 +172,28 @@ function TenantWelcomeConfigurator({
         },
         weeklyReportDemo: {
             enabled: initialConfig.weeklyReportDemo?.enabled ?? true,
-            highlights:
-                initialConfig.weeklyReportDemo?.highlights?.length
-                    ? initialConfig.weeklyReportDemo.highlights.slice(0, 4)
-                    : [
-                          '拖曳排序同步更新主管檢視順序',
-                          'Redmine/Jira 連動，自動帶入任務與工時',
-                      ],
+            highlights: initialConfig.weeklyReportDemo?.highlights?.length
+                ? initialConfig.weeklyReportDemo.highlights.slice(0, 4)
+                : [
+                      '拖曳排序同步更新主管檢視順序',
+                      'Redmine/Jira 連動，自動帶入任務與工時',
+                  ],
         },
         announcements: {
             enabled: initialConfig.announcements?.enabled ?? false,
-            items: initialConfig.announcements?.items?.slice(
-                0,
-                MAX_ANNOUNCEMENTS,
-            ) ?? [],
+            items:
+                initialConfig.announcements?.items?.slice(
+                    0,
+                    MAX_ANNOUNCEMENTS,
+                ) ?? [],
         },
         supportContacts: {
             enabled: initialConfig.supportContacts?.enabled ?? false,
-            contacts: initialConfig.supportContacts?.contacts?.slice(
-                0,
-                MAX_SUPPORT_CONTACTS,
-            ) ?? [],
+            contacts:
+                initialConfig.supportContacts?.contacts?.slice(
+                    0,
+                    MAX_SUPPORT_CONTACTS,
+                ) ?? [],
         },
         ctas: initialConfig.ctas?.slice(0, MAX_CTA) ?? [],
     });
@@ -203,8 +208,7 @@ function TenantWelcomeConfigurator({
             ...formData,
             hero: {
                 ...formData.hero,
-                backgroundImage:
-                    formData.hero.backgroundImage?.trim() || null,
+                backgroundImage: formData.hero.backgroundImage?.trim() || null,
                 videoUrl: formData.hero.videoUrl?.trim() || null,
             },
             quickStartSteps: formData.quickStartSteps.enabled
@@ -325,9 +329,7 @@ function TenantWelcomeConfigurator({
     const removeStep = (index: number) => {
         form.setData('quickStartSteps', {
             ...data.quickStartSteps,
-            steps: data.quickStartSteps.steps.filter(
-                (_, idx) => idx !== index,
-            ),
+            steps: data.quickStartSteps.steps.filter((_, idx) => idx !== index),
         });
     };
 
@@ -342,8 +344,8 @@ function TenantWelcomeConfigurator({
     };
 
     const updateHighlight = (index: number, value: string) => {
-        const highlights = data.weeklyReportDemo.highlights.map(
-            (item, idx) => (idx === index ? value : item),
+        const highlights = data.weeklyReportDemo.highlights.map((item, idx) =>
+            idx === index ? value : item,
         );
         form.setData('weeklyReportDemo', {
             ...data.weeklyReportDemo,
@@ -391,9 +393,7 @@ function TenantWelcomeConfigurator({
     const removeAnnouncement = (index: number) => {
         form.setData('announcements', {
             ...data.announcements,
-            items: data.announcements.items.filter(
-                (_, idx) => idx !== index,
-            ),
+            items: data.announcements.items.filter((_, idx) => idx !== index),
         });
     };
 
@@ -416,9 +416,8 @@ function TenantWelcomeConfigurator({
         key: 'name' | 'email' | 'phone',
         value: string,
     ) => {
-        const contacts = data.supportContacts.contacts.map(
-            (contact, idx) =>
-                idx === index ? { ...contact, [key]: value } : contact,
+        const contacts = data.supportContacts.contacts.map((contact, idx) =>
+            idx === index ? { ...contact, [key]: value } : contact,
         );
         form.setData('supportContacts', {
             ...data.supportContacts,
@@ -506,9 +505,7 @@ function TenantWelcomeConfigurator({
                             {data.hero.enabled && (
                                 <div className="space-y-4 rounded-lg border border-border p-4">
                                     <div className="space-y-2">
-                                        <Label htmlFor="hero-title">
-                                            標題
-                                        </Label>
+                                        <Label htmlFor="hero-title">標題</Label>
                                         <Input
                                             id="hero-title"
                                             value={data.hero.title}
@@ -554,8 +551,8 @@ function TenantWelcomeConfigurator({
                                             <Input
                                                 id="hero-background"
                                                 value={
-                                                    data.hero
-                                                        .backgroundImage ?? ''
+                                                    data.hero.backgroundImage ??
+                                                    ''
                                                 }
                                                 onChange={(event) =>
                                                     form.setData('hero', {
@@ -620,13 +617,9 @@ function TenantWelcomeConfigurator({
                                                 <Fragment key={`cta-${index}`}>
                                                     <div className="grid gap-3 rounded-lg border border-border p-3 md:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_120px_auto] md:items-end md:gap-4">
                                                         <div className="md:space-y-1.5">
-                                                            <Label>
-                                                                文案
-                                                            </Label>
+                                                            <Label>文案</Label>
                                                             <Input
-                                                                value={
-                                                                    cta.text
-                                                                }
+                                                                value={cta.text}
                                                                 onChange={(
                                                                     event,
                                                                 ) =>
@@ -649,13 +642,9 @@ function TenantWelcomeConfigurator({
                                                             />
                                                         </div>
                                                         <div className="md:space-y-1.5">
-                                                            <Label>
-                                                                連結
-                                                            </Label>
+                                                            <Label>連結</Label>
                                                             <Input
-                                                                value={
-                                                                    cta.url
-                                                                }
+                                                                value={cta.url}
                                                                 onChange={(
                                                                     event,
                                                                 ) =>
@@ -678,11 +667,9 @@ function TenantWelcomeConfigurator({
                                                             />
                                                         </div>
                                                         <div className="md:space-y-1.5">
-                                                            <Label>
-                                                                樣式
-                                                            </Label>
+                                                            <Label>樣式</Label>
                                                             <select
-                                                                className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-sm focus-visible:border-ring focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                                                                className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-sm focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
                                                                 value={
                                                                     cta.variant ??
                                                                     'primary'
@@ -712,9 +699,7 @@ function TenantWelcomeConfigurator({
                                                             variant="ghost"
                                                             className="justify-self-end text-xs text-destructive hover:text-destructive"
                                                             onClick={() =>
-                                                                removeCta(
-                                                                    index,
-                                                                )
+                                                                removeCta(index)
                                                             }
                                                         >
                                                             移除
@@ -735,7 +720,8 @@ function TenantWelcomeConfigurator({
                                         快速開始步驟
                                     </h3>
                                     <p className="text-sm text-muted-foreground">
-                                        提醒新成員必備步驟（最多 {MAX_STEPS} 項）。
+                                        提醒新成員必備步驟（最多 {MAX_STEPS}{' '}
+                                        項）。
                                     </p>
                                 </div>
                                 <Checkbox
@@ -778,16 +764,10 @@ function TenantWelcomeConfigurator({
                                                     className="grid gap-3 rounded-lg border border-border p-3 md:grid-cols-[minmax(0,0.4fr)_minmax(0,1fr)_auto] md:items-end md:gap-4"
                                                 >
                                                     <div className="md:space-y-1.5">
-                                                        <Label>
-                                                            標題
-                                                        </Label>
+                                                        <Label>標題</Label>
                                                         <Input
-                                                            value={
-                                                                step.title
-                                                            }
-                                                            onChange={(
-                                                                event,
-                                                            ) =>
+                                                            value={step.title}
+                                                            onChange={(event) =>
                                                                 updateStep(
                                                                     index,
                                                                     'title',
@@ -806,16 +786,12 @@ function TenantWelcomeConfigurator({
                                                         />
                                                     </div>
                                                     <div className="md:space-y-1.5">
-                                                        <Label>
-                                                            描述
-                                                        </Label>
+                                                        <Label>描述</Label>
                                                         <Input
                                                             value={
                                                                 step.description
                                                             }
-                                                            onChange={(
-                                                                event,
-                                                            ) =>
+                                                            onChange={(event) =>
                                                                 updateStep(
                                                                     index,
                                                                     'description',
@@ -885,8 +861,8 @@ function TenantWelcomeConfigurator({
                                             size="sm"
                                             onClick={addHighlight}
                                             disabled={
-                                                data.weeklyReportDemo
-                                                    .highlights.length >= 4
+                                                data.weeklyReportDemo.highlights
+                                                    .length >= 4
                                             }
                                         >
                                             新增亮點
@@ -961,9 +937,10 @@ function TenantWelcomeConfigurator({
                                                         'announcements',
                                                         {
                                                             ...data.announcements,
-                                                            enabled: Boolean(
-                                                                checked,
-                                                            ),
+                                                            enabled:
+                                                                Boolean(
+                                                                    checked,
+                                                                ),
                                                         },
                                                     )
                                                 }
@@ -1052,7 +1029,7 @@ function TenantWelcomeConfigurator({
                                                                     內容
                                                                 </Label>
                                                                 <textarea
-                                                                    className="min-h-[96px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-sm focus-visible:border-ring focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                                                                    className="min-h-[96px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-sm focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
                                                                     value={
                                                                         item.content
                                                                     }
@@ -1099,7 +1076,8 @@ function TenantWelcomeConfigurator({
                                 <div className="space-y-4">
                                     <div className="flex items-center justify-between">
                                         <Label className="text-sm font-medium">
-                                            支援聯絡窗口（最多 {MAX_SUPPORT_CONTACTS} 位）
+                                            支援聯絡窗口（最多{' '}
+                                            {MAX_SUPPORT_CONTACTS} 位）
                                         </Label>
                                         <div className="flex items-center gap-3">
                                             <span className="text-xs text-muted-foreground">
@@ -1107,17 +1085,17 @@ function TenantWelcomeConfigurator({
                                             </span>
                                             <Checkbox
                                                 checked={
-                                                    data.supportContacts
-                                                        .enabled
+                                                    data.supportContacts.enabled
                                                 }
                                                 onCheckedChange={(checked) =>
                                                     form.setData(
                                                         'supportContacts',
                                                         {
                                                             ...data.supportContacts,
-                                                            enabled: Boolean(
-                                                                checked,
-                                                            ),
+                                                            enabled:
+                                                                Boolean(
+                                                                    checked,
+                                                                ),
                                                         },
                                                     )
                                                 }
@@ -1282,8 +1260,8 @@ function TenantWelcomeConfigurator({
                                         title={previewConfig.hero.title}
                                         subtitle={previewConfig.hero.subtitle}
                                         backgroundImage={
-                                            previewConfig.hero.backgroundImage ??
-                                            undefined
+                                            previewConfig.hero
+                                                .backgroundImage ?? undefined
                                         }
                                         videoUrl={
                                             previewConfig.hero.videoUrl ??
@@ -1321,7 +1299,8 @@ function TenantWelcomeConfigurator({
                                         0 && (
                                         <AnnouncementsModule
                                             announcements={
-                                                previewConfig.announcements.items
+                                                previewConfig.announcements
+                                                    .items
                                             }
                                             brandColor={accentColor}
                                         />
@@ -1352,7 +1331,10 @@ interface IPWhitelistFormProps {
     companySlug: string;
 }
 
-function IPWhitelistForm({ initialAddresses, companySlug }: IPWhitelistFormProps) {
+function IPWhitelistForm({
+    initialAddresses,
+    companySlug,
+}: IPWhitelistFormProps) {
     const form = useForm<{ ipAddresses: string[] }>({
         ipAddresses: initialAddresses.length ? initialAddresses : [''],
     });
@@ -1405,67 +1387,68 @@ function IPWhitelistForm({ initialAddresses, companySlug }: IPWhitelistFormProps
             <CardContent>
                 <div className="space-y-6">
                     <div>
-                        <h3 className="text-lg font-semibold text-foreground mb-1">
+                        <h3 className="mb-1 text-lg font-semibold text-foreground">
                             IP 白名單
                         </h3>
                         <p className="text-sm text-muted-foreground">
-                            限制哪些 IP / CIDR 可登入用戶，最多 5 組。留空則允許所有 IP 登入。
+                            限制哪些 IP / CIDR 可登入用戶，最多 5
+                            組。留空則允許所有 IP 登入。
                         </p>
                     </div>
                     <form className="space-y-6" onSubmit={handleSubmit}>
-                    <div className="space-y-3">
-                        {data.ipAddresses.map((ip, index) => (
-                            <div key={`ip-${index}`} className="space-y-2">
-                                <div className="flex items-center gap-3">
-                                    <Input
-                                        value={ip}
-                                        onChange={(event) =>
-                                            updateAddress(
-                                                index,
-                                                event.target.value,
-                                            )
-                                        }
-                                        placeholder="例如：203.66.113.1 或 10.0.0.0/8"
+                        <div className="space-y-3">
+                            {data.ipAddresses.map((ip, index) => (
+                                <div key={`ip-${index}`} className="space-y-2">
+                                    <div className="flex items-center gap-3">
+                                        <Input
+                                            value={ip}
+                                            onChange={(event) =>
+                                                updateAddress(
+                                                    index,
+                                                    event.target.value,
+                                                )
+                                            }
+                                            placeholder="例如：203.66.113.1 或 10.0.0.0/8"
+                                        />
+                                        <Button
+                                            type="button"
+                                            variant="ghost"
+                                            className={cn(
+                                                'text-xs text-destructive hover:text-destructive',
+                                                data.ipAddresses.length === 1 &&
+                                                    'opacity-40',
+                                            )}
+                                            onClick={() => removeAddress(index)}
+                                            disabled={
+                                                data.ipAddresses.length === 1
+                                            }
+                                        >
+                                            移除
+                                        </Button>
+                                    </div>
+                                    <InputError
+                                        message={errors[`ipAddresses.${index}`]}
                                     />
-                                    <Button
-                                        type="button"
-                                        variant="ghost"
-                                        className={cn(
-                                            'text-xs text-destructive hover:text-destructive',
-                                            data.ipAddresses.length === 1 &&
-                                                'opacity-40',
-                                        )}
-                                        onClick={() => removeAddress(index)}
-                                        disabled={data.ipAddresses.length === 1}
-                                    >
-                                        移除
-                                    </Button>
                                 </div>
-                                <InputError
-                                    message={
-                                        errors[`ipAddresses.${index}`]
-                                    }
-                                />
+                            ))}
+                            <InputError message={errors.ipAddresses} />
+                            <div className="flex items-center gap-3">
+                                <Button
+                                    type="button"
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={addAddress}
+                                    disabled={data.ipAddresses.length >= 5}
+                                >
+                                    新增 IP
+                                </Button>
+                                {recentlySuccessful && (
+                                    <span className="text-sm text-emerald-600">
+                                        已更新！
+                                    </span>
+                                )}
                             </div>
-                        ))}
-                        <InputError message={errors.ipAddresses} />
-                        <div className="flex items-center gap-3">
-                            <Button
-                                type="button"
-                                variant="outline"
-                                size="sm"
-                                onClick={addAddress}
-                                disabled={data.ipAddresses.length >= 5}
-                            >
-                                新增 IP
-                            </Button>
-                            {recentlySuccessful && (
-                                <span className="text-sm text-emerald-600">
-                                    已更新！
-                                </span>
-                            )}
                         </div>
-                    </div>
 
                         <Button type="submit" disabled={processing}>
                             儲存白名單
@@ -1476,4 +1459,3 @@ function IPWhitelistForm({ initialAddresses, companySlug }: IPWhitelistFormProps
         </Card>
     );
 }
-
