@@ -1,9 +1,20 @@
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
+import { DatePicker } from '@/components/ui/date-picker';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { HolidayBanner } from '@/components/weekly-report/holiday-banner';
+import { HoursStatsCard } from '@/components/weekly-report/hours-stats-card';
 import AppLayout from '@/layouts/app-layout';
+import { isWeekend } from '@/lib/date-utils';
+import {
+    buildHolidayMap,
+    calculateWorkRangeStats,
+    getHolidayDateStatus,
+    getHolidayMarkerDates,
+} from '@/lib/holiday-utils';
+import type { HolidayEntry } from '@/pages/weekly/components/types';
 import personal from '@/routes/personal';
 import * as weeklyReportRoutes from '@/routes/personal/weekly-reports';
 import { type BreadcrumbItem, type SharedData } from '@/types';
@@ -52,6 +63,16 @@ interface PersonalWeeklyReportFormProps {
     defaults: { year: number; week: number };
     weekDateRange: { startDate: string; endDate: string };
     nextWeekDateRange: { startDate: string; endDate: string };
+    holidayCalendar?: {
+        currentWeek: { year: number; week: number; holidays: HolidayEntry[] };
+        nextWeek: { year: number; week: number; holidays: HolidayEntry[] };
+        source: {
+            name: string;
+            dataset_url: string;
+            api_url: string;
+            provider: string;
+        };
+    };
 }
 
 const emptyCurrentItem = (): ItemInput => ({
@@ -82,6 +103,7 @@ export default function PersonalWeeklyReportForm({
     defaults,
     weekDateRange,
     nextWeekDateRange,
+    holidayCalendar,
 }: PersonalWeeklyReportFormProps) {
     const { flash } = usePage<{
         flash: { success?: string; info?: string; warning?: string };
@@ -100,6 +122,40 @@ export default function PersonalWeeklyReportForm({
         current_week: report?.currentWeek ?? [emptyCurrentItem()],
         next_week: report?.nextWeek ?? [],
     });
+
+    const currentWeekHolidayMap = buildHolidayMap(
+        holidayCalendar?.currentWeek.holidays ?? [],
+    );
+    const nextWeekHolidayMap = buildHolidayMap(
+        holidayCalendar?.nextWeek.holidays ?? [],
+    );
+    const currentWeekHolidayMarkers = getHolidayMarkerDates(
+        currentWeekHolidayMap,
+    );
+    const nextWeekHolidayMarkers = getHolidayMarkerDates(nextWeekHolidayMap);
+
+    const totalCurrentWeekHours = data.current_week.reduce(
+        (sum, item) => sum + (item.hours_spent || 0),
+        0,
+    );
+    const totalNextWeekHours = data.next_week.reduce(
+        (sum, item) => sum + (item.planned_hours || 0),
+        0,
+    );
+    const currentWeekCapacity = weekDateRange
+        ? calculateWorkRangeStats(
+              weekDateRange.startDate,
+              weekDateRange.endDate,
+              currentWeekHolidayMap,
+          )
+        : null;
+    const nextWeekCapacity = nextWeekDateRange
+        ? calculateWorkRangeStats(
+              nextWeekDateRange.startDate,
+              nextWeekDateRange.endDate,
+              nextWeekHolidayMap,
+          )
+        : null;
 
     const breadcrumbs: BreadcrumbItem[] = [
         { title: '我的週報', href: personal.weeklyReports.url() },
@@ -286,6 +342,8 @@ export default function PersonalWeeklyReportForm({
                     </div>
                 )}
 
+                <HolidayBanner holidayCalendar={holidayCalendar} />
+
                 <section className="grid gap-3 sm:grid-cols-2">
                     <div className="space-y-2">
                         <Label htmlFor="work_year">年度</Label>
@@ -439,6 +497,208 @@ export default function PersonalWeeklyReportForm({
                                                 />
                                             </div>
                                         </div>
+                                        <div className="grid gap-2 sm:grid-cols-2">
+                                            <div>
+                                                <Label className="text-xs">
+                                                    開始日期
+                                                </Label>
+                                                <DatePicker
+                                                    value={
+                                                        item.started_at ?? null
+                                                    }
+                                                    onChange={(v) =>
+                                                        updateCurrent(index, {
+                                                            started_at: v,
+                                                        })
+                                                    }
+                                                    minDate={
+                                                        weekDateRange.startDate
+                                                    }
+                                                    maxDate={
+                                                        item.ended_at ??
+                                                        weekDateRange.endDate
+                                                    }
+                                                    weekRange={weekDateRange}
+                                                    holidayDates={
+                                                        currentWeekHolidayMarkers.holidayDates
+                                                    }
+                                                    workdayOverrideDates={
+                                                        currentWeekHolidayMarkers.workdayOverrideDates
+                                                    }
+                                                    className={
+                                                        isWeekend(
+                                                            item.started_at,
+                                                        )
+                                                            ? 'border-yellow-400 bg-yellow-50 dark:border-yellow-600 dark:bg-yellow-950/20'
+                                                            : undefined
+                                                    }
+                                                />
+                                                {(() => {
+                                                    const status =
+                                                        getHolidayDateStatus(
+                                                            item.started_at,
+                                                            currentWeekHolidayMap,
+                                                        );
+                                                    if (status) {
+                                                        return (
+                                                            <p
+                                                                className={`mt-1 text-xs font-medium ${
+                                                                    status.tone ===
+                                                                    'holiday'
+                                                                        ? 'text-rose-600 dark:text-rose-400'
+                                                                        : status.tone ===
+                                                                            'makeup_workday'
+                                                                          ? 'text-emerald-600 dark:text-emerald-400'
+                                                                          : 'text-yellow-600 dark:text-yellow-400'
+                                                                }`}
+                                                            >
+                                                                {status.tone ===
+                                                                'makeup_workday'
+                                                                    ? 'ℹ️'
+                                                                    : '⚠️'}{' '}
+                                                                {status.label}．
+                                                                {status.detail}
+                                                            </p>
+                                                        );
+                                                    }
+                                                    if (
+                                                        isWeekend(
+                                                            item.started_at,
+                                                        )
+                                                    ) {
+                                                        return (
+                                                            <p className="mt-1 text-xs font-medium text-yellow-600 dark:text-yellow-400">
+                                                                ⚠️ 週末
+                                                            </p>
+                                                        );
+                                                    }
+                                                    return null;
+                                                })()}
+                                            </div>
+                                            <div>
+                                                <Label className="text-xs">
+                                                    結束日期
+                                                </Label>
+                                                <DatePicker
+                                                    value={
+                                                        item.ended_at ?? null
+                                                    }
+                                                    onChange={(v) =>
+                                                        updateCurrent(index, {
+                                                            ended_at: v,
+                                                        })
+                                                    }
+                                                    minDate={
+                                                        item.started_at ??
+                                                        weekDateRange.startDate
+                                                    }
+                                                    maxDate={
+                                                        weekDateRange.endDate
+                                                    }
+                                                    weekRange={weekDateRange}
+                                                    holidayDates={
+                                                        currentWeekHolidayMarkers.holidayDates
+                                                    }
+                                                    workdayOverrideDates={
+                                                        currentWeekHolidayMarkers.workdayOverrideDates
+                                                    }
+                                                    className={
+                                                        isWeekend(item.ended_at)
+                                                            ? 'border-yellow-400 bg-yellow-50 dark:border-yellow-600 dark:bg-yellow-950/20'
+                                                            : undefined
+                                                    }
+                                                />
+                                                {(() => {
+                                                    const status =
+                                                        getHolidayDateStatus(
+                                                            item.ended_at,
+                                                            currentWeekHolidayMap,
+                                                        );
+                                                    if (status) {
+                                                        return (
+                                                            <p
+                                                                className={`mt-1 text-xs font-medium ${
+                                                                    status.tone ===
+                                                                    'holiday'
+                                                                        ? 'text-rose-600 dark:text-rose-400'
+                                                                        : status.tone ===
+                                                                            'makeup_workday'
+                                                                          ? 'text-emerald-600 dark:text-emerald-400'
+                                                                          : 'text-yellow-600 dark:text-yellow-400'
+                                                                }`}
+                                                            >
+                                                                {status.tone ===
+                                                                'makeup_workday'
+                                                                    ? 'ℹ️'
+                                                                    : '⚠️'}{' '}
+                                                                {status.label}．
+                                                                {status.detail}
+                                                            </p>
+                                                        );
+                                                    }
+                                                    if (
+                                                        isWeekend(item.ended_at)
+                                                    ) {
+                                                        return (
+                                                            <p className="mt-1 text-xs font-medium text-yellow-600 dark:text-yellow-400">
+                                                                ⚠️ 週末
+                                                            </p>
+                                                        );
+                                                    }
+                                                    return null;
+                                                })()}
+                                            </div>
+                                        </div>
+                                        {(() => {
+                                            const rangeStats =
+                                                calculateWorkRangeStats(
+                                                    item.started_at,
+                                                    item.ended_at,
+                                                    currentWeekHolidayMap,
+                                                );
+                                            if (!rangeStats) return null;
+                                            const exceeds =
+                                                (item.hours_spent ?? 0) >
+                                                rangeStats.availableHours;
+                                            return (
+                                                <div className="rounded-md border border-border/60 bg-muted/30 p-3 text-xs text-muted-foreground">
+                                                    <p className="font-semibold text-foreground">
+                                                        期間可用工時{' '}
+                                                        {rangeStats.availableHours.toFixed(
+                                                            1,
+                                                        )}{' '}
+                                                        小時
+                                                    </p>
+                                                    <p className="mt-1">
+                                                        工作日{' '}
+                                                        {rangeStats.workingDays}{' '}
+                                                        天，扣除假日{' '}
+                                                        {rangeStats.holidayDays}{' '}
+                                                        天
+                                                        {rangeStats.makeupWorkdays >
+                                                            0 &&
+                                                            `，含補班日 ${rangeStats.makeupWorkdays} 天`}
+                                                        {rangeStats.holidayNames
+                                                            .length > 0 &&
+                                                            `（${rangeStats.holidayNames.join('、')}）`}
+                                                    </p>
+                                                    {exceeds && (
+                                                        <p className="mt-2 font-semibold text-amber-700 dark:text-amber-300">
+                                                            目前填寫{' '}
+                                                            {(
+                                                                item.hours_spent ??
+                                                                0
+                                                            ).toFixed(1)}{' '}
+                                                            小時，高於區間可用工時{' '}
+                                                            {rangeStats.availableHours.toFixed(
+                                                                1,
+                                                            )}{' '}
+                                                            小時。
+                                                        </p>
+                                                    )}
+                                                </div>
+                                            );
+                                        })()}
                                     </CardContent>
                                 </Card>
                             ))}
@@ -525,12 +785,227 @@ export default function PersonalWeeklyReportForm({
                                                 }
                                             />
                                         </div>
+                                        <div className="grid gap-2 sm:grid-cols-2">
+                                            <div>
+                                                <Label className="text-xs">
+                                                    開始日期
+                                                </Label>
+                                                <DatePicker
+                                                    value={
+                                                        item.started_at ?? null
+                                                    }
+                                                    onChange={(v) =>
+                                                        updateNext(index, {
+                                                            started_at: v,
+                                                        })
+                                                    }
+                                                    minDate={
+                                                        nextWeekDateRange.startDate
+                                                    }
+                                                    maxDate={
+                                                        item.ended_at ??
+                                                        nextWeekDateRange.endDate
+                                                    }
+                                                    weekRange={
+                                                        nextWeekDateRange
+                                                    }
+                                                    holidayDates={
+                                                        nextWeekHolidayMarkers.holidayDates
+                                                    }
+                                                    workdayOverrideDates={
+                                                        nextWeekHolidayMarkers.workdayOverrideDates
+                                                    }
+                                                    className={
+                                                        isWeekend(
+                                                            item.started_at,
+                                                        )
+                                                            ? 'border-yellow-400 bg-yellow-50 dark:border-yellow-600 dark:bg-yellow-950/20'
+                                                            : undefined
+                                                    }
+                                                />
+                                                {(() => {
+                                                    const status =
+                                                        getHolidayDateStatus(
+                                                            item.started_at,
+                                                            nextWeekHolidayMap,
+                                                        );
+                                                    if (status) {
+                                                        return (
+                                                            <p
+                                                                className={`mt-1 text-xs font-medium ${
+                                                                    status.tone ===
+                                                                    'holiday'
+                                                                        ? 'text-rose-600 dark:text-rose-400'
+                                                                        : status.tone ===
+                                                                            'makeup_workday'
+                                                                          ? 'text-emerald-600 dark:text-emerald-400'
+                                                                          : 'text-yellow-600 dark:text-yellow-400'
+                                                                }`}
+                                                            >
+                                                                {status.tone ===
+                                                                'makeup_workday'
+                                                                    ? 'ℹ️'
+                                                                    : '⚠️'}{' '}
+                                                                {status.label}．
+                                                                {status.detail}
+                                                            </p>
+                                                        );
+                                                    }
+                                                    if (
+                                                        isWeekend(
+                                                            item.started_at,
+                                                        )
+                                                    ) {
+                                                        return (
+                                                            <p className="mt-1 text-xs font-medium text-yellow-600 dark:text-yellow-400">
+                                                                ⚠️ 週末
+                                                            </p>
+                                                        );
+                                                    }
+                                                    return null;
+                                                })()}
+                                            </div>
+                                            <div>
+                                                <Label className="text-xs">
+                                                    結束日期
+                                                </Label>
+                                                <DatePicker
+                                                    value={
+                                                        item.ended_at ?? null
+                                                    }
+                                                    onChange={(v) =>
+                                                        updateNext(index, {
+                                                            ended_at: v,
+                                                        })
+                                                    }
+                                                    minDate={
+                                                        item.started_at ??
+                                                        nextWeekDateRange.startDate
+                                                    }
+                                                    maxDate={
+                                                        nextWeekDateRange.endDate
+                                                    }
+                                                    weekRange={
+                                                        nextWeekDateRange
+                                                    }
+                                                    holidayDates={
+                                                        nextWeekHolidayMarkers.holidayDates
+                                                    }
+                                                    workdayOverrideDates={
+                                                        nextWeekHolidayMarkers.workdayOverrideDates
+                                                    }
+                                                    className={
+                                                        isWeekend(item.ended_at)
+                                                            ? 'border-yellow-400 bg-yellow-50 dark:border-yellow-600 dark:bg-yellow-950/20'
+                                                            : undefined
+                                                    }
+                                                />
+                                                {(() => {
+                                                    const status =
+                                                        getHolidayDateStatus(
+                                                            item.ended_at,
+                                                            nextWeekHolidayMap,
+                                                        );
+                                                    if (status) {
+                                                        return (
+                                                            <p
+                                                                className={`mt-1 text-xs font-medium ${
+                                                                    status.tone ===
+                                                                    'holiday'
+                                                                        ? 'text-rose-600 dark:text-rose-400'
+                                                                        : status.tone ===
+                                                                            'makeup_workday'
+                                                                          ? 'text-emerald-600 dark:text-emerald-400'
+                                                                          : 'text-yellow-600 dark:text-yellow-400'
+                                                                }`}
+                                                            >
+                                                                {status.tone ===
+                                                                'makeup_workday'
+                                                                    ? 'ℹ️'
+                                                                    : '⚠️'}{' '}
+                                                                {status.label}．
+                                                                {status.detail}
+                                                            </p>
+                                                        );
+                                                    }
+                                                    if (
+                                                        isWeekend(item.ended_at)
+                                                    ) {
+                                                        return (
+                                                            <p className="mt-1 text-xs font-medium text-yellow-600 dark:text-yellow-400">
+                                                                ⚠️ 週末
+                                                            </p>
+                                                        );
+                                                    }
+                                                    return null;
+                                                })()}
+                                            </div>
+                                        </div>
+                                        {(() => {
+                                            const rangeStats =
+                                                calculateWorkRangeStats(
+                                                    item.started_at,
+                                                    item.ended_at,
+                                                    nextWeekHolidayMap,
+                                                );
+                                            if (!rangeStats) return null;
+                                            const exceeds =
+                                                (item.planned_hours ?? 0) >
+                                                rangeStats.availableHours;
+                                            return (
+                                                <div className="rounded-md border border-border/60 bg-muted/30 p-3 text-xs text-muted-foreground">
+                                                    <p className="font-semibold text-foreground">
+                                                        期間可用工時{' '}
+                                                        {rangeStats.availableHours.toFixed(
+                                                            1,
+                                                        )}{' '}
+                                                        小時
+                                                    </p>
+                                                    <p className="mt-1">
+                                                        工作日{' '}
+                                                        {rangeStats.workingDays}{' '}
+                                                        天，扣除假日{' '}
+                                                        {rangeStats.holidayDays}{' '}
+                                                        天
+                                                        {rangeStats.makeupWorkdays >
+                                                            0 &&
+                                                            `，含補班日 ${rangeStats.makeupWorkdays} 天`}
+                                                        {rangeStats.holidayNames
+                                                            .length > 0 &&
+                                                            `（${rangeStats.holidayNames.join('、')}）`}
+                                                    </p>
+                                                    {exceeds && (
+                                                        <p className="mt-2 font-semibold text-amber-700 dark:text-amber-300">
+                                                            目前填寫{' '}
+                                                            {(
+                                                                item.planned_hours ??
+                                                                0
+                                                            ).toFixed(1)}{' '}
+                                                            小時，高於區間可用工時{' '}
+                                                            {rangeStats.availableHours.toFixed(
+                                                                1,
+                                                            )}{' '}
+                                                            小時。
+                                                        </p>
+                                                    )}
+                                                </div>
+                                            );
+                                        })()}
                                     </CardContent>
                                 </Card>
                             ))}
                         </div>
                     )}
                 </section>
+
+                <HoursStatsCard
+                    totalCurrentWeekHours={totalCurrentWeekHours}
+                    totalNextWeekHours={totalNextWeekHours}
+                    currentWeekCapacity={currentWeekCapacity}
+                    nextWeekCapacity={nextWeekCapacity}
+                    currentWeekItemCount={data.current_week.length}
+                    nextWeekItemCount={data.next_week.length}
+                />
 
                 {mode === 'edit' && report && (
                     <section className="space-y-3">
