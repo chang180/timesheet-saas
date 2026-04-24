@@ -1,12 +1,17 @@
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
+import { HoursStatsCard } from '@/components/weekly-report/hours-stats-card';
 import AppLayout from '@/layouts/app-layout';
+import { buildHolidayMap, calculateWorkRangeStats } from '@/lib/holiday-utils';
+import type { HolidayEntry } from '@/pages/weekly/components/types';
 import personal from '@/routes/personal';
 import * as weeklyReportRoutes from '@/routes/personal/weekly-reports';
 import { type BreadcrumbItem } from '@/types';
 import { Head, Link } from '@inertiajs/react';
 import {
     ArrowLeft,
+    CalendarDays,
     CheckCircle2,
     Clock,
     Globe,
@@ -15,6 +20,7 @@ import {
     Target,
     type LucideIcon,
 } from 'lucide-react';
+import { useMemo } from 'react';
 
 interface ReportItem {
     title: string;
@@ -22,6 +28,24 @@ interface ReportItem {
     hoursSpent?: number | null;
     plannedHours?: number | null;
     tags: string[];
+    startedAt?: string | null;
+    endedAt?: string | null;
+}
+
+interface DateRange {
+    startDate: string;
+    endDate: string;
+}
+
+interface HolidayCalendar {
+    currentWeek: { year: number; week: number; holidays: HolidayEntry[] };
+    nextWeek: { year: number; week: number; holidays: HolidayEntry[] };
+    source: {
+        name: string;
+        dataset_url: string;
+        api_url: string;
+        provider: string;
+    };
 }
 
 interface PersonalWeeklyReportShowProps {
@@ -40,6 +64,9 @@ interface PersonalWeeklyReportShowProps {
         name: string;
         handle: string | null;
     };
+    weekDateRange?: DateRange | null;
+    nextWeekDateRange?: DateRange | null;
+    holidayCalendar?: HolidayCalendar | null;
 }
 
 const STATUS_CONFIG: Record<
@@ -66,12 +93,80 @@ const STATUS_CONFIG: Record<
     },
 };
 
+function formatDate(dateStr: string | null | undefined): string {
+    if (!dateStr) {
+        return '';
+    }
+
+    const date = new Date(dateStr);
+
+    return date.toLocaleDateString('zh-TW', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+        weekday: 'short',
+    });
+}
+
 export default function PersonalWeeklyReportShow({
     report,
     user,
+    weekDateRange,
+    nextWeekDateRange,
+    holidayCalendar,
 }: PersonalWeeklyReportShowProps) {
     const statusConfig = STATUS_CONFIG[report.status] ?? STATUS_CONFIG.draft;
     const StatusIcon = statusConfig.icon;
+
+    const holidayMap = useMemo(() => {
+        const entries = [
+            ...(holidayCalendar?.currentWeek.holidays ?? []),
+            ...(holidayCalendar?.nextWeek.holidays ?? []),
+        ];
+        return buildHolidayMap(entries);
+    }, [holidayCalendar]);
+
+    const currentWeekCapacity = useMemo(
+        () =>
+            weekDateRange
+                ? calculateWorkRangeStats(
+                      weekDateRange.startDate,
+                      weekDateRange.endDate,
+                      holidayMap,
+                  )
+                : null,
+        [weekDateRange, holidayMap],
+    );
+
+    const nextWeekCapacity = useMemo(
+        () =>
+            nextWeekDateRange
+                ? calculateWorkRangeStats(
+                      nextWeekDateRange.startDate,
+                      nextWeekDateRange.endDate,
+                      holidayMap,
+                  )
+                : null,
+        [nextWeekDateRange, holidayMap],
+    );
+
+    const totalCurrentWeekHours = useMemo(
+        () =>
+            report.currentWeek.reduce(
+                (sum, item) => sum + (item.hoursSpent ?? 0),
+                0,
+            ),
+        [report.currentWeek],
+    );
+
+    const totalNextWeekHours = useMemo(
+        () =>
+            report.nextWeek.reduce(
+                (sum, item) => sum + (item.plannedHours ?? 0),
+                0,
+            ),
+        [report.nextWeek],
+    );
 
     const breadcrumbs: BreadcrumbItem[] = [
         {
@@ -139,6 +234,13 @@ export default function PersonalWeeklyReportShow({
                         {report.publishedAt &&
                             ` · 於 ${new Date(report.publishedAt).toLocaleDateString('zh-TW')} 公開發布`}
                     </p>
+                    {weekDateRange && (
+                        <p className="flex items-center gap-1.5 text-sm text-muted-foreground">
+                            <CalendarDays className="size-4" />
+                            {formatDate(weekDateRange.startDate)} ～{' '}
+                            {formatDate(weekDateRange.endDate)}
+                        </p>
+                    )}
                 </header>
 
                 {report.summary && (
@@ -160,30 +262,75 @@ export default function PersonalWeeklyReportShow({
                         </p>
                     ) : (
                         <div className="space-y-3">
-                            {report.currentWeek.map((item, i) => (
-                                <Card key={i}>
-                                    <CardContent className="space-y-2 p-4">
-                                        <h3 className="font-semibold text-foreground">
-                                            {item.title}
-                                        </h3>
-                                        {item.content && (
-                                            <p className="text-sm whitespace-pre-wrap text-muted-foreground">
-                                                {item.content}
-                                            </p>
-                                        )}
-                                        {typeof item.hoursSpent === 'number' &&
-                                            item.hoursSpent > 0 && (
-                                                <p className="text-xs text-muted-foreground">
-                                                    工時：
-                                                    {item.hoursSpent.toFixed(
-                                                        1,
-                                                    )}{' '}
-                                                    小時
+                            {report.currentWeek.map((item, i) => {
+                                const rangeStats =
+                                    item.startedAt && item.endedAt
+                                        ? calculateWorkRangeStats(
+                                              item.startedAt,
+                                              item.endedAt,
+                                              holidayMap,
+                                          )
+                                        : null;
+
+                                return (
+                                    <Card key={i}>
+                                        <CardContent className="space-y-2 p-4">
+                                            <div className="flex flex-wrap items-start justify-between gap-2">
+                                                <h3 className="font-semibold text-foreground">
+                                                    {item.title}
+                                                </h3>
+                                                {item.startedAt &&
+                                                    item.endedAt && (
+                                                        <Badge
+                                                            variant="outline"
+                                                            className="shrink-0 gap-1 text-xs text-muted-foreground"
+                                                        >
+                                                            <CalendarDays className="size-3" />
+                                                            {formatDate(
+                                                                item.startedAt,
+                                                            )}{' '}
+                                                            ～{' '}
+                                                            {formatDate(
+                                                                item.endedAt,
+                                                            )}
+                                                        </Badge>
+                                                    )}
+                                            </div>
+                                            {item.content && (
+                                                <p className="text-sm whitespace-pre-wrap text-muted-foreground">
+                                                    {item.content}
                                                 </p>
                                             )}
-                                    </CardContent>
-                                </Card>
-                            ))}
+                                            {typeof item.hoursSpent ===
+                                                'number' &&
+                                                item.hoursSpent > 0 && (
+                                                    <p className="text-xs text-muted-foreground">
+                                                        工時：
+                                                        {item.hoursSpent.toFixed(
+                                                            1,
+                                                        )}{' '}
+                                                        小時
+                                                    </p>
+                                                )}
+                                            {rangeStats && (
+                                                <div className="rounded-md border border-border/60 bg-muted/30 px-3 py-2 text-xs text-muted-foreground">
+                                                    工作日{' '}
+                                                    {rangeStats.workingDays} 天
+                                                    {rangeStats.makeupWorkdays >
+                                                        0 &&
+                                                        `（含補班 ${rangeStats.makeupWorkdays} 天）`}
+                                                    ，可用工時{' '}
+                                                    {rangeStats.availableHours}{' '}
+                                                    小時
+                                                    {rangeStats.holidayDays >
+                                                        0 &&
+                                                        `，假日/休息 ${rangeStats.holidayDays} 天`}
+                                                </div>
+                                            )}
+                                        </CardContent>
+                                    </Card>
+                                );
+                            })}
                         </div>
                     )}
                 </section>
@@ -195,31 +342,86 @@ export default function PersonalWeeklyReportShow({
                             下週計畫
                         </h2>
                         <div className="space-y-3">
-                            {report.nextWeek.map((item, i) => (
-                                <Card key={i}>
-                                    <CardContent className="space-y-2 p-4">
-                                        <h3 className="font-semibold text-foreground">
-                                            {item.title}
-                                        </h3>
-                                        {item.content && (
-                                            <p className="text-sm whitespace-pre-wrap text-muted-foreground">
-                                                {item.content}
-                                            </p>
-                                        )}
-                                        {item.plannedHours && (
-                                            <p className="text-xs text-muted-foreground">
-                                                預估：
-                                                {item.plannedHours.toFixed(
-                                                    1,
-                                                )}{' '}
-                                                小時
-                                            </p>
-                                        )}
-                                    </CardContent>
-                                </Card>
-                            ))}
+                            {report.nextWeek.map((item, i) => {
+                                const rangeStats =
+                                    item.startedAt && item.endedAt
+                                        ? calculateWorkRangeStats(
+                                              item.startedAt,
+                                              item.endedAt,
+                                              holidayMap,
+                                          )
+                                        : null;
+
+                                return (
+                                    <Card key={i}>
+                                        <CardContent className="space-y-2 p-4">
+                                            <div className="flex flex-wrap items-start justify-between gap-2">
+                                                <h3 className="font-semibold text-foreground">
+                                                    {item.title}
+                                                </h3>
+                                                {item.startedAt &&
+                                                    item.endedAt && (
+                                                        <Badge
+                                                            variant="outline"
+                                                            className="shrink-0 gap-1 text-xs text-muted-foreground"
+                                                        >
+                                                            <CalendarDays className="size-3" />
+                                                            {formatDate(
+                                                                item.startedAt,
+                                                            )}{' '}
+                                                            ～{' '}
+                                                            {formatDate(
+                                                                item.endedAt,
+                                                            )}
+                                                        </Badge>
+                                                    )}
+                                            </div>
+                                            {item.content && (
+                                                <p className="text-sm whitespace-pre-wrap text-muted-foreground">
+                                                    {item.content}
+                                                </p>
+                                            )}
+                                            {item.plannedHours && (
+                                                <p className="text-xs text-muted-foreground">
+                                                    預估：
+                                                    {item.plannedHours.toFixed(
+                                                        1,
+                                                    )}{' '}
+                                                    小時
+                                                </p>
+                                            )}
+                                            {rangeStats && (
+                                                <div className="rounded-md border border-border/60 bg-muted/30 px-3 py-2 text-xs text-muted-foreground">
+                                                    工作日{' '}
+                                                    {rangeStats.workingDays} 天
+                                                    {rangeStats.makeupWorkdays >
+                                                        0 &&
+                                                        `（含補班 ${rangeStats.makeupWorkdays} 天）`}
+                                                    ，可用工時{' '}
+                                                    {rangeStats.availableHours}{' '}
+                                                    小時
+                                                    {rangeStats.holidayDays >
+                                                        0 &&
+                                                        `，假日/休息 ${rangeStats.holidayDays} 天`}
+                                                </div>
+                                            )}
+                                        </CardContent>
+                                    </Card>
+                                );
+                            })}
                         </div>
                     </section>
+                )}
+
+                {(currentWeekCapacity || nextWeekCapacity) && (
+                    <HoursStatsCard
+                        totalCurrentWeekHours={totalCurrentWeekHours}
+                        totalNextWeekHours={totalNextWeekHours}
+                        currentWeekCapacity={currentWeekCapacity}
+                        nextWeekCapacity={nextWeekCapacity}
+                        currentWeekItemCount={report.currentWeek.length}
+                        nextWeekItemCount={report.nextWeek.length}
+                    />
                 )}
             </div>
         </AppLayout>
