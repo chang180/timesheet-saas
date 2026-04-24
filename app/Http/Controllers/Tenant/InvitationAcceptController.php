@@ -21,8 +21,14 @@ class InvitationAcceptController extends Controller
     /**
      * Show the invitation accept page.
      */
-    public function show(Request $request, Company $company, string $token): Response
+    public function show(Request $request, Company $company, string $token): Response|RedirectResponse
     {
+        $loggedIn = $request->user();
+
+        if ($loggedIn && $loggedIn->isPersonal()) {
+            return redirect()->route('personal.invitations.accept', ['token' => $token]);
+        }
+
         $user = User::query()
             ->where('company_id', $company->getKey())
             ->where('invitation_token', $token)
@@ -91,8 +97,18 @@ class InvitationAcceptController extends Controller
     /**
      * Show the register by invitation page (for organization-level invitations).
      */
-    public function registerByInvitation(Request $request, Company $company, string $token, string $type): Response
+    public function registerByInvitation(Request $request, Company $company, string $token, string $type): Response|RedirectResponse
     {
+        $loggedIn = $request->user();
+
+        if ($loggedIn && $loggedIn->isPersonal()) {
+            return redirect()->route('personal.invitations.join', [
+                'company' => $company->slug,
+                'token' => $token,
+                'type' => $type,
+            ]);
+        }
+
         $organization = match ($type) {
             'division' => Division::where('company_id', $company->id)
                 ->where('invitation_token', $token)

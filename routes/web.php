@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\PersonalInvitationController;
 use App\Http\Controllers\PersonalWeeklyReportController;
 use App\Http\Controllers\PublicProfileController;
 use App\Http\Controllers\WeeklyReportController;
@@ -65,6 +66,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::post('weekly-reports/{weeklyReport}/submit', [PersonalWeeklyReportController::class, 'submit'])->name('personal.weekly-reports.submit');
         Route::post('weekly-reports/{weeklyReport}/toggle-public', [PersonalWeeklyReportController::class, 'togglePublic'])->name('personal.weekly-reports.toggle-public');
         Route::delete('weekly-reports/{weeklyReport}', [PersonalWeeklyReportController::class, 'destroy'])->name('personal.weekly-reports.destroy');
+
+        Route::get('invitations/accept/{token}', [PersonalInvitationController::class, 'showEmailInvitation'])->name('personal.invitations.accept');
+        Route::post('invitations/accept/{token}', [PersonalInvitationController::class, 'acceptEmailInvitation'])->name('personal.invitations.accept.store');
+        Route::get('invitations/join/{company:slug}/{token}/{type}', [PersonalInvitationController::class, 'showOrgInvitation'])->name('personal.invitations.join');
+        Route::post('invitations/join/{company:slug}/{token}/{type}', [PersonalInvitationController::class, 'acceptOrgInvitation'])->name('personal.invitations.join.store');
     });
 
     Route::get('app', function (Request $request) {
