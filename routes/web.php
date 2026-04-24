@@ -1,5 +1,8 @@
 <?php
 
+use App\Http\Controllers\PersonalInvitationController;
+use App\Http\Controllers\PersonalWeeklyReportController;
+use App\Http\Controllers\PublicProfileController;
 use App\Http\Controllers\WeeklyReportController;
 use App\Models\Company;
 use Illuminate\Http\Request;
@@ -8,6 +11,15 @@ use Inertia\Inertia;
 
 Route::get('/', [App\Http\Controllers\LandingController::class, 'global'])
     ->name('home');
+
+// Public profile routes (no auth, rate-limited)
+Route::middleware('throttle:public-profile')->group(function (): void {
+    Route::get('u/{handle}/{year}/{week}', [PublicProfileController::class, 'showReport'])
+        ->where(['year' => '[0-9]{4}', 'week' => '[0-9]{1,2}'])
+        ->name('public.profile.report');
+    Route::get('u/{handle}', [PublicProfileController::class, 'show'])
+        ->name('public.profile.show');
+});
 
 // Google OAuth 路由（公開）
 Route::get('/auth/google', [App\Http\Controllers\Auth\GoogleAuthController::class, 'redirect'])->name('google.redirect');
@@ -28,12 +40,12 @@ Route::prefix('app/{company:slug}')
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('dashboard', function (Request $request) {
         $user = $request->user();
-        $company = $user?->company;
 
-        if (! $company) {
-            return Inertia::render('dashboard');
+        if ($user->isPersonal()) {
+            return redirect()->route('personal.home');
         }
 
+        $company = $user->company;
         $isManager = in_array($user->role, ['owner', 'admin', 'company_admin'], true);
 
         if ($isManager && $company->onboarded_at === null) {
@@ -42,6 +54,24 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
         return redirect()->route('tenant.weekly-reports', $company);
     })->name('dashboard');
+
+    Route::middleware('personal')->prefix('me')->group(function () {
+        Route::get('/', fn () => redirect()->route('personal.weekly-reports'))->name('personal.home');
+
+        Route::get('weekly-reports', [PersonalWeeklyReportController::class, 'index'])->name('personal.weekly-reports');
+        Route::get('weekly-reports/create', [PersonalWeeklyReportController::class, 'create'])->name('personal.weekly-reports.create');
+        Route::post('weekly-reports', [PersonalWeeklyReportController::class, 'store'])->name('personal.weekly-reports.store');
+        Route::get('weekly-reports/{weeklyReport}/edit', [PersonalWeeklyReportController::class, 'edit'])->name('personal.weekly-reports.edit');
+        Route::put('weekly-reports/{weeklyReport}', [PersonalWeeklyReportController::class, 'update'])->name('personal.weekly-reports.update');
+        Route::post('weekly-reports/{weeklyReport}/submit', [PersonalWeeklyReportController::class, 'submit'])->name('personal.weekly-reports.submit');
+        Route::post('weekly-reports/{weeklyReport}/toggle-public', [PersonalWeeklyReportController::class, 'togglePublic'])->name('personal.weekly-reports.toggle-public');
+        Route::delete('weekly-reports/{weeklyReport}', [PersonalWeeklyReportController::class, 'destroy'])->name('personal.weekly-reports.destroy');
+
+        Route::get('invitations/accept/{token}', [PersonalInvitationController::class, 'showEmailInvitation'])->name('personal.invitations.accept');
+        Route::post('invitations/accept/{token}', [PersonalInvitationController::class, 'acceptEmailInvitation'])->name('personal.invitations.accept.store');
+        Route::get('invitations/join/{company:slug}/{token}/{type}', [PersonalInvitationController::class, 'showOrgInvitation'])->name('personal.invitations.join');
+        Route::post('invitations/join/{company:slug}/{token}/{type}', [PersonalInvitationController::class, 'acceptOrgInvitation'])->name('personal.invitations.join.store');
+    });
 
     Route::get('app', function (Request $request) {
         $user = $request->user();
@@ -56,6 +86,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
             }
 
             return redirect()->route('tenant.home', $company);
+        }
+
+        if ($user?->isPersonal()) {
+            return redirect()->route('personal.home');
         }
 
         if (! $company) {
@@ -104,8 +138,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
             Route::patch('settings/branding', [App\Http\Controllers\TenantSettingsController::class, 'updateBranding'])->name('tenant.settings.branding');
             Route::patch('settings/ip-whitelist', [App\Http\Controllers\TenantSettingsController::class, 'updateIPWhitelist'])->name('tenant.settings.ip-whitelist');
             Route::patch('settings/organization-levels', [App\Http\Controllers\TenantSettingsController::class, 'updateOrganizationLevels'])->name('tenant.settings.organization-levels');
+            Route::delete('settings/dissolve', [App\Http\Controllers\TenantSettingsController::class, 'dissolve'])->name('tenant.settings.dissolve');
 
             Route::get('members', [App\Http\Controllers\Tenant\MemberController::class, 'show'])->name('tenant.members');
+            Route::delete('members/{member}', [App\Http\Controllers\Tenant\MemberController::class, 'destroy'])->name('tenant.members.destroy');
             Route::get('organization', [App\Http\Controllers\Tenant\OrganizationController::class, 'index'])->name('tenant.organization');
             Route::get('invitations/accept/{token}', [App\Http\Controllers\Tenant\InvitationAcceptController::class, 'show'])->name('tenant.invitations.accept');
 

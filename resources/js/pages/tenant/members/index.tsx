@@ -1,5 +1,6 @@
 import { MemberInviteDialog } from '@/components/tenant/member-invite-dialog';
 import { MemberListTable } from '@/components/tenant/member-list-table';
+import { MemberRemoveDialog } from '@/components/tenant/member-remove-dialog';
 import { MemberRoleEditDialog } from '@/components/tenant/member-role-edit-dialog';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -64,6 +65,7 @@ interface PageProps {
         slug: string;
         user_limit: number;
         current_user_count: number;
+        company_admin_count: number;
     };
     organization: Organization;
     roles: {
@@ -72,10 +74,11 @@ interface PageProps {
 }
 
 export default function MemberManagementPage(props: PageProps) {
-    const { tenant } = usePage<SharedData>().props;
+    const { auth, tenant } = usePage<SharedData>().props;
     const companySlug =
         (tenant?.company as { slug?: string } | undefined)?.slug ??
         props.company.slug;
+    const currentUserId = (auth?.user as { id?: number } | undefined)?.id ?? 0;
 
     const [members, setMembers] = useState<Member[]>([]);
     const [loading, setLoading] = useState(true);
@@ -94,6 +97,7 @@ export default function MemberManagementPage(props: PageProps) {
     });
     const [inviteDialogOpen, setInviteDialogOpen] = useState(false);
     const [editDialogOpen, setEditDialogOpen] = useState(false);
+    const [removeDialogOpen, setRemoveDialogOpen] = useState(false);
     const [selectedMember, setSelectedMember] = useState<Member | null>(null);
 
     const fetchMembers = async (page = 1) => {
@@ -182,6 +186,17 @@ export default function MemberManagementPage(props: PageProps) {
     const handleEditMember = (member: Member) => {
         setSelectedMember(member);
         setEditDialogOpen(true);
+    };
+
+    const handleRemoveMember = (member: Member) => {
+        setSelectedMember(member);
+        setRemoveDialogOpen(true);
+    };
+
+    const handleRemoveSuccess = () => {
+        setRemoveDialogOpen(false);
+        setSelectedMember(null);
+        fetchMembers(pagination.current_page);
     };
 
     const breadcrumbs: BreadcrumbItem[] = [
@@ -363,7 +378,12 @@ export default function MemberManagementPage(props: PageProps) {
                                 members={members}
                                 loading={loading}
                                 pagination={pagination}
+                                currentUserId={currentUserId}
+                                companyAdminCount={
+                                    props.company.company_admin_count
+                                }
                                 onEdit={handleEditMember}
+                                onRemove={handleRemoveMember}
                                 onPageChange={fetchMembers}
                             />
                         </div>
@@ -390,6 +410,16 @@ export default function MemberManagementPage(props: PageProps) {
                         organization={props.organization}
                         roles={props.roles.available}
                         onSuccess={handleEditSuccess}
+                    />
+                )}
+
+                {selectedMember && (
+                    <MemberRemoveDialog
+                        open={removeDialogOpen}
+                        onOpenChange={setRemoveDialogOpen}
+                        member={selectedMember}
+                        companySlug={companySlug}
+                        onSuccess={handleRemoveSuccess}
                     />
                 )}
             </div>

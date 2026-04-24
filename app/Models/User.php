@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Support\Facades\DB;
 use Laravel\Fortify\TwoFactorAuthenticatable;
 use Laravel\Sanctum\HasApiTokens;
 
@@ -32,6 +33,7 @@ class User extends Authenticatable
         'team_id',
         'name',
         'email',
+        'handle',
         'password',
         'google_id',
         'avatar',
@@ -47,6 +49,7 @@ class User extends Authenticatable
         'invitation_token',
         'invitation_sent_at',
         'invitation_accepted_at',
+        'invitation_revoked_at',
     ];
 
     /**
@@ -76,12 +79,47 @@ class User extends Authenticatable
             'last_active_at' => 'datetime',
             'invitation_sent_at' => 'datetime',
             'invitation_accepted_at' => 'datetime',
+            'invitation_revoked_at' => 'datetime',
         ];
     }
 
     public function company(): BelongsTo
     {
         return $this->belongsTo(Company::class);
+    }
+
+    public function isPersonal(): bool
+    {
+        return $this->company_id === null;
+    }
+
+    public function leaveCurrentCompany(): void
+    {
+        if ($this->isPersonal()) {
+            return;
+        }
+
+        $previousCompanyId = $this->company_id;
+
+        DB::transaction(function () use ($previousCompanyId): void {
+            $company = Company::query()
+                ->whereKey($previousCompanyId)
+                ->lockForUpdate()
+                ->first();
+
+            if ($company !== null && $company->current_user_count > 0) {
+                $company->decrement('current_user_count');
+            }
+
+            $this->forceFill([
+                'company_id' => null,
+                'division_id' => null,
+                'department_id' => null,
+                'team_id' => null,
+                'role' => 'member',
+                'registered_via' => 'removed-from-tenant',
+            ])->save();
+        });
     }
 
     public function division(): BelongsTo
@@ -102,6 +140,19 @@ class User extends Authenticatable
     public function weeklyReports(): HasMany
     {
         return $this->hasMany(WeeklyReport::class);
+    }
+
+    public function personalPublicReports(): HasMany
+    {
+        return $this->hasMany(WeeklyReport::class, 'user_id')
+            ->whereNull('company_id')
+            ->where('status', WeeklyReport::STATUS_SUBMITTED)
+            ->where('is_public', true);
+    }
+
+    public static function findByHandle(string $handle): ?self
+    {
+        return self::query()->where('handle', strtolower(trim($handle)))->first();
     }
 
     public function submittedWeeklyReports(): HasMany

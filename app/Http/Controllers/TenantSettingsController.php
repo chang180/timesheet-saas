@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Actions\Tenant\DissolveCompanyAction;
 use App\Http\Requests\Tenant\UpdateBrandingRequest;
 use App\Http\Requests\Tenant\UpdateOrganizationLevelsRequest;
 use App\Http\Requests\Tenant\UpdateWelcomePageRequest;
@@ -9,6 +10,7 @@ use App\Http\Requests\UpdateIPWhitelistRequest;
 use App\Models\Company;
 use App\Services\OrganizationLevelsService;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -116,5 +118,18 @@ class TenantSettingsController extends Controller
         }
 
         return redirect()->back()->with('success', '組織層級設定已更新');
+    }
+
+    public function dissolve(
+        Request $request,
+        Company $company,
+        DissolveCompanyAction $action,
+    ): RedirectResponse {
+        $this->authorize('update', $company);
+
+        $action->execute($company, $request->user());
+
+        return redirect()->route('personal.home')
+            ->with('success', '公司已關閉，您已切換為個人帳號。');
     }
 }

@@ -14,6 +14,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
 import { Spinner } from '@/components/ui/spinner';
+import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import AuthSplitLayout from '@/layouts/auth/auth-split-layout';
 import { login } from '@/routes';
 import { store } from '@/routes/register';
@@ -28,15 +29,25 @@ import {
     MailPlus,
     Shield,
     Sparkles,
+    User,
     UserPlus,
     Users,
 } from 'lucide-react';
+import { useState } from 'react';
+
+type RegisterMode = 'company' | 'personal';
 
 export default function Register() {
+    const [mode, setMode] = useState<RegisterMode>('company');
+
     return (
         <AuthSplitLayout
-            title="建立週報工作簿"
-            description="給團隊一個地方，隨手記下這週做了什麼、支援了誰、開了哪些會。週會或臨時提報時，自動整理的摘要立刻就緒。"
+            title={mode === 'company' ? '建立週報工作簿' : '個人週報帳號'}
+            description={
+                mode === 'company'
+                    ? '給團隊一個地方，隨手記下這週做了什麼、支援了誰、開了哪些會。週會或臨時提報時，自動整理的摘要立刻就緒。'
+                    : '不需要團隊也可以開始：用個人身份持續累積週報，未來受邀加入組織時資料隨身帶走。'
+            }
             aside={<RegisterAside />}
         >
             <Head title="註冊" />
@@ -54,12 +65,45 @@ export default function Register() {
                                 分鐘整理好這週
                             </Badge>
                             <CardTitle className="text-2xl font-semibold">
-                                建立週報工作簿
+                                {mode === 'company'
+                                    ? '建立週報工作簿'
+                                    : '個人週報帳號'}
                             </CardTitle>
                             <CardDescription className="leading-relaxed">
-                                不論是 Jira
-                                任務、幫忙教新人或臨時開會，都可以在這裡記錄。下次週會、主管想看某人的一週重點時，隨時叫得出來。
+                                {mode === 'company'
+                                    ? '不論是 Jira 任務、幫忙教新人或臨時開會，都可以在這裡記錄。下次週會、主管想看某人的一週重點時，隨時叫得出來。'
+                                    : '一個人也能寫週報。先把每週重點記錄下來，之後若加入組織，過去的紀錄都還在。'}
                             </CardDescription>
+                            <ToggleGroup
+                                type="single"
+                                value={mode}
+                                onValueChange={(value: string) => {
+                                    if (
+                                        value === 'company' ||
+                                        value === 'personal'
+                                    ) {
+                                        setMode(value);
+                                    }
+                                }}
+                                className="w-full"
+                            >
+                                <ToggleGroupItem
+                                    value="company"
+                                    className="flex-1 gap-2"
+                                    aria-label="建立或加入公司"
+                                >
+                                    <Building2 className="size-4" />
+                                    建立公司
+                                </ToggleGroupItem>
+                                <ToggleGroupItem
+                                    value="personal"
+                                    className="flex-1 gap-2"
+                                    aria-label="個人使用"
+                                >
+                                    <User className="size-4" />
+                                    個人使用
+                                </ToggleGroupItem>
+                            </ToggleGroup>
                         </CardHeader>
                         <Separator className="mx-6" />
                         <CardContent className="space-y-5 pt-6">
@@ -77,24 +121,26 @@ export default function Register() {
                             </div>
 
                             <div className="space-y-4">
-                                <div className="space-y-2">
-                                    <Label htmlFor="company_name">
-                                        公司或團隊名稱
-                                    </Label>
-                                    <Input
-                                        id="company_name"
-                                        type="text"
-                                        required
-                                        tabIndex={1}
-                                        autoComplete="organization"
-                                        name="company_name"
-                                        placeholder="例如：Acme 研發部"
-                                    />
-                                    <InputError
-                                        message={errors.company_name}
-                                        className="mt-2"
-                                    />
-                                </div>
+                                {mode === 'company' && (
+                                    <div className="space-y-2">
+                                        <Label htmlFor="company_name">
+                                            公司或團隊名稱
+                                        </Label>
+                                        <Input
+                                            id="company_name"
+                                            type="text"
+                                            required
+                                            tabIndex={1}
+                                            autoComplete="organization"
+                                            name="company_name"
+                                            placeholder="例如：Acme 研發部"
+                                        />
+                                        <InputError
+                                            message={errors.company_name}
+                                            className="mt-2"
+                                        />
+                                    </div>
+                                )}
                                 <div className="space-y-2">
                                     <Label htmlFor="name">姓名</Label>
                                     <Input
@@ -169,7 +215,9 @@ export default function Register() {
                             >
                                 {processing && <Spinner />}
                                 {!processing && <UserPlus className="size-4" />}
-                                建立帳號
+                                {mode === 'company'
+                                    ? '建立帳號'
+                                    : '建立個人帳號'}
                                 {!processing && (
                                     <ArrowRight className="ml-1 size-4" />
                                 )}
@@ -178,25 +226,44 @@ export default function Register() {
                             <Separator className="my-6" />
 
                             <div className="grid gap-4 text-sm text-muted-foreground">
-                                <div className="flex items-center gap-3">
-                                    <Building2 className="size-4 text-indigo-500" />
-                                    <span>
-                                        依公司／部門／小組分層管理週報，週會時快速切換想看的單位。
-                                    </span>
-                                </div>
-                                <div className="flex items-center gap-3">
-                                    <Users className="size-4 text-sky-500" />
-                                    <span>
-                                        成員可自由補充臨時支援、教學、會議紀錄，不只限於專案任務。
-                                    </span>
-                                </div>
-                                <div className="flex items-center gap-3">
-                                    <MailPlus className="size-4 text-emerald-500" />
-                                    <span>
-                                        會議前自動提醒，主管與 PM
-                                        能提早閱讀本週焦點。
-                                    </span>
-                                </div>
+                                {mode === 'company' ? (
+                                    <>
+                                        <div className="flex items-center gap-3">
+                                            <Building2 className="size-4 text-indigo-500" />
+                                            <span>
+                                                依公司／部門／小組分層管理週報，週會時快速切換想看的單位。
+                                            </span>
+                                        </div>
+                                        <div className="flex items-center gap-3">
+                                            <Users className="size-4 text-sky-500" />
+                                            <span>
+                                                成員可自由補充臨時支援、教學、會議紀錄，不只限於專案任務。
+                                            </span>
+                                        </div>
+                                        <div className="flex items-center gap-3">
+                                            <MailPlus className="size-4 text-emerald-500" />
+                                            <span>
+                                                會議前自動提醒，主管與 PM
+                                                能提早閱讀本週焦點。
+                                            </span>
+                                        </div>
+                                    </>
+                                ) : (
+                                    <>
+                                        <div className="flex items-center gap-3">
+                                            <User className="size-4 text-indigo-500" />
+                                            <span>
+                                                個人週報專屬於你，未加入任何組織前不會被任何人看見。
+                                            </span>
+                                        </div>
+                                        <div className="flex items-center gap-3">
+                                            <MailPlus className="size-4 text-sky-500" />
+                                            <span>
+                                                收到組織邀請時可選擇加入，過去的個人週報不會自動帶過去。
+                                            </span>
+                                        </div>
+                                    </>
+                                )}
                             </div>
 
                             <div className="rounded-2xl border border-border/60 bg-muted/30 p-4 text-xs text-muted-foreground dark:bg-muted/10">
