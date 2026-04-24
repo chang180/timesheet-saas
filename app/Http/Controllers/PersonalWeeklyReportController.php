@@ -142,6 +142,48 @@ class PersonalWeeklyReportController extends Controller
             ->with('success', '已建立週報草稿，可繼續編輯。');
     }
 
+    public function show(Request $request, WeeklyReport $weeklyReport): Response
+    {
+        $this->authorizePersonalReport($request, $weeklyReport);
+
+        $weeklyReport->load('items');
+
+        return Inertia::render('personal/weekly-reports/show', [
+            'report' => [
+                'id' => $weeklyReport->id,
+                'workYear' => $weeklyReport->work_year,
+                'workWeek' => $weeklyReport->work_week,
+                'status' => $weeklyReport->status,
+                'isPublic' => $weeklyReport->is_public,
+                'publishedAt' => $weeklyReport->published_at?->toIso8601String(),
+                'summary' => $weeklyReport->summary,
+                'currentWeek' => $weeklyReport->items
+                    ->where('type', WeeklyReportItem::TYPE_CURRENT_WEEK)
+                    ->values()
+                    ->map(fn (WeeklyReportItem $item): array => [
+                        'title' => $item->title,
+                        'content' => $item->content,
+                        'hoursSpent' => $item->hours_spent,
+                        'plannedHours' => $item->planned_hours,
+                        'tags' => $item->tags ?? [],
+                    ]),
+                'nextWeek' => $weeklyReport->items
+                    ->where('type', WeeklyReportItem::TYPE_NEXT_WEEK)
+                    ->values()
+                    ->map(fn (WeeklyReportItem $item): array => [
+                        'title' => $item->title,
+                        'content' => $item->content,
+                        'plannedHours' => $item->planned_hours,
+                        'tags' => $item->tags ?? [],
+                    ]),
+            ],
+            'user' => [
+                'name' => $request->user()->name,
+                'handle' => $request->user()->handle,
+            ],
+        ]);
+    }
+
     public function edit(Request $request, WeeklyReport $weeklyReport): Response
     {
         $this->authorizePersonalReport($request, $weeklyReport);

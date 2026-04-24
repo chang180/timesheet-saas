@@ -61,6 +61,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('weekly-reports', [PersonalWeeklyReportController::class, 'index'])->name('personal.weekly-reports');
         Route::get('weekly-reports/create', [PersonalWeeklyReportController::class, 'create'])->name('personal.weekly-reports.create');
         Route::post('weekly-reports', [PersonalWeeklyReportController::class, 'store'])->name('personal.weekly-reports.store');
+        Route::get('weekly-reports/{weeklyReport}', [PersonalWeeklyReportController::class, 'show'])->name('personal.weekly-reports.show');
         Route::get('weekly-reports/{weeklyReport}/edit', [PersonalWeeklyReportController::class, 'edit'])->name('personal.weekly-reports.edit');
         Route::put('weekly-reports/{weeklyReport}', [PersonalWeeklyReportController::class, 'update'])->name('personal.weekly-reports.update');
         Route::post('weekly-reports/{weeklyReport}/submit', [PersonalWeeklyReportController::class, 'submit'])->name('personal.weekly-reports.submit');
