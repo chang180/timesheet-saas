@@ -1,6 +1,7 @@
 import InputError from '@/components/input-error';
 import { BrandingSettingsCard } from '@/components/tenant/branding-settings-card';
 import { CompanyInfoCard } from '@/components/tenant/company-info-card';
+import { DissolveCompanyDialog } from '@/components/tenant/dissolve-company-dialog';
 import { OrganizationLevelsCard } from '@/components/tenant/organization-levels-card';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -17,7 +18,7 @@ import { QuickStartStepsModule } from '@/tenant/welcome-modules/quick-start-step
 import { SupportContactsModule } from '@/tenant/welcome-modules/support-contacts-module';
 import { WeeklyReportDemoModule } from '@/tenant/welcome-modules/weekly-report-demo-module';
 import { Head, useForm } from '@inertiajs/react';
-import { Fragment, useMemo } from 'react';
+import { Fragment, useMemo, useState } from 'react';
 
 type WelcomeFormData = {
     hero: {
@@ -77,6 +78,8 @@ const MAX_SUPPORT_CONTACTS = 3;
 const MAX_ANNOUNCEMENTS = 3;
 
 export default function TenantSettingsPage({ settings }: PageProps) {
+    const [dissolveDialogOpen, setDissolveDialogOpen] = useState(false);
+
     return (
         <AppLayout
             breadcrumbs={[
@@ -131,7 +134,40 @@ export default function TenantSettingsPage({ settings }: PageProps) {
                     initialAddresses={settings.ipWhitelist}
                     companySlug={settings.companySlug}
                 />
+
+                {(settings.currentUserCount ?? 0) <= 1 && (
+                    <Card className="border-destructive/50">
+                        <CardHeader>
+                            <CardTitle className="text-destructive">
+                                危險區域
+                            </CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                            <div className="flex items-center justify-between">
+                                <div>
+                                    <p className="font-medium">關閉公司</p>
+                                    <p className="text-sm text-muted-foreground">
+                                        您是公司唯一成員，關閉後帳號將切換為個人模式，歷史週報保留。
+                                    </p>
+                                </div>
+                                <Button
+                                    variant="destructive"
+                                    onClick={() => setDissolveDialogOpen(true)}
+                                >
+                                    關閉公司
+                                </Button>
+                            </div>
+                        </CardContent>
+                    </Card>
+                )}
             </div>
+
+            <DissolveCompanyDialog
+                open={dissolveDialogOpen}
+                onOpenChange={setDissolveDialogOpen}
+                companySlug={settings.companySlug}
+                companyName={settings.companyName}
+            />
         </AppLayout>
     );
 }

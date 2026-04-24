@@ -132,6 +132,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
             Route::patch('settings/branding', [App\Http\Controllers\TenantSettingsController::class, 'updateBranding'])->name('tenant.settings.branding');
             Route::patch('settings/ip-whitelist', [App\Http\Controllers\TenantSettingsController::class, 'updateIPWhitelist'])->name('tenant.settings.ip-whitelist');
             Route::patch('settings/organization-levels', [App\Http\Controllers\TenantSettingsController::class, 'updateOrganizationLevels'])->name('tenant.settings.organization-levels');
+            Route::delete('settings/dissolve', [App\Http\Controllers\TenantSettingsController::class, 'dissolve'])->name('tenant.settings.dissolve');
 
             Route::get('members', [App\Http\Controllers\Tenant\MemberController::class, 'show'])->name('tenant.members');
             Route::delete('members/{member}', [App\Http\Controllers\Tenant\MemberController::class, 'destroy'])->name('tenant.members.destroy');
