@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\PersonalWeeklyReportController;
 use App\Http\Controllers\WeeklyReportController;
 use App\Models\Company;
 use Illuminate\Http\Request;
@@ -28,12 +29,12 @@ Route::prefix('app/{company:slug}')
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('dashboard', function (Request $request) {
         $user = $request->user();
-        $company = $user?->company;
 
-        if (! $company) {
-            return Inertia::render('dashboard');
+        if ($user->isPersonal()) {
+            return redirect()->route('personal.home');
         }
 
+        $company = $user->company;
         $isManager = in_array($user->role, ['owner', 'admin', 'company_admin'], true);
 
         if ($isManager && $company->onboarded_at === null) {
@@ -42,6 +43,18 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
         return redirect()->route('tenant.weekly-reports', $company);
     })->name('dashboard');
+
+    Route::middleware('personal')->prefix('me')->group(function () {
+        Route::get('/', fn () => redirect()->route('personal.weekly-reports'))->name('personal.home');
+
+        Route::get('weekly-reports', [PersonalWeeklyReportController::class, 'index'])->name('personal.weekly-reports');
+        Route::get('weekly-reports/create', [PersonalWeeklyReportController::class, 'create'])->name('personal.weekly-reports.create');
+        Route::post('weekly-reports', [PersonalWeeklyReportController::class, 'store'])->name('personal.weekly-reports.store');
+        Route::get('weekly-reports/{weeklyReport}/edit', [PersonalWeeklyReportController::class, 'edit'])->name('personal.weekly-reports.edit');
+        Route::put('weekly-reports/{weeklyReport}', [PersonalWeeklyReportController::class, 'update'])->name('personal.weekly-reports.update');
+        Route::post('weekly-reports/{weeklyReport}/submit', [PersonalWeeklyReportController::class, 'submit'])->name('personal.weekly-reports.submit');
+        Route::delete('weekly-reports/{weeklyReport}', [PersonalWeeklyReportController::class, 'destroy'])->name('personal.weekly-reports.destroy');
+    });
 
     Route::get('app', function (Request $request) {
         $user = $request->user();
@@ -56,6 +69,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
             }
 
             return redirect()->route('tenant.home', $company);
+        }
+
+        if ($user?->isPersonal()) {
+            return redirect()->route('personal.home');
         }
 
         if (! $company) {
