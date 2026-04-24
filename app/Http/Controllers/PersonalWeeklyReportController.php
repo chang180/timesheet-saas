@@ -5,6 +5,8 @@ namespace App\Http\Controllers;
 use App\Http\Requests\PersonalWeeklyReportUpsertRequest;
 use App\Models\WeeklyReport;
 use App\Models\WeeklyReportItem;
+use App\Services\HolidayCacheService;
+use App\Services\HolidaySyncService;
 use Carbon\CarbonImmutable;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -13,6 +15,10 @@ use Inertia\Response;
 
 class PersonalWeeklyReportController extends Controller
 {
+    public function __construct(
+        private HolidayCacheService $holidayCacheService
+    ) {}
+
     public function index(Request $request): Response
     {
         $user = $request->user();
@@ -104,6 +110,7 @@ class PersonalWeeklyReportController extends Controller
             ],
             'weekDateRange' => $this->getWeekDateRange($year, $week, $timezone),
             'nextWeekDateRange' => $this->getWeekDateRange($nextYear, $nextWeek, $timezone),
+            'holidayCalendar' => $this->buildHolidayCalendarProps($year, $week, $timezone),
         ]);
     }
 
@@ -148,11 +155,15 @@ class PersonalWeeklyReportController extends Controller
 
         $weeklyReport->load('items');
 
+        $year = $weeklyReport->work_year;
+        $week = $weeklyReport->work_week;
+        $timezone = config('app.timezone');
+
         return Inertia::render('personal/weekly-reports/show', [
             'report' => [
                 'id' => $weeklyReport->id,
-                'workYear' => $weeklyReport->work_year,
-                'workWeek' => $weeklyReport->work_week,
+                'workYear' => $year,
+                'workWeek' => $week,
                 'status' => $weeklyReport->status,
                 'isPublic' => $weeklyReport->is_public,
                 'publishedAt' => $weeklyReport->published_at?->toIso8601String(),
@@ -165,6 +176,8 @@ class PersonalWeeklyReportController extends Controller
                         'content' => $item->content,
                         'hoursSpent' => $item->hours_spent,
                         'plannedHours' => $item->planned_hours,
+                        'startedAt' => $item->started_at?->toDateString(),
+                        'endedAt' => $item->ended_at?->toDateString(),
                         'tags' => $item->tags ?? [],
                     ]),
                 'nextWeek' => $weeklyReport->items
@@ -174,6 +187,8 @@ class PersonalWeeklyReportController extends Controller
                         'title' => $item->title,
                         'content' => $item->content,
                         'plannedHours' => $item->planned_hours,
+                        'startedAt' => $item->started_at?->toDateString(),
+                        'endedAt' => $item->ended_at?->toDateString(),
                         'tags' => $item->tags ?? [],
                     ]),
             ],
@@ -181,6 +196,9 @@ class PersonalWeeklyReportController extends Controller
                 'name' => $request->user()->name,
                 'handle' => $request->user()->handle,
             ],
+            'weekDateRange' => $this->getWeekDateRange($year, $week, $timezone),
+            'nextWeekDateRange' => $this->getWeekDateRange($year, $week + 1, $timezone),
+            'holidayCalendar' => $this->buildHolidayCalendarProps($year, $week, $timezone),
         ]);
     }
 
@@ -225,6 +243,11 @@ class PersonalWeeklyReportController extends Controller
 
                 return $this->getWeekDateRange($ny, $nw, $timezone);
             })(),
+            'holidayCalendar' => $this->buildHolidayCalendarProps(
+                $weeklyReport->work_year,
+                $weeklyReport->work_week,
+                $timezone,
+            ),
         ]);
     }
 
@@ -449,5 +472,55 @@ class PersonalWeeklyReportController extends Controller
             'startDate' => $date->startOfWeek()->format('Y-m-d'),
             'endDate' => $date->endOfWeek()->format('Y-m-d'),
         ];
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function buildHolidayCalendarProps(int $year, int $week, string $timezone): array
+    {
+        $currentWeekDate = CarbonImmutable::now($timezone)->setISODate($year, $week);
+        $currentWeekYear = (int) $currentWeekDate->isoFormat('GGGG');
+        $currentWeekNumber = (int) $currentWeekDate->isoWeek();
+        $nextWeekDate = $currentWeekDate->addWeek();
+        $nextWeekYear = (int) $nextWeekDate->isoFormat('GGGG');
+        $nextWeekNumber = (int) $nextWeekDate->isoWeek();
+
+        return [
+            'currentWeek' => [
+                'year' => $currentWeekYear,
+                'week' => $currentWeekNumber,
+                'holidays' => $this->formatHolidayProps(
+                    $this->holidayCacheService->getHolidaysForWeek($currentWeekYear, $currentWeekNumber)->all()
+                ),
+            ],
+            'nextWeek' => [
+                'year' => $nextWeekYear,
+                'week' => $nextWeekNumber,
+                'holidays' => $this->formatHolidayProps(
+                    $this->holidayCacheService->getHolidaysForWeek($nextWeekYear, $nextWeekNumber)->all()
+                ),
+            ],
+            'source' => HolidaySyncService::sourceMetadata(),
+        ];
+    }
+
+    /**
+     * @param  array<int, array<string, mixed>>  $holidays
+     * @return array<int, array<string, mixed>>
+     */
+    private function formatHolidayProps(array $holidays): array
+    {
+        return collect($holidays)
+            ->map(fn (array $holiday) => [
+                'date' => CarbonImmutable::parse($holiday['holiday_date'])->format('Y-m-d'),
+                'name' => $holiday['name'],
+                'is_holiday' => (bool) $holiday['is_holiday'],
+                'category' => $holiday['category'],
+                'note' => $holiday['note'],
+                'is_workday_override' => (bool) $holiday['is_workday_override'],
+            ])
+            ->values()
+            ->all();
     }
 }
