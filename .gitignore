@@ -30,6 +30,7 @@ yarn-error.log
 /.superset
 /.vscode
 /.zed
+/.sisyphus
 
 # OS files
 Thumbs.db
