@@ -32,6 +32,7 @@ class User extends Authenticatable
         'team_id',
         'name',
         'email',
+        'handle',
         'password',
         'google_id',
         'avatar',
@@ -109,6 +110,19 @@ class User extends Authenticatable
     public function weeklyReports(): HasMany
     {
         return $this->hasMany(WeeklyReport::class);
+    }
+
+    public function personalPublicReports(): HasMany
+    {
+        return $this->hasMany(WeeklyReport::class, 'user_id')
+            ->whereNull('company_id')
+            ->where('status', WeeklyReport::STATUS_SUBMITTED)
+            ->where('is_public', true);
+    }
+
+    public static function findByHandle(string $handle): ?self
+    {
+        return self::query()->where('handle', strtolower(trim($handle)))->first();
     }
 
     public function submittedWeeklyReports(): HasMany

@@ -5,16 +5,19 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import AppLayout from '@/layouts/app-layout';
 import personal from '@/routes/personal';
-import { type BreadcrumbItem } from '@/types';
+import { type BreadcrumbItem, type SharedData } from '@/types';
 import { Head, Link, router, useForm, usePage } from '@inertiajs/react';
 import {
     ArrowLeft,
     CheckCircle2,
+    Copy,
+    Globe,
     Plus,
     Save,
     SendHorizonal,
     Trash2,
 } from 'lucide-react';
+import { useState } from 'react';
 
 type ItemInput = {
     id?: number | null;
@@ -34,6 +37,8 @@ type ReportPayload = {
     workYear: number;
     workWeek: number;
     status: string;
+    isPublic?: boolean;
+    publishedAt?: string | null;
     summary: string | null;
     currentWeek: ItemInput[];
     nextWeek: ItemInput[];
@@ -167,8 +172,42 @@ export default function PersonalWeeklyReportForm({
         );
     };
 
+    const { auth } = usePage<SharedData>().props;
+    const userHandle = (auth?.user as { handle?: string | null } | undefined)
+        ?.handle;
+
     const status = report?.status ?? 'draft';
     const isSubmittable = status === 'draft' && mode === 'edit';
+    const canShare = status === 'submitted' && !!userHandle && mode === 'edit';
+    const isPublic = Boolean(report?.isPublic);
+    const [copied, setCopied] = useState(false);
+
+    const shareUrl =
+        userHandle && report
+            ? `${window.location.origin}/u/${userHandle}/${report.workYear}/${report.workWeek}`
+            : null;
+
+    const togglePublic = (next: boolean) => {
+        if (!report) return;
+        router.post(
+            personal.weeklyReports.togglePublic.url({
+                weeklyReport: report.id,
+            }),
+            { is_public: next ? 1 : 0 },
+            { preserveScroll: true },
+        );
+    };
+
+    const copyShareUrl = async () => {
+        if (!shareUrl) return;
+        try {
+            await navigator.clipboard.writeText(shareUrl);
+            setCopied(true);
+            setTimeout(() => setCopied(false), 1800);
+        } catch {
+            // ignore
+        }
+    };
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
@@ -471,6 +510,87 @@ export default function PersonalWeeklyReportForm({
                         </div>
                     )}
                 </section>
+
+                {mode === 'edit' && report && (
+                    <section className="space-y-3">
+                        <h2 className="flex items-center gap-2 text-lg font-semibold">
+                            <Globe className="size-5" />
+                            公開分享
+                        </h2>
+
+                        {!userHandle && (
+                            <p className="text-sm text-muted-foreground">
+                                請先到{' '}
+                                <Link
+                                    href="/settings/handle"
+                                    className="text-primary underline"
+                                >
+                                    設定 → 我的代號
+                                </Link>{' '}
+                                建立你的代號才能公開分享。
+                            </p>
+                        )}
+
+                        {userHandle && status !== 'submitted' && (
+                            <p className="text-sm text-muted-foreground">
+                                需先提交（submit）週報才能公開分享。
+                            </p>
+                        )}
+
+                        {canShare && (
+                            <div className="flex flex-col gap-2">
+                                <div className="flex items-center gap-2">
+                                    <Button
+                                        type="button"
+                                        variant={
+                                            isPublic ? 'default' : 'outline'
+                                        }
+                                        onClick={() => togglePublic(!isPublic)}
+                                        disabled={processing}
+                                    >
+                                        {isPublic ? '已公開' : '公開此週報'}
+                                    </Button>
+                                    {(errors as Record<string, string>)
+                                        .is_public && (
+                                        <span className="text-xs text-red-600">
+                                            {
+                                                (
+                                                    errors as Record<
+                                                        string,
+                                                        string
+                                                    >
+                                                ).is_public
+                                            }
+                                        </span>
+                                    )}
+                                </div>
+
+                                {isPublic && shareUrl && (
+                                    <div className="flex flex-col gap-1 rounded-md border border-border/60 bg-muted/30 p-3 text-sm">
+                                        <span className="text-xs text-muted-foreground">
+                                            你的公開連結
+                                        </span>
+                                        <div className="flex items-center gap-2">
+                                            <code className="flex-1 rounded bg-background px-2 py-1 text-xs">
+                                                {shareUrl}
+                                            </code>
+                                            <Button
+                                                type="button"
+                                                variant="ghost"
+                                                size="sm"
+                                                onClick={copyShareUrl}
+                                                className="gap-1"
+                                            >
+                                                <Copy className="size-3" />
+                                                {copied ? '已複製' : '複製'}
+                                            </Button>
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+                        )}
+                    </section>
+                )}
 
                 <div className="sticky bottom-4 flex flex-wrap items-center justify-between gap-3 rounded-xl border-2 border-border/60 bg-background/95 p-4 shadow-lg backdrop-blur">
                     <div className="flex items-center gap-2 text-sm">

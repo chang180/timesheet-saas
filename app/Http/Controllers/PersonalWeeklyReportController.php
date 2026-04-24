@@ -157,6 +157,8 @@ class PersonalWeeklyReportController extends Controller
                 'workYear' => $weeklyReport->work_year,
                 'workWeek' => $weeklyReport->work_week,
                 'status' => $weeklyReport->status,
+                'isPublic' => $weeklyReport->is_public,
+                'publishedAt' => $weeklyReport->published_at?->toIso8601String(),
                 'summary' => $weeklyReport->summary,
                 'currentWeek' => $weeklyReport->items
                     ->where('type', WeeklyReportItem::TYPE_CURRENT_WEEK)
@@ -222,6 +224,35 @@ class PersonalWeeklyReportController extends Controller
 
         return redirect()->route('personal.weekly-reports.edit', $weeklyReport)
             ->with('success', '週報已成功發佈。');
+    }
+
+    public function togglePublic(Request $request, WeeklyReport $weeklyReport): RedirectResponse
+    {
+        $this->authorizePersonalReport($request, $weeklyReport);
+
+        $isPublic = (bool) $request->boolean('is_public');
+
+        if ($isPublic && $weeklyReport->status !== WeeklyReport::STATUS_SUBMITTED) {
+            return back()->withErrors([
+                'is_public' => '僅已提交（submitted）的週報可公開分享。',
+            ]);
+        }
+
+        if ($isPublic && $request->user()->handle === null) {
+            return back()->withErrors([
+                'is_public' => '請先到「設定 → 我的代號」建立你的代號。',
+            ]);
+        }
+
+        $weeklyReport->forceFill([
+            'is_public' => $isPublic,
+            'published_at' => $isPublic
+                ? ($weeklyReport->published_at ?? now())
+                : $weeklyReport->published_at,
+        ])->save();
+
+        return redirect()->route('personal.weekly-reports.edit', $weeklyReport)
+            ->with('success', $isPublic ? '已公開此週報。' : '已關閉公開分享。');
     }
 
     public function destroy(Request $request, WeeklyReport $weeklyReport): RedirectResponse

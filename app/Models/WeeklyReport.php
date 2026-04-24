@@ -31,6 +31,8 @@ class WeeklyReport extends Model
         'work_year',
         'work_week',
         'status',
+        'is_public',
+        'published_at',
         'summary',
         'metadata',
         'submitted_at',
@@ -48,11 +50,20 @@ class WeeklyReport extends Model
         return [
             'work_year' => 'integer',
             'work_week' => 'integer',
+            'is_public' => 'boolean',
+            'published_at' => 'datetime',
             'metadata' => 'array',
             'submitted_at' => 'datetime',
             'approved_at' => 'datetime',
             'locked_at' => 'datetime',
         ];
+    }
+
+    public function isPubliclyVisible(): bool
+    {
+        return $this->company_id === null
+            && $this->status === self::STATUS_SUBMITTED
+            && $this->is_public === true;
     }
 
     protected static function booted(): void
