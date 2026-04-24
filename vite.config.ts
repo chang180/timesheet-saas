@@ -1,6 +1,8 @@
 import { wayfinder } from '@laravel/vite-plugin-wayfinder';
 import tailwindcss from '@tailwindcss/vite';
 import react from '@vitejs/plugin-react';
+import { existsSync } from 'node:fs';
+import { homedir } from 'node:os';
 import laravel from 'laravel-vite-plugin';
 import { defineConfig, loadEnv, type ProxyOptions } from 'vite';
 
@@ -10,6 +12,11 @@ export default defineConfig(({ mode }) => {
     const backendUrl = env.VITE_BACKEND_URL ?? 'http://localhost:8000';
     const devHost = env.VITE_DEV_SERVER_HOST ?? '0.0.0.0';
     const devPort = Number(env.VITE_DEV_SERVER_PORT ?? '5173');
+    const homeDirectory = homedir();
+    const hasLocalTlsConfig =
+        existsSync(`${homeDirectory}/.config/herd/config/valet`) ||
+        existsSync(`${homeDirectory}/.config/valet`) ||
+        existsSync(`${homeDirectory}/.valet`);
 
     // In production builds, base should be '/build/' so Vite generates absolute paths
     // for dynamic imports that work correctly when loaded from /build/assets/
@@ -63,7 +70,11 @@ export default defineConfig(({ mode }) => {
                 // Only enable TLS detection in development mode (not production)
                 // Can be overridden via VITE_DETECT_TLS environment variable
                 ...(mode !== 'production' && {
-                    detectTls: env.VITE_DETECT_TLS || 'timesheet-saas.test',
+                    ...(env.VITE_DETECT_TLS || hasLocalTlsConfig
+                        ? {
+                              detectTls: env.VITE_DETECT_TLS || 'timesheet-saas.test',
+                          }
+                        : {}),
                 }),
                 buildDirectory: 'build',
             }),
