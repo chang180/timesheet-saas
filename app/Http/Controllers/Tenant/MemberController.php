@@ -2,11 +2,13 @@
 
 namespace App\Http\Controllers\Tenant;
 
+use App\Actions\Tenant\RemoveMemberFromCompanyAction;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Tenant\ListMembersRequest;
 use App\Models\Company;
 use App\Models\User;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Inertia\Inertia;
@@ -149,6 +151,11 @@ class MemberController extends Controller
             'teams' => fn ($query) => $query->orderBy('sort_order')->select('id', 'company_id', 'division_id', 'department_id', 'name', 'slug', 'is_active'),
         ]);
 
+        $coAdminsCount = User::query()
+            ->where('company_id', $company->id)
+            ->where('role', 'company_admin')
+            ->count();
+
         return Inertia::render('tenant/members/index', [
             'company' => [
                 'id' => $company->id,
@@ -156,6 +163,7 @@ class MemberController extends Controller
                 'slug' => $company->slug,
                 'user_limit' => $company->user_limit,
                 'current_user_count' => $company->current_user_count,
+                'company_admin_count' => $coAdminsCount,
             ],
             'organization' => [
                 'divisions' => $company->divisions->map(fn ($division) => [
@@ -184,5 +192,19 @@ class MemberController extends Controller
                 'available' => User::tenantAssignableRoles(),
             ],
         ]);
+    }
+
+    public function destroy(
+        Request $request,
+        Company $company,
+        User $member,
+        RemoveMemberFromCompanyAction $action,
+    ): RedirectResponse {
+        $actor = $request->user();
+
+        $action->execute($company, $member, $actor);
+
+        return redirect()->route('tenant.members', $company)
+            ->with('success', "已將 {$member->name} 移出公司。");
     }
 }

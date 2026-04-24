@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Support\Facades\DB;
 use Laravel\Fortify\TwoFactorAuthenticatable;
 use Laravel\Sanctum\HasApiTokens;
 
@@ -90,6 +91,35 @@ class User extends Authenticatable
     public function isPersonal(): bool
     {
         return $this->company_id === null;
+    }
+
+    public function leaveCurrentCompany(): void
+    {
+        if ($this->isPersonal()) {
+            return;
+        }
+
+        $previousCompanyId = $this->company_id;
+
+        DB::transaction(function () use ($previousCompanyId): void {
+            $company = Company::query()
+                ->whereKey($previousCompanyId)
+                ->lockForUpdate()
+                ->first();
+
+            if ($company !== null && $company->current_user_count > 0) {
+                $company->decrement('current_user_count');
+            }
+
+            $this->forceFill([
+                'company_id' => null,
+                'division_id' => null,
+                'department_id' => null,
+                'team_id' => null,
+                'role' => 'member',
+                'registered_via' => 'removed-from-tenant',
+            ])->save();
+        });
     }
 
     public function division(): BelongsTo

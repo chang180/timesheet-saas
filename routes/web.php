@@ -134,6 +134,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
             Route::patch('settings/organization-levels', [App\Http\Controllers\TenantSettingsController::class, 'updateOrganizationLevels'])->name('tenant.settings.organization-levels');
 
             Route::get('members', [App\Http\Controllers\Tenant\MemberController::class, 'show'])->name('tenant.members');
+            Route::delete('members/{member}', [App\Http\Controllers\Tenant\MemberController::class, 'destroy'])->name('tenant.members.destroy');
             Route::get('organization', [App\Http\Controllers\Tenant\OrganizationController::class, 'index'])->name('tenant.organization');
             Route::get('invitations/accept/{token}', [App\Http\Controllers\Tenant\InvitationAcceptController::class, 'show'])->name('tenant.invitations.accept');
 
