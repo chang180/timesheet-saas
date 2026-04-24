@@ -8,7 +8,7 @@
 - **認證與安全**：Laravel Fortify + Sanctum，支援 Google OAuth、雙因素認證（2FA）、邀請系統。
 - **組織層級**：公司 → 單位（Division）→ 部門（Department）→ 小組（Team），多角色權限管理；公司管理者可彈性選擇啟用的層級。
 - **組織邀請連結**：各層級可生成專屬邀請連結，透過連結註冊自動加入對應層級。
-- **週報體驗**：上一週複製、拖曳排序（@dnd-kit）、工時統計、智慧表單驗證與錯誤提示；主管可將已送出週報重新開啟（reopen）。
+- **週報體驗**：上一週複製、拖曳排序（@dnd-kit）、工時統計、智慧表單驗證與錯誤提示；主管可將已送出週報重新開啟（reopen）。個人週報支援工作項目日期區間、假日警告與工時摘要。
 - **匯總與匯出**：依公司／單位／部門／小組查詢匯總、下載 CSV/XLSX（`/app/{company}/weekly-reports/summary?export=csv|xlsx`），支援日期區間與層級篩選。
 - **通知與提醒**：成員邀請通知；週報填寫提醒（週五 16:00）、週一上午匯總摘要；可於 `company_settings.notification_preferences` 設定。
 - **假期與工時**：新北市開放資料同步國定假日（`holidays:sync`）；API `GET /app/{company}/calendar/holidays`、`/calendar/holidays/week` 供前端標註假日。
@@ -110,16 +110,22 @@ GOOGLE_REDIRECT_URI=https://yourdomain.com/auth/google/callback
 
 ## 更新日誌
 
+### 2026-04-24
+
+- **個人週報表單（`form.tsx`）日期區間與假日警告**：各工作項目加入 `started_at`/`ended_at` DatePicker，min/max 日期連動；整合假日標記（假日/補班日/週末色彩提示）、假日 hint 文字（⚠️/ℹ️）、以及每項工作的區間工時摘要（可用工時、超時 amber 警告）。本週與下週皆支援。
+- **個人週報檢視頁（`show.tsx`）對齊表單功能**：header 加入本週日期區間；每個工作項目顯示 `startedAt ~ endedAt` 日期 Badge 及區間工時摘要（工作日/假日/可用工時）；頁面底部加入工時統計 section（`HoursStatsCard`），有假期資料時才顯示。
+- **後端 `PersonalWeeklyReportController::show()`**：補傳 `startedAt`/`endedAt`（camelCase）給每個工作項目，以及 `weekDateRange`、`nextWeekDateRange`、`holidayCalendar`，與 `create()`/`edit()` 對齊。
+
 ### 2026-03-26
 
 - **Neuron ToolExecutorAgent 穩定化**：修復多項導致 apply→test→commit/push 流程失敗的問題。
-  - `maxTokens` 從 900 提升至 4096，避免 LLM 在工具呼叫時被截斷。
-  - 新增 `GuzzleHttpClient(timeout: 180s)`，解決 tool-calling 請求超時問題。
-  - `run_tests` / `run_pint` 最大呼叫次數從 5 提升至 10。
-  - 加入 `find_files` 工具，讓 agent 能以 glob 模式定位檔案，不再盲目掃描 repo。
-  - `runToolExecutorAgent` 加入完整 exception handling（`ToolRunsExceededException`、`HttpException`、通用 Throwable）與 retry 機制，錯誤不再造成 command crash。
-  - Command 預先在本機執行測試並將結果嵌入 agent 初始訊息，大幅減少無效工具呼叫。
-  - Neuron agent 語言指令強化：明確要求全程使用繁體中文，禁止輸出推理過程。
+    - `maxTokens` 從 900 提升至 4096，避免 LLM 在工具呼叫時被截斷。
+    - 新增 `GuzzleHttpClient(timeout: 180s)`，解決 tool-calling 請求超時問題。
+    - `run_tests` / `run_pint` 最大呼叫次數從 5 提升至 10。
+    - 加入 `find_files` 工具，讓 agent 能以 glob 模式定位檔案，不再盲目掃描 repo。
+    - `runToolExecutorAgent` 加入完整 exception handling（`ToolRunsExceededException`、`HttpException`、通用 Throwable）與 retry 機制，錯誤不再造成 command crash。
+    - Command 預先在本機執行測試並將結果嵌入 agent 初始訊息，大幅減少無效工具呼叫。
+    - Neuron agent 語言指令強化：明確要求全程使用繁體中文，禁止輸出推理過程。
 - **ToolExecutorAgent 實戰驗證**：以上改動後，agent 成功完整跑通一次真實 epic（`EPIC-LIVE-V6`）——自動發現並修正 `WeeklyReportControllerTest` 中 `onboarded` → `onboarded_at` 的欄位名稱錯誤，通過 211 項測試後自動 commit 並推送（`b9473bc`）。
 - **CI workflow 修正**（`EPIC-04`）：ToolExecutorAgent 自動修正 `.github/workflows/tests.yml`，加入 `agentic-team-develop` 分支、migration 步驟，並統一測試指令為 `php artisan test --compact`（`3b35074`）。
 - **500 護欄：`http_healthcheck` 工具**：新增 `http_healthcheck` 工具，於 `run_tests` 通過後、`git_commit_push` 前對首頁發送 HTTP GET，確認回應 200 且含有效 HTML。防止修改開機路徑（`bootstrap/app.php`、middleware、ServiceProvider 等）導致測試通過但用戶看到 500 的事故；對應事故：EPIC-DEBUG-HOMEPAGE（`bootstrap/app.php` 的 `app()->environment()` 在 middleware callback 內過早呼叫，PHP tests 不察但 HTTP 啟動即爆）。
