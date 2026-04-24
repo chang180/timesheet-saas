@@ -23,11 +23,13 @@ class CreateNewUser implements CreatesNewUsers
      */
     public function create(array $input): User
     {
-        // 檢查是否為租戶註冊（有 company_slug）
         $isTenantRegistration = isset($input['company_slug']) && $input['company_slug'] !== '';
+        $isPersonalRegistration = ! $isTenantRegistration
+            && (! isset($input['company_name']) || $input['company_name'] === '');
 
         Log::info('CreateNewUser::create called', [
             'is_tenant_registration' => $isTenantRegistration,
+            'is_personal_registration' => $isPersonalRegistration,
             'has_company_slug' => isset($input['company_slug']),
             'company_slug' => $input['company_slug'] ?? null,
             'email' => $input['email'] ?? null,
@@ -35,21 +37,30 @@ class CreateNewUser implements CreatesNewUsers
 
         $rules = [
             'name' => ['required', 'string', 'max:255'],
-            'email' => [
+            'password' => $this->passwordRules(),
+        ];
+
+        if ($isPersonalRegistration) {
+            $rules['email'] = [
+                'required',
+                'string',
+                'email',
+                'max:255',
+                Rule::unique(User::class)->where(fn ($query) => $query->whereNull('company_id')),
+            ];
+        } else {
+            $rules['email'] = [
                 'required',
                 'string',
                 'email',
                 'max:255',
                 Rule::unique(User::class),
-            ],
-            'password' => $this->passwordRules(),
-        ];
+            ];
+        }
 
         if ($isTenantRegistration) {
-            // 租戶註冊：驗證 company_slug 是否存在且允許註冊
             $rules['company_slug'] = ['required', 'string', 'exists:companies,slug'];
-        } else {
-            // 一般註冊：需要公司名稱
+        } elseif (! $isPersonalRegistration) {
             $rules['company_name'] = ['required', 'string', 'max:255'];
         }
 
@@ -63,7 +74,25 @@ class CreateNewUser implements CreatesNewUsers
             throw $e;
         }
 
-        return DB::transaction(function () use ($input, $isTenantRegistration): User {
+        return DB::transaction(function () use ($input, $isTenantRegistration, $isPersonalRegistration): User {
+            if ($isPersonalRegistration) {
+                $user = User::create([
+                    'company_id' => null,
+                    'name' => $input['name'],
+                    'email' => $input['email'],
+                    'password' => $input['password'],
+                    'role' => 'member',
+                    'registered_via' => 'personal-self-register',
+                ]);
+
+                Log::info('Personal registration successful', [
+                    'user_id' => $user->id,
+                    'user_email' => $user->email,
+                ]);
+
+                return $user;
+            }
+
             if ($isTenantRegistration) {
                 // 加入現有公司
                 $company = Company::where('slug', $input['company_slug'])->firstOrFail();
