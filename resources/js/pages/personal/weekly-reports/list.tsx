@@ -2,6 +2,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import AppLayout from '@/layouts/app-layout';
 import personal from '@/routes/personal';
+import * as weeklyReportRoutes from '@/routes/personal/weekly-reports';
 import { type BreadcrumbItem } from '@/types';
 import { Head, Link, usePage } from '@inertiajs/react';
 import {
@@ -9,6 +10,7 @@ import {
     CheckCircle2,
     ClipboardList,
     Clock,
+    Eye,
     Lock,
     PenSquare,
     SquarePen,
@@ -229,23 +231,43 @@ export default function PersonalWeeklyReportList({
                                                     小時
                                                 </p>
                                             </div>
-                                            <Button
-                                                asChild
-                                                variant="outline"
-                                                className="gap-2"
-                                            >
-                                                <Link
-                                                    href={personal.weeklyReports.edit.url(
-                                                        {
-                                                            weeklyReport:
-                                                                report.id,
-                                                        },
-                                                    )}
+                                            <div className="flex gap-2">
+                                                <Button
+                                                    asChild
+                                                    variant="ghost"
+                                                    size="sm"
+                                                    className="gap-2"
                                                 >
-                                                    <SquarePen className="size-4" />
-                                                    編輯
-                                                </Link>
-                                            </Button>
+                                                    <Link
+                                                        href={weeklyReportRoutes.show.url(
+                                                            {
+                                                                weeklyReport:
+                                                                    report.id,
+                                                            },
+                                                        )}
+                                                    >
+                                                        <Eye className="size-4" />
+                                                        檢視
+                                                    </Link>
+                                                </Button>
+                                                <Button
+                                                    asChild
+                                                    variant="outline"
+                                                    className="gap-2"
+                                                >
+                                                    <Link
+                                                        href={personal.weeklyReports.edit.url(
+                                                            {
+                                                                weeklyReport:
+                                                                    report.id,
+                                                            },
+                                                        )}
+                                                    >
+                                                        <SquarePen className="size-4" />
+                                                        編輯
+                                                    </Link>
+                                                </Button>
+                                            </div>
                                         </CardContent>
                                     </Card>
                                 );

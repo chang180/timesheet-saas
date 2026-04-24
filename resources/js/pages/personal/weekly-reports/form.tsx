@@ -5,12 +5,14 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import AppLayout from '@/layouts/app-layout';
 import personal from '@/routes/personal';
+import * as weeklyReportRoutes from '@/routes/personal/weekly-reports';
 import { type BreadcrumbItem, type SharedData } from '@/types';
 import { Head, Link, router, useForm, usePage } from '@inertiajs/react';
 import {
     ArrowLeft,
     CheckCircle2,
     Copy,
+    Eye,
     Globe,
     Plus,
     Save,
@@ -224,13 +226,32 @@ export default function PersonalWeeklyReportForm({
                 className="flex flex-col gap-6 px-4 sm:px-6 lg:px-8"
             >
                 <header className="flex flex-col gap-3">
-                    <Link
-                        href={personal.weeklyReports.url()}
-                        className="inline-flex w-fit items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
-                    >
-                        <ArrowLeft className="size-4" />
-                        返回列表
-                    </Link>
+                    <div className="flex items-center justify-between">
+                        <Link
+                            href={personal.weeklyReports.url()}
+                            className="inline-flex w-fit items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
+                        >
+                            <ArrowLeft className="size-4" />
+                            返回列表
+                        </Link>
+                        {mode === 'edit' && report && (
+                            <Button
+                                asChild
+                                variant="ghost"
+                                size="sm"
+                                className="gap-2"
+                            >
+                                <Link
+                                    href={weeklyReportRoutes.show.url({
+                                        weeklyReport: report.id,
+                                    })}
+                                >
+                                    <Eye className="size-4" />
+                                    檢視
+                                </Link>
+                            </Button>
+                        )}
+                    </div>
                     <div className="flex flex-col gap-1 sm:flex-row sm:items-baseline sm:justify-between">
                         <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">
                             {data.work_year} 年 第 {data.work_week} 週
